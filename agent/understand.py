@@ -1,13 +1,144 @@
+"""
+UNDERSTAND layer — converts raw user text into a validated TaskModel.
+
+Primary path : LLM structured extraction via OpenAI-compatible API.
+Fallback path: deterministic regex extraction (used when LLM unavailable).
+
+Public interface (unchanged):
+    understand(user_text, last_shown_candidates?) -> TaskModel
+"""
+
+import json
+import logging
+import os
 import re
 from typing import Any, Dict, List, Optional
 
+from dotenv import load_dotenv
+from pydantic import ValidationError
+
 from agent.task_model import FollowUp, Relationship, SemanticAttribute, TaskModel, TaskObject
+from agent.prompts import UNDERSTAND_SYSTEM_PROMPT
 from services.search import normalize_text
 
+load_dotenv()
 
-FOOD_TERMS = [
+try:
+    from openai import OpenAI
+except ImportError:  # pragma: no cover
+    OpenAI = None  # type: ignore[assignment,misc]
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Public entry point
+# ---------------------------------------------------------------------------
+
+def understand(
+    user_text: str,
+    last_shown_candidates: Optional[List[Dict[str, Any]]] = None,
+) -> TaskModel:
+    """Convert one raw user turn into a validated TaskModel.
+
+    Tries LLM extraction first; falls back to regex on any failure.
+    Interface is identical regardless of which path runs.
+    """
+    candidates = last_shown_candidates or []
+
+    # Attempt LLM path
+    llm_result = _try_llm_understand(user_text, candidates)
+    if llm_result is not None:
+        return llm_result
+
+    # Fallback: deterministic regex path
+    logger.debug("[understand] Using regex fallback for: %s", user_text[:80])
+    return _regex_understand(user_text, candidates)
+
+
+# ---------------------------------------------------------------------------
+# LLM path
+# ---------------------------------------------------------------------------
+
+def _try_llm_understand(
+    user_text: str,
+    candidates: List[Dict[str, Any]],
+) -> Optional[TaskModel]:
+    """Call LLM to extract TaskModel. Returns None on any error."""
+    groq_key = os.getenv("GROQ_API_KEY", "").strip()
+    openai_key = os.getenv("OPENAI_API_KEY", "").strip()
+    api_key = groq_key or openai_key
+    if not api_key:
+        return None  # No credentials → use fallback
+
+    if OpenAI is None:  # package not installed
+        logger.warning("[understand] openai package not installed; using regex fallback.")
+        return None
+
+    is_groq = bool(groq_key) or api_key.startswith("gsk_")
+    default_base = "https://api.groq.com/openai/v1" if is_groq else "https://api.openai.com/v1"
+    default_model = "llama-3.3-70b-versatile" if is_groq else "gpt-4o-mini"
+
+    base_url = os.getenv("OPENAI_BASE_URL", default_base)
+    model = os.getenv("OPENAI_MODEL_NAME", default_model)
+
+    # Build context hint for follow-up reference resolution
+    context_note = ""
+    if candidates:
+        shown = ", ".join(
+            f"#{item.get('ordinal')} {item.get('name', '')}" for item in candidates[:5]
+        )
+        context_note = f"\n\nCác món vừa hiển thị (để resolve follow-up): {shown}"
+
+    user_message = user_text + context_note
+
+    try:
+        client = OpenAI(api_key=api_key, base_url=base_url)
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": UNDERSTAND_SYSTEM_PROMPT},
+                {"role": "user", "content": user_message},
+            ],
+            temperature=0,
+            max_tokens=1024,
+        )
+        raw = response.choices[0].message.content or ""
+        return _parse_and_validate(raw)
+    except Exception as exc:
+        logger.warning("[understand] LLM call failed (%s); falling back to regex.", exc)
+        return None
+
+
+def _parse_and_validate(raw: str) -> Optional[TaskModel]:
+    """Parse LLM output JSON and validate with Pydantic. Returns None on failure."""
+    # Strip markdown code fences if model wraps the JSON
+    cleaned = re.sub(r"```(?:json)?\s*", "", raw).strip().rstrip("```").strip()
+    # Find first { ... } block
+    match = re.search(r"\{.*\}", cleaned, re.DOTALL)
+    if not match:
+        logger.warning("[understand] LLM returned no JSON: %s", raw[:200])
+        return None
+    try:
+        data = json.loads(match.group())
+        return TaskModel.model_validate(data)
+    except (json.JSONDecodeError, ValidationError) as exc:
+        logger.warning("[understand] TaskModel validation failed: %s", exc)
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Regex fallback path (preserved from previous implementation)
+# ---------------------------------------------------------------------------
+
+# Hard-coded food terms list used ONLY for regex fallback.
+# The LLM path does not rely on this list.
+_FOOD_TERMS = [
     ("trà chanh", "tra chanh", "Drink"),
     ("coca", "coca", "Drink"),
+    ("cà phê", "ca phe", "Drink"),
+    ("sinh tố", "sinh to", "Drink"),
+    ("nước cam", "nuoc cam", "Drink"),
+    ("trà sữa", "tra sua", "Drink"),
     ("xôi chim", "xoi chim", "Main"),
     ("xôi sườn", "xoi suon", "Main"),
     ("xôi gà", "xoi ga", "Main"),
@@ -18,10 +149,13 @@ FOOD_TERMS = [
     ("cơm sườn", "com suon", "Main"),
     ("bún bò", "bun bo", "Main"),
     ("bún chả", "bun cha", "Main"),
+    ("bún đậu", "bun dau", "Main"),
     ("phở bò", "pho bo", "Main"),
     ("phở gà", "pho ga", "Main"),
     ("gà rán", "ga ran", "Main"),
     ("tokbokki", "tokbokki", "Main"),
+    ("bánh mì", "banh mi", "Main"),
+    ("mì xào", "mi xao", "Main"),
     ("phở", "pho", "Main"),
     ("bún", "bun", "Main"),
     ("cơm", "com", "Main"),
@@ -30,37 +164,42 @@ FOOD_TERMS = [
     ("pizza", "pizza", "Main"),
 ]
 
-SEMANTIC_PHRASES = (
+_SEMANTIC_PHRASES = (
     ("do nuoc", "đồ nước"), ("an nhe", "ăn nhẹ"), ("nhe nhe", "nhẹ nhẹ"),
     ("mon thanh", "món thanh"), ("do mat", "đồ mát"), ("mat mat", "mát mát"),
     ("an cho do ngan", "ăn cho đỡ ngán"), ("mon no", "món no"), ("an choi", "ăn chơi"),
+    ("thanh thanh", "thanh thanh"),
 )
 
 
-def understand(
+def _regex_understand(
     user_text: str,
-    last_shown_candidates: Optional[List[Dict[str, Any]]] = None,
+    candidates: List[Dict[str, Any]],
 ) -> TaskModel:
-    """Convert one raw user turn into a validated structured task."""
+    """Deterministic regex-based extraction. Used as LLM fallback."""
     normalized = normalize_text(user_text).strip()
-    result = TaskModel(intent=_intent(normalized))
+    result = TaskModel(intent=_regex_intent(normalized))
     if not normalized:
         return result
 
-    _extract_reference(normalized, result, last_shown_candidates or [])
-    _extract_party_size(normalized, result)
-    _extract_price(normalized, result)
-    _extract_spicy(normalized, result)
-    _extract_exclusions(normalized, result)
-    _extract_cuisine_and_priorities(normalized, result)
-    _extract_follow_up(normalized, result)
-    _extract_objects_and_semantics(normalized, result)
-    _add_composition_relationships(normalized, result)
+    _regex_extract_reference(normalized, result, candidates)
+    _regex_extract_party_size(normalized, result)
+    _regex_extract_price(normalized, result)
+    _regex_extract_spicy(normalized, result)
+    _regex_extract_exclusions(normalized, result)
+    _regex_extract_cuisine_and_priorities(normalized, result)
+    _regex_extract_follow_up(normalized, result)
+    _regex_extract_objects_and_semantics(normalized, result)
+    _regex_add_composition_relationships(normalized, result)
 
     return TaskModel.model_validate(result.model_dump())
 
 
-def _intent(text: str) -> str:
+def _contains_term(text: str, token: str) -> bool:
+    return bool(re.search(r"\b" + re.escape(token) + r"\b", text))
+
+
+def _regex_intent(text: str) -> str:
     if any(token in text for token in ("xin chao", "hello", "alo", "chao ")) and not any(
         token in text for token in ("an", "mon", "quan", "tim")
     ):
@@ -71,23 +210,26 @@ def _intent(text: str) -> str:
         "tao thich", "minh thich", "toi thich", "tao ghet", "minh ghet", "toi ghet",
         "tao khong thich", "minh khong thich", "toi khong thich",
     ))
-    has_food_term = any(_contains_term(text, token) for _, token, _ in FOOD_TERMS)
-    has_semantic_food_need = any(phrase in text for phrase, _ in SEMANTIC_PHRASES)
-    request = any(token in text for token in ("tim", "muon an", "khong muon an", "khong an", "toi nay an", "an gi", "goi y", "mon khac", "re hon", "do han", "do nhat", "mon ngon", "mon cay", "do nuoc"))
+    has_food_term = any(_contains_term(text, token) for _, token, _ in _FOOD_TERMS)
+    has_semantic = any(phrase in text for phrase, _ in _SEMANTIC_PHRASES)
+    request = any(token in text for token in (
+        "tim", "muon an", "khong muon an", "khong an", "toi nay an",
+        "an gi", "goi y", "mon khac", "re hon", "do han", "do nhat",
+        "mon ngon", "mon cay", "do nuoc",
+    ))
     if preference and not request:
         return "state_preference"
-    if request or has_food_term or has_semantic_food_need or re.search(r"(?:duoi|khong qua|toi da|tren|hon|tu)\s*\d+", text) or any(
-        token in text for token in ("doi qua", "doi bung", "khong cay", "nguoi", "muon com", "muon bun", "muon pho", "muon tra", "muon mon", "dang sale")
-    ):
+    if request or has_food_term or has_semantic or re.search(
+        r"(?:duoi|khong qua|toi da|tren|hon|tu)\s*\d+", text
+    ) or any(token in text for token in (
+        "doi qua", "doi bung", "khong cay", "nguoi", "muon com", "muon bun",
+        "muon pho", "muon tra", "muon mon", "dang sale",
+    )):
         return "request_recommendation"
     return "chit_chat"
 
 
-def _contains_term(text: str, token: str) -> bool:
-    return bool(re.search(r"\b" + re.escape(token) + r"\b", text))
-
-
-def _extract_party_size(text: str, task: TaskModel) -> None:
+def _regex_extract_party_size(text: str, task: TaskModel) -> None:
     match = re.search(r"\b(\d+)\s*(?:nguoi|phan)\b", text)
     if match:
         task.context.party_size = max(1, int(match.group(1)))
@@ -102,7 +244,7 @@ def _money(value: str, suffix: str = "") -> int:
     return amount
 
 
-def _extract_price(text: str, task: TaskModel) -> None:
+def _regex_extract_price(text: str, task: TaskModel) -> None:
     bounds = task.hard_constraints
     range_match = re.search(r"(\d+)\s*k?\s*(?:-|den|toi)\s*(\d+)\s*k", text)
     if range_match:
@@ -118,26 +260,34 @@ def _extract_price(text: str, task: TaskModel) -> None:
         bounds.price_min = _money(match.group(1), (match.group(2) or "").strip())
 
 
-def _extract_spicy(text: str, task: TaskModel) -> None:
+def _regex_extract_spicy(text: str, task: TaskModel) -> None:
     if "khong cay" in text or "dung cay" in text:
         task.hard_constraints.spicy = False
-    elif re.search(r"\bcay\b", text) and not any(x in text for x in ("cay nhe", "cay vua", "cay qua", "mot chut cay")):
+    elif re.search(r"\bcay\b", text) and not any(
+        x in text for x in ("cay nhe", "cay vua", "cay qua", "mot chut cay")
+    ):
         task.hard_constraints.spicy = True
-    nuanced_spice = (("cay nhe", "cay nhẹ"), ("cay vua", "cay vừa"),
-                     ("dung cay qua", "đừng cay quá"), ("mot chut cay", "một chút cay"))
+    nuanced_spice = (
+        ("cay nhe", "cay nhẹ"), ("cay vua", "cay vừa"),
+        ("dung cay qua", "đừng cay quá"), ("mot chut cay", "một chút cay"),
+    )
     for phrase, display_text in nuanced_spice:
         if phrase in text:
             task.semantic_attributes.append(_make_semantic_attribute(display_text, "object", text))
 
 
-def _extract_exclusions(text: str, task: TaskModel) -> None:
+def _regex_extract_exclusions(text: str, task: TaskModel) -> None:
     ingredient_terms = {"hanh": "hành", "rau mui": "rau mùi", "ngo": "ngò", "toi": "tỏi", "ot": "ớt"}
-    negation = re.search(r"(?:khong (?:muon an|an|thich)|tranh|bo|ghet)\s+(.+?)(?:[,?.!]|$)", text)
+    negation = re.search(
+        r"(?:khong (?:muon an|an|thich)|tranh|bo|ghet)\s+(.+?)(?:[,?.!]|$)", text
+    )
     if not negation:
         return
     excluded = negation.group(1).strip()
     normalized_excluded = normalize_text(excluded)
-    ingredient = next((value for key, value in ingredient_terms.items() if key in normalized_excluded), None)
+    ingredient = next(
+        (value for key, value in ingredient_terms.items() if key in normalized_excluded), None
+    )
     if ingredient:
         task.ingredient_excludes.append(ingredient)
         return
@@ -146,9 +296,15 @@ def _extract_exclusions(text: str, task: TaskModel) -> None:
         task.excluded_concepts.append(concept_names.get(normalized_excluded, excluded))
 
 
-def _extract_cuisine_and_priorities(text: str, task: TaskModel) -> None:
-    for phrase, cuisine in (("han", "Korean"), ("nhat", "Japanese"), ("thai", "Thai"), ("viet", "Vietnamese")):
-        if re.search(r"\bdo " + re.escape(phrase) + r"\b", text) or phrase + " quoc" in text or phrase + "ese" in text:
+def _regex_extract_cuisine_and_priorities(text: str, task: TaskModel) -> None:
+    for phrase, cuisine in (
+        ("han", "Korean"), ("nhat", "Japanese"), ("thai", "Thai"), ("viet", "Vietnamese")
+    ):
+        if (
+            re.search(r"\bdo " + re.escape(phrase) + r"\b", text)
+            or phrase + " quoc" in text
+            or phrase + "ese" in text
+        ):
             task.soft_preferences.cuisine_affinity.append(cuisine)
             break
     if any(x in text for x in ("uu tien re", "uu tien gia", "re nhat")):
@@ -163,20 +319,25 @@ def _extract_cuisine_and_priorities(text: str, task: TaskModel) -> None:
         task.soft_preferences.priority_order.append("price")
 
 
-def _extract_follow_up(text: str, task: TaskModel) -> None:
+def _regex_extract_follow_up(text: str, task: TaskModel) -> None:
     if any(x in text for x in ("re hon nua", "re hon")):
         task.follow_up = FollowUp(type="refine", reason="lower_price")
         if "price" not in task.soft_preferences.priority_order:
             task.soft_preferences.priority_order.append("price")
     elif any(x in text for x in ("dat qua", "mon khac di", "tim cai khac")):
-        task.follow_up = FollowUp(type="reject_previous", reason="too_expensive" if "dat qua" in text else None)
-    elif task.intent == "request_recommendation" and not any(x in text for x in ("re hon", "dat qua", "mon khac")) and any(
-        x in text for x in ("thoi", "tim ", "toi nay")
-    ):
+        task.follow_up = FollowUp(
+            type="reject_previous",
+            reason="too_expensive" if "dat qua" in text else None,
+        )
+    elif task.intent == "request_recommendation" and not any(
+        x in text for x in ("re hon", "dat qua", "mon khac")
+    ) and any(x in text for x in ("thoi", "tim ", "toi nay")):
         task.follow_up = FollowUp(type="new_request", reason=None)
 
 
-def _extract_reference(text: str, task: TaskModel, candidates: List[Dict[str, Any]]) -> None:
+def _regex_extract_reference(
+    text: str, task: TaskModel, candidates: List[Dict[str, Any]]
+) -> None:
     ordinal_match = re.search(r"(?:mon\s+)?so\s+(\d+)", text)
     if ordinal_match:
         ordinal = ordinal_match.group(1)
@@ -186,53 +347,72 @@ def _extract_reference(text: str, task: TaskModel, candidates: List[Dict[str, An
         task.context.conversation_ref = str(candidates[0].get("ordinal"))
 
 
-def _extract_objects_and_semantics(text: str, task: TaskModel) -> None:
+def _regex_extract_objects_and_semantics(text: str, task: TaskModel) -> None:
     if task.intent != "request_recommendation":
         return
     found = []
-    for concept, token, role in FOOD_TERMS:
+    for concept, token, role in _FOOD_TERMS:
         excluded = any(normalize_text(value) == token for value in task.excluded_concepts)
         if not excluded and _contains_term(text, token):
             found.append((concept, role))
     if found:
-        # Keep user mention order, with specific dishes before their broader category.
         positions = [
             (text.find(token), concept, token, role)
             for concept, role in found
-            for food_concept, token, food_role in FOOD_TERMS
+            for food_concept, token, food_role in _FOOD_TERMS
             if food_concept == concept and food_role == role and text.find(token) >= 0
         ]
-        positions = [entry for entry in positions if not any(
-            other_token != entry[2] and entry[2] in other_token and text.find(other_token) == entry[0]
-            for _, _, other_token, _ in positions
-        )]
+        positions = [
+            entry for entry in positions
+            if not any(
+                other_token != entry[2]
+                and entry[2] in other_token
+                and text.find(other_token) == entry[0]
+                for _, _, other_token, _ in positions
+            )
+        ]
         positions.sort()
         for _, concept, _, role in positions:
             task.objects.append(TaskObject(role=role, concept=concept, required=True))
     else:
-        for phrase, display_text in SEMANTIC_PHRASES:
+        for phrase, display_text in _SEMANTIC_PHRASES:
             if phrase in text:
                 if phrase == "do nuoc":
                     task.objects.append(TaskObject(role="Main", concept=None, required=True))
-                task.semantic_attributes.append(_make_semantic_attribute(display_text, "object", text))
+                task.semantic_attributes.append(
+                    _make_semantic_attribute(display_text, "object", text)
+                )
                 break
     if "ngoi lau duoc" in text:
         task.semantic_attributes.append(_make_semantic_attribute("ngồi lâu được", "venue", text))
-    for phrase, display_text in (("sang trong", "sang trọng"), ("doi qua", "đói quá"), ("ngon", "ngon")):
-        if phrase in text and display_text not in (attribute.text for attribute in task.semantic_attributes):
+    for phrase, display_text in (
+        ("sang trong", "sang trọng"), ("doi qua", "đói quá"), ("ngon", "ngon")
+    ):
+        if phrase in text and display_text not in (a.text for a in task.semantic_attributes):
             task.semantic_attributes.append(_make_semantic_attribute(display_text, "object", text))
 
 
-def _make_semantic_attribute(display_text: str, target: str, request_text: str) -> SemanticAttribute:
+def _make_semantic_attribute(
+    display_text: str, target: str, request_text: str
+) -> SemanticAttribute:
     strength = "hard" if any(
         marker in request_text for marker in ("phai ", "nhat dinh", "bat buoc", "nhat thiet")
     ) else "soft"
     return SemanticAttribute(text=display_text, strength=strength, target=target)
 
 
-def _add_composition_relationships(text: str, task: TaskModel) -> None:
-    if len(task.objects) < 2 or not any(joiner in text for joiner in (" voi ", " va ", " cung ")):
+def _regex_add_composition_relationships(text: str, task: TaskModel) -> None:
+    if len(task.objects) < 2 or not any(
+        joiner in text for joiner in (" voi ", " va ", " cung ")
+    ):
         return
-    task.relationships.append(Relationship(type="same_order", objects=list(range(len(task.objects)))))
-    if any(phrase in text for phrase in ("cung quan", "cung mot quan", "cung nha hang", "cung mot nha hang")):
-        task.relationships.append(Relationship(type="same_restaurant", objects=list(range(len(task.objects)))))
+    task.relationships.append(
+        Relationship(type="same_order", objects=list(range(len(task.objects))))
+    )
+    if any(
+        phrase in text
+        for phrase in ("cung quan", "cung mot quan", "cung nha hang", "cung mot nha hang")
+    ):
+        task.relationships.append(
+            Relationship(type="same_restaurant", objects=list(range(len(task.objects))))
+        )
