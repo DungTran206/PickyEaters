@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Unit test / pytest cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment files and credentials (CRITICAL: DO NOT COMMIT REAL KEYS)
+.env
+.env.local
+.env.*.local
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local SQLite databases (runtime databases generated on startup)
+*.db
+*.sqlite
+*.sqlite3
+
+# Playwright screenshots and temporary browser artifacts
+food-browser-poc/artifacts/screenshots/
+artifacts/screenshots/
+
+# OS and IDE temporary files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

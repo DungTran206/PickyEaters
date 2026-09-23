@@ -1,0 +1,235 @@
+{
+  "platform": "ShopeeFood",
+  "feasibility": {
+    "website_accessible": true,
+    "browser_interaction": true,
+    "search_possible": true,
+    "restaurant_cards_readable": true,
+    "restaurant_detail_readable": true,
+    "menu_readable": true,
+    "promotion_readable": true,
+    "blocked_by": null
+  },
+  "notes": [],
+  "restaurants": [
+    {
+      "platform": "ShopeeFood",
+      "restaurant_name": "Cơm Ngon SÀI GÒN - Cơm gà, Cơm sườn ngon",
+      "address": "1 Lê Đại Hành, Hai Bà Trưng, Hà Nội",
+      "rating": null,
+      "category": null,
+      "dish_name": "Cơm sườn sốt (3 miếng) + Canh + Trứng ốp + Trà hoa",
+      "dish_price": 83300,
+      "promotion": "Flash Sale",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/com-ngon-sai-gon-com-ga-com-suon-ngon",
+      "menu": [
+        {
+          "dish_name": "Cơm sườn sốt (3 miếng) + Canh + Trứng ốp + Trà hoa",
+          "dish_price": 83300,
+          "original_price": 85000,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": "Giảm 2% (-1,700đ)"
+        },
+        {
+          "dish_name": "Cơm gà đùi lớn + Canh + Trứng ốp + Trà hoa",
+          "dish_price": 86250,
+          "original_price": 88000,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": "Giảm 2% (-1,750đ)"
+        },
+        {
+          "dish_name": "Cơm gà viên chiên + Canh + Trứng ốp + Trà hoa",
+          "dish_price": 79000,
+          "original_price": null,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": null
+        },
+        {
+          "dish_name": "Cơm thịt xá xíu + Canh + Trứng + Trà hoa",
+          "dish_price": 79000,
+          "original_price": null,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": null
+        },
+        {
+          "dish_name": "Cơm thịt chiên xù sốt Nhật + Canh + Trứng ốp + Trà hoa",
+          "dish_price": 79000,
+          "original_price": null,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": null
+        },
+        {
+          "dish_name": "Cơm thịt chiên xù sốt Nhật + Trứng ốp + Trà hoa",
+          "dish_price": 70550,
+          "original_price": 72000,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": "Giảm 2% (-1,450đ)"
+        },
+        {
+          "dish_name": "Cơm gà viên Hàn Quốc + Trứng ốp + Trà hoa",
+          "dish_price": 66650,
+          "original_price": 135000,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": "Giảm 51% (-68,350đ)"
+        },
+        {
+          "dish_name": "Cơm đùi gà lớn + Trứng ốp + Trà hoa",
+          "dish_price": 71447,
+          "original_price": 75000,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": "Giảm 5% (-3,553đ)"
+        },
+        {
+          "dish_name": "Cơm gà đùi tỏi + Canh + Trứng ốp + Trà hoa",
+          "dish_price": 66650,
+          "original_price": 68000,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": "Giảm 2% (-1,350đ)"
+        },
+        {
+          "dish_name": "Cơm thịt chưng mắm tép + Trứng ốp + Trà hoa",
+          "dish_price": 48000,
+          "original_price": 65000,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": "Giảm 26% (-17,000đ)"
+        },
+        {
+          "dish_name": "Cơm Gà viên chiên + Trứng ốp + Trà hoa",
+          "dish_price": 48000,
+          "original_price": 65000,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": "Giảm 26% (-17,000đ)"
+        },
+        {
+          "dish_name": "3 Pizza Mini Bò băm 5cm",
+          "dish_price": 35750,
+          "original_price": 65000,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": "Giảm 45% (-29,250đ)"
+        },
+        {
+          "dish_name": "Cơm gà viên chiên Hàn Quốc + Canh + Trứng ốp + Trà hoa",
+          "dish_price": 78400,
+          "original_price": 148000,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": "Giảm 47% (-69,600đ)"
+        },
+        {
+          "dish_name": "4 Pizza Mini Bò băm 5cm",
+          "dish_price": 85000,
+          "original_price": null,
+          "description": "CƠM NGON SÀI GÒN® có chính sách MIỄN PHÍ đổi trả. Nếu có bất cứ vấn đề gì, hãy liên lạc với quán, đánh giá gian hàng và nhận ngay voucher 30K. Trân trọng cảm ơn",
+          "discount": null
+        }
+      ]
+    },
+    {
+      "platform": "ShopeeFood",
+      "restaurant_name": "PIZZA FRESH - Pizza Spaghetti & Burger tươi ngon",
+      "address": "129 Nguyễn Thái Học, P. Văn Miếu, Đống Đa, Hà Nội",
+      "rating": null,
+      "category": null,
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Flash Sale",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/pizza-fresh-pizza-spaghetti-burger-tuoi-ngon",
+      "menu": []
+    },
+    {
+      "platform": "ShopeeFood",
+      "restaurant_name": "Cơm ngon CÔ TẤM - Cơm gà Cơm sườn ngon",
+      "address": "28 Đại Cồ Việt, P. Lê Đại Hành, Hai Bà Trưng, Hà Nội",
+      "rating": null,
+      "category": null,
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Flash Sale",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/com-ngon-co-tam-com-ga-com-suon-ngon",
+      "menu": []
+    },
+    {
+      "platform": "ShopeeFood",
+      "restaurant_name": "Cơm Ngon HÀ THÀNH - Cơm gà, Cơm sườn ngon",
+      "address": "2 Lê Đại Hành, Hai Bà Trưng, Hà Nội",
+      "rating": null,
+      "category": null,
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Flash Sale",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/com-ngon-ha-thanh-com-ga-com-suon-ngon",
+      "menu": []
+    },
+    {
+      "platform": "ShopeeFood",
+      "restaurant_name": "NGON QUÁN - Cơm gà, Cơm sườn ngon",
+      "address": "20 Cao Đạt, P. Lê Đại Hành, Hai Bà Trưng, Hà Nội",
+      "rating": null,
+      "category": null,
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Giảm món",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/ngon-quan-com-ga-com-suon-ngon",
+      "menu": []
+    },
+    {
+      "platform": "ShopeeFood",
+      "restaurant_name": "CHAY EXPRESS - Đồ chay Thực Dưỡng - Văn Miếu",
+      "address": "1 Văn Miếu, P. Điện Biên, Ba Đình, Hà Nội",
+      "rating": null,
+      "category": null,
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Flash Sale",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/chay-express-do-chay-thuc-duong-van-mieu",
+      "menu": []
+    },
+    {
+      "platform": "ShopeeFood",
+      "restaurant_name": "CHAY EXPRESS - Đồ Chay Thực Dưỡng",
+      "address": "28 Đại Cổ Việt, P. Lê Đại Hành, Hai Bà Trưng, Hà Nội",
+      "rating": null,
+      "category": null,
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Flash Sale",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/chay-express-do-chay-thuc-duong",
+      "menu": []
+    },
+    {
+      "platform": "ShopeeFood",
+      "restaurant_name": "Mr Chay - Món Chay Ngon - Bà Triệu",
+      "address": "203 Bà Triệu, Hai Bà Trưng, Hà Nội",
+      "rating": null,
+      "category": null,
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Flash Sale",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/mr-chay-mon-chay-ngon-ba-trieu",
+      "menu": []
+    },
+    {
+      "platform": "ShopeeFood",
+      "restaurant_name": "TACO MEXICO - Pizza, Mỳ Ý Spaghetti Burger Burrito Mexico Tươi Ngon",
+      "address": "203 Bà Triệu, Hai Bà Trưng, Hà Nội",
+      "rating": null,
+      "category": null,
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Giảm món",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/taco-mexico-pizza-my-y-spaghetti-burger-burrito-mexico-tuoi-ngon",
+      "menu": []
+    },
+    {
+      "platform": "ShopeeFood",
+      "restaurant_name": "Thứ Ba Chốt Món Giảm 30.000Đ",
+      "address": null,
+      "rating": null,
+      "category": null,
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": null,
+      "restaurant_url": "https://shopeefood.vn/bo-suu-tap/thu-ba-chot-mon-giam-30000d-1",
+      "menu": []
+    }
+  ]
+}

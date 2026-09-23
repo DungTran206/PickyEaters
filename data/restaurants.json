@@ -1,0 +1,522 @@
+[
+  {
+    "id": "r001",
+    "name": "Bún Bò Huế O An",
+    "cuisine": "Vietnamese",
+    "rating": 4.7,
+    "distance_km": 1.1,
+    "delivery_fee": 12000,
+    "address": "42 Nguyễn Huệ, Quận 1, TP.HCM",
+    "open_hours": "06:30 - 21:30"
+  },
+  {
+    "id": "r002",
+    "name": "Phở Bò Gia Truyền Lý Quốc Sư",
+    "cuisine": "Vietnamese",
+    "rating": 4.8,
+    "distance_km": 2.3,
+    "delivery_fee": 16000,
+    "address": "10 Lý Quốc Sư, Hoàn Kiếm, Hà Nội",
+    "open_hours": "06:00 - 22:00"
+  },
+  {
+    "id": "r003",
+    "name": "Cơm Tấm Sà Bì Chưởng",
+    "cuisine": "Vietnamese",
+    "rating": 4.6,
+    "distance_km": 1.5,
+    "delivery_fee": 14000,
+    "address": "179 Trần Hưng Đạo, Quận 5, TP.HCM",
+    "open_hours": "07:00 - 22:00"
+  },
+  {
+    "id": "r004",
+    "name": "Bún Chả Hương Liên",
+    "cuisine": "Vietnamese",
+    "rating": 4.5,
+    "distance_km": 2.8,
+    "delivery_fee": 18000,
+    "address": "24 Lê Văn Hưu, Hai Bà Trưng, Hà Nội",
+    "open_hours": "08:00 - 20:30"
+  },
+  {
+    "id": "r005",
+    "name": "Bánh Mì Huỳnh Hoa",
+    "cuisine": "Vietnamese",
+    "rating": 4.9,
+    "distance_km": 3.2,
+    "delivery_fee": 20000,
+    "address": "26 Lê Thị Riêng, Quận 1, TP.HCM",
+    "open_hours": "11:00 - 22:00"
+  },
+  {
+    "id": "r006",
+    "name": "K-Pub Korean Tokbokki & BBQ",
+    "cuisine": "Korean",
+    "rating": 4.6,
+    "distance_km": 1.8,
+    "delivery_fee": 15000,
+    "address": "84 Sư Vạn Hạnh, Quận 10, TP.HCM",
+    "open_hours": "10:00 - 22:30"
+  },
+  {
+    "id": "r007",
+    "name": "Gimbap & Kimchi House",
+    "cuisine": "Korean",
+    "rating": 4.4,
+    "distance_km": 1.2,
+    "delivery_fee": 12000,
+    "address": "52 Hoa Sứ, Phú Nhuận, TP.HCM",
+    "open_hours": "09:30 - 21:30"
+  },
+  {
+    "id": "r008",
+    "name": "Marukame Udon & Tempura",
+    "cuisine": "Japanese",
+    "rating": 4.7,
+    "distance_km": 2.0,
+    "delivery_fee": 15000,
+    "address": "215 Lý Tự Trọng, Quận 1, TP.HCM",
+    "open_hours": "10:00 - 21:30"
+  },
+  {
+    "id": "r009",
+    "name": "Tokyo Deli Sushi Express",
+    "cuisine": "Japanese",
+    "rating": 4.5,
+    "distance_km": 3.5,
+    "delivery_fee": 22000,
+    "address": "386 Cách Mạng Tháng 8, Quận 3, TP.HCM",
+    "open_hours": "11:00 - 22:00"
+  },
+  {
+    "id": "r010",
+    "name": "Thai Market - Tom Yum & Pad Thai",
+    "cuisine": "Thai",
+    "rating": 4.6,
+    "distance_km": 1.9,
+    "delivery_fee": 15000,
+    "address": "15 Lê Thánh Tôn, Quận 1, TP.HCM",
+    "open_hours": "10:30 - 22:00"
+  },
+  {
+    "id": "r011",
+    "name": "TukTuk Cha - Đồ Ăn Thái Cay",
+    "cuisine": "Thai",
+    "rating": 4.5,
+    "distance_km": 2.5,
+    "delivery_fee": 18000,
+    "address": "29 Ngô Thời Nhiệm, Quận 3, TP.HCM",
+    "open_hours": "10:00 - 22:00"
+  },
+  {
+    "id": "r012",
+    "name": "Cơm Chay An Lạc",
+    "cuisine": "Vegetarian",
+    "rating": 4.7,
+    "distance_km": 0.8,
+    "delivery_fee": 10000,
+    "address": "18 Nguyễn Đình Chiểu, Quận 3, TP.HCM",
+    "open_hours": "07:00 - 21:00"
+  },
+  {
+    "id": "r013",
+    "name": "Veggie Castle Buffet Chay",
+    "cuisine": "Vegetarian",
+    "rating": 4.8,
+    "distance_km": 2.2,
+    "delivery_fee": 16000,
+    "address": "7 Yên Ninh, Ba Đình, Hà Nội",
+    "open_hours": "11:00 - 21:30"
+  },
+  {
+    "id": "r014",
+    "name": "Popeyes Gà Rán Cay & Burger",
+    "cuisine": "Western",
+    "rating": 4.3,
+    "distance_km": 1.4,
+    "delivery_fee": 14000,
+    "address": "56 Nguyễn Trãi, Quận 1, TP.HCM",
+    "open_hours": "09:00 - 22:00"
+  },
+  {
+    "id": "r015",
+    "name": "Pizza 4P's Express",
+    "cuisine": "Western",
+    "rating": 4.9,
+    "distance_km": 4.1,
+    "delivery_fee": 25000,
+    "address": "8/15 Lê Thánh Tôn, Quận 1, TP.HCM",
+    "open_hours": "10:00 - 22:30"
+  },
+  {
+    "id": "r016",
+    "name": "Bún Đậu Mắm Tôm A Chảnh",
+    "cuisine": "Vietnamese",
+    "rating": 4.6,
+    "distance_km": 0.9,
+    "delivery_fee": 10000,
+    "address": "175 Thành Thái, Quận 10, TP.HCM",
+    "open_hours": "09:30 - 22:00"
+  },
+  {
+    "id": "r017",
+    "name": "Hủ Tiếu Nam Vang Nhân Quán",
+    "cuisine": "Vietnamese",
+    "rating": 4.5,
+    "distance_km": 1.6,
+    "delivery_fee": 14000,
+    "address": "122 Nguyễn Thị Minh Khai, Quận 3, TP.HCM",
+    "open_hours": "06:00 - 23:00"
+  },
+  {
+    "id": "r018",
+    "name": "Mì Cay Seoul 7 Cấp Độ",
+    "cuisine": "Korean",
+    "rating": 4.7,
+    "distance_km": 1.3,
+    "delivery_fee": 12000,
+    "address": "39 Nguyễn Gia Trí, Bình Thạnh, TP.HCM",
+    "open_hours": "09:00 - 22:30"
+  },
+  {
+    "id": "r019",
+    "name": "Nem Nướng Nha Trang D'Loro",
+    "cuisine": "Vietnamese",
+    "rating": 4.6,
+    "distance_km": 2.1,
+    "delivery_fee": 16000,
+    "address": "15 Cô Giang, Quận 1, TP.HCM",
+    "open_hours": "10:00 - 21:30"
+  },
+  {
+    "id": "r020",
+    "name": "Bánh Canh Ghẹ 69",
+    "cuisine": "Vietnamese",
+    "rating": 4.4,
+    "distance_km": 3.0,
+    "delivery_fee": 20000,
+    "address": "69 Ô Chợ Dừa, Đống Đa, Hà Nội",
+    "open_hours": "08:00 - 22:00"
+  },
+  {
+    "id": "r021",
+    "name": "Dookki Topokki Buffet & Bento",
+    "cuisine": "Korean",
+    "rating": 4.5,
+    "distance_km": 2.4,
+    "delivery_fee": 18000,
+    "address": "Tầng 4 Vạn Hạnh Mall, Quận 10, TP.HCM",
+    "open_hours": "10:30 - 21:30"
+  },
+  {
+    "id": "r022",
+    "name": "Quán Cơm Gà Xối Mỡ 142",
+    "cuisine": "Vietnamese",
+    "rating": 4.5,
+    "distance_km": 1.0,
+    "delivery_fee": 12000,
+    "address": "142 Ba Đình, Quận 8, TP.HCM",
+    "open_hours": "10:00 - 23:00"
+  },
+  {
+    "id": "r023",
+    "name": "Dim Tu Tac Cantonese Dimsum",
+    "cuisine": "Chinese",
+    "rating": 4.8,
+    "distance_km": 3.8,
+    "delivery_fee": 24000,
+    "address": "55 Đông Du, Quận 1, TP.HCM",
+    "open_hours": "09:00 - 22:00"
+  },
+  {
+    "id": "r024",
+    "name": "Cơm Niêu Sài Gòn",
+    "cuisine": "Vietnamese",
+    "rating": 4.6,
+    "distance_km": 2.6,
+    "delivery_fee": 18000,
+    "address": "27 Tú Xương, Quận 3, TP.HCM",
+    "open_hours": "10:00 - 22:00"
+  },
+  {
+    "id": "r025",
+    "name": "Bún Riêu Cua Hàng Bạc",
+    "cuisine": "Vietnamese",
+    "rating": 4.7,
+    "distance_km": 1.7,
+    "delivery_fee": 14000,
+    "address": "11 Hàng Bạc, Hoàn Kiếm, Hà Nội",
+    "open_hours": "06:30 - 20:00"
+  },
+  {
+    "id": "r026",
+    "name": "Trà Sữa & Ăn Vặt Xing Fu",
+    "cuisine": "Snack",
+    "rating": 4.3,
+    "distance_km": 0.5,
+    "delivery_fee": 10000,
+    "address": "12 Điện Biên Phủ, Bình Thạnh, TP.HCM",
+    "open_hours": "08:30 - 23:00"
+  },
+  {
+    "id": "r027",
+    "name": "Bánh Cuốn Nóng Gia An",
+    "cuisine": "Vietnamese",
+    "rating": 4.4,
+    "distance_km": 1.3,
+    "delivery_fee": 12000,
+    "address": "25 Thái Phiên, Hai Bà Trưng, Hà Nội",
+    "open_hours": "06:30 - 21:00"
+  },
+  {
+    "id": "r028",
+    "name": "Mì Trộn & Tokbokki Park Hang",
+    "cuisine": "Korean",
+    "rating": 4.6,
+    "distance_km": 2.7,
+    "delivery_fee": 18000,
+    "address": "62 Phan Xích Long, Phú Nhuận, TP.HCM",
+    "open_hours": "10:00 - 22:00"
+  },
+  {
+    "id": "r029",
+    "name": "Gà Rán Jollibee & Burger Combo",
+    "cuisine": "Western",
+    "rating": 4.2,
+    "distance_km": 1.1,
+    "delivery_fee": 12000,
+    "address": "354 Phan Đăng Lưu, Phú Nhuận, TP.HCM",
+    "open_hours": "08:00 - 22:00"
+  },
+  {
+    "id": "r030",
+    "name": "Cháo Ếch Singapore Geylang",
+    "cuisine": "Singaporean",
+    "rating": 4.7,
+    "distance_km": 2.9,
+    "delivery_fee": 19000,
+    "address": "35 Đông Du, Quận 1, TP.HCM",
+    "open_hours": "10:30 - 23:30"
+  },
+  {
+    "id": "tx_r01",
+    "name": "Xôi Chim & Xôi Sườn Cay Bà Thu",
+    "cuisine": "Vietnamese",
+    "rating": 4.9,
+    "distance_km": 1.2,
+    "delivery_fee": 14000,
+    "address": "105 Nguyễn Tuân, Thanh Xuân, Hà Nội",
+    "open_hours": "06:00 - 22:30",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r02",
+    "name": "Xôi Xéo & Xôi Thịt Kho Tàu Cô Lan",
+    "cuisine": "Vietnamese",
+    "rating": 4.8,
+    "distance_km": 0.9,
+    "delivery_fee": 12000,
+    "address": "18 Khương Đình, Thanh Xuân, Hà Nội",
+    "open_hours": "06:00 - 14:00, 17:00 - 22:00",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r03",
+    "name": "Xôi Ngô & Xôi Xéo Mỡ Hành Tô Vĩnh Diện",
+    "cuisine": "Vietnamese",
+    "rating": 4.8,
+    "distance_km": 1.6,
+    "delivery_fee": 15000,
+    "address": "45 Tô Vĩnh Diện, Thanh Xuân, Hà Nội",
+    "open_hours": "06:00 - 21:30",
+    "platform": "GrabFood"
+  },
+  {
+    "id": "tx_r04",
+    "name": "Xôi Gà Nấm & Xôi Xéo Bác Ngọ",
+    "cuisine": "Vietnamese",
+    "rating": 4.7,
+    "distance_km": 1.4,
+    "delivery_fee": 13000,
+    "address": "34 Triều Khúc, Thanh Xuân, Hà Nội",
+    "open_hours": "06:30 - 22:00",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r05",
+    "name": "Xôi Chị Em - Xôi Thập Cẩm & Sườn Nướng",
+    "cuisine": "Vietnamese",
+    "rating": 4.6,
+    "distance_km": 1.1,
+    "delivery_fee": 12000,
+    "address": "220 Nguyễn Trãi, Thanh Xuân, Hà Nội",
+    "open_hours": "07:00 - 23:00",
+    "platform": "GrabFood"
+  },
+  {
+    "id": "tx_r06",
+    "name": "Xôi Bắp & Xôi Đậu Xanh Phố Cổ",
+    "cuisine": "Vietnamese",
+    "rating": 4.5,
+    "distance_km": 2.0,
+    "delivery_fee": 16000,
+    "address": "12 Hoàng Văn Thái, Thanh Xuân, Hà Nội",
+    "open_hours": "06:00 - 13:00",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r07",
+    "name": "Xôi Mặn Thập Cẩm Chợ Chính Kinh",
+    "cuisine": "Vietnamese",
+    "rating": 4.6,
+    "distance_km": 0.8,
+    "delivery_fee": 10000,
+    "address": "8 Chính Kinh, Thanh Xuân, Hà Nội",
+    "open_hours": "06:00 - 21:00",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r08",
+    "name": "Phở Bò Tái Lăn & Sốt Vang Bát Đàn - Thanh Xuân",
+    "cuisine": "Vietnamese",
+    "rating": 4.8,
+    "distance_km": 1.8,
+    "delivery_fee": 16000,
+    "address": "88 Lê Trọng Tấn, Thanh Xuân, Hà Nội",
+    "open_hours": "06:00 - 21:30",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r09",
+    "name": "Bún Chả Sinh Từ - Nướng Than Hoa",
+    "cuisine": "Vietnamese",
+    "rating": 4.7,
+    "distance_km": 1.3,
+    "delivery_fee": 14000,
+    "address": "48 Nguyễn Trãi, Thanh Xuân, Hà Nội",
+    "open_hours": "07:30 - 21:00",
+    "platform": "GrabFood"
+  },
+  {
+    "id": "tx_r10",
+    "name": "Cơm Tấm Sườn Bì Chả Ali Triều Khúc",
+    "cuisine": "Vietnamese",
+    "rating": 4.6,
+    "distance_km": 1.5,
+    "delivery_fee": 14000,
+    "address": "25 Triều Khúc, Thanh Xuân, Hà Nội",
+    "open_hours": "09:30 - 21:30",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r11",
+    "name": "Bún Đậu Mắm Tôm Mơ Quán",
+    "cuisine": "Vietnamese",
+    "rating": 4.7,
+    "distance_km": 1.0,
+    "delivery_fee": 12000,
+    "address": "15 Ngõ 190 Nguyễn Trãi, Thanh Xuân, Hà Nội",
+    "open_hours": "09:00 - 21:30",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r12",
+    "name": "Bún Riêu Cua Bắp Bò Giò Tai",
+    "cuisine": "Vietnamese",
+    "rating": 4.6,
+    "distance_km": 1.7,
+    "delivery_fee": 15000,
+    "address": "110 Vũ Tông Phan, Thanh Xuân, Hà Nội",
+    "open_hours": "06:30 - 21:00",
+    "platform": "GrabFood"
+  },
+  {
+    "id": "tx_r13",
+    "name": "Bún Ốc Sườn Cay Nóng Khương Đình",
+    "cuisine": "Vietnamese",
+    "rating": 4.8,
+    "distance_km": 0.7,
+    "delivery_fee": 10000,
+    "address": "215 Khương Đình, Thanh Xuân, Hà Nội",
+    "open_hours": "06:00 - 21:00",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r14",
+    "name": "Bánh Mì Dân Tổ & Pate Nóng Hải Phòng",
+    "cuisine": "Vietnamese",
+    "rating": 4.6,
+    "distance_km": 1.2,
+    "delivery_fee": 12000,
+    "address": "64 Nguyễn Tuân, Thanh Xuân, Hà Nội",
+    "open_hours": "06:00 - 23:00",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r15",
+    "name": "Bánh Cuốn Nóng Gia An - Nhân Hòa",
+    "cuisine": "Vietnamese",
+    "rating": 4.6,
+    "distance_km": 1.9,
+    "delivery_fee": 16000,
+    "address": "62 Nhân Hòa, Thanh Xuân, Hà Nội",
+    "open_hours": "06:30 - 21:00",
+    "platform": "GrabFood"
+  },
+  {
+    "id": "tx_r16",
+    "name": "Mì Cay Seoul 7 Cấp Độ & Tokbokki",
+    "cuisine": "Korean",
+    "rating": 4.6,
+    "distance_km": 1.5,
+    "delivery_fee": 14000,
+    "address": "142 Triều Khúc, Thanh Xuân, Hà Nội",
+    "open_hours": "09:00 - 22:30",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r17",
+    "name": "Gà Rán Giòn Tan & Burger Mom's Touch",
+    "cuisine": "Western",
+    "rating": 4.5,
+    "distance_km": 2.1,
+    "delivery_fee": 16000,
+    "address": "52 Quan Nhân, Thanh Xuân, Hà Nội",
+    "open_hours": "09:00 - 22:00",
+    "platform": "GrabFood"
+  },
+  {
+    "id": "tx_r18",
+    "name": "Nem Nướng Nha Trang Cô Ba Tô Vĩnh Diện",
+    "cuisine": "Vietnamese",
+    "rating": 4.7,
+    "distance_km": 1.6,
+    "delivery_fee": 15000,
+    "address": "78 Tô Vĩnh Diện, Thanh Xuân, Hà Nội",
+    "open_hours": "09:30 - 21:30",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r19",
+    "name": "Cháo Sườn Sụn & Cháo Ngô Niêu Đất",
+    "cuisine": "Vietnamese",
+    "rating": 4.8,
+    "distance_km": 1.0,
+    "delivery_fee": 12000,
+    "address": "12 Nguyễn Quý Đức, Thanh Xuân, Hà Nội",
+    "open_hours": "06:30 - 22:30",
+    "platform": "ShopeeFood"
+  },
+  {
+    "id": "tx_r20",
+    "name": "Chè Sầu Liên Đà Nẵng & Trà Sữa Ăn Vặt",
+    "cuisine": "Vietnamese",
+    "rating": 4.7,
+    "distance_km": 0.8,
+    "delivery_fee": 10000,
+    "address": "38 Chính Kinh, Thanh Xuân, Hà Nội",
+    "open_hours": "09:00 - 23:00",
+    "platform": "GrabFood"
+  }
+]

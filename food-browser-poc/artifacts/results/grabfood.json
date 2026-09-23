@@ -1,0 +1,314 @@
+{
+  "platform": "GrabFood",
+  "feasibility": {
+    "website_accessible": true,
+    "browser_interaction": true,
+    "search_possible": true,
+    "restaurant_cards_readable": true,
+    "restaurant_detail_readable": true,
+    "menu_readable": true,
+    "promotion_readable": true,
+    "blocked_by": null
+  },
+  "notes": [
+    "Location set via Enter on 'input[placeholder*='location']'"
+  ],
+  "restaurants": [
+    {
+      "platform": "GrabFood",
+      "restaurant_name": "Mochi Chicken - Gà Rán Hàn Quốc",
+      "address": null,
+      "rating": 0.9,
+      "category": "Mochi Chicken - Gà Rán Hàn Quốc",
+      "dish_name": "Boneless Fried Chicken With Seoul Cream Sauce",
+      "dish_price": 199000,
+      "promotion": "Promo",
+      "restaurant_url": "https://food.grab.com/vn/en/restaurant/mochi-chicken-g%C3%A0-r%C3%A1n-h%C3%A0n-qu%E1%BB%91c-delivery/5-C6MDLNKTDEBVWA?",
+      "menu": [
+        {
+          "dish_name": "Boneless Fried Chicken With Seoul Cream Sauce",
+          "dish_price": 199000,
+          "original_price": 221111,
+          "description": "500Gr Boneless Fried Chicken With Korean Cream Onion Sauce. Soft – Light – Rich Flavor. Served With 150Gr Of Fried Rice Cakes + Pickled Vegetables.",
+          "discount": "Save 22.111 ₫"
+        },
+        {
+          "dish_name": "GÀ RÁN KHÔNG XƯƠNG SỐT CAY NGỌT BUSAN",
+          "dish_price": 199000,
+          "original_price": 211000,
+          "description": "500Gr Boneless Fried Chicken With Korean Sweet & Spicy Busan Sauce, Medium Spicy – Sweet & Sour. Served With 150Gr Fried Rice Cakes + Salted Radish.",
+          "discount": "Save 12.000 ₫"
+        },
+        {
+          "dish_name": "GÀ RÁN KHÔNG XƯƠNG SỐT GOCHU JEJU",
+          "dish_price": 199000,
+          "original_price": 211000,
+          "description": "500G Boneless Chicken Fried Crispy With Gochujang Jeju Sauce (Mildly Spicy) Korean-Style — Served With 150G Fried Rice Cakes + Pickled Radish.",
+          "discount": "Save 12.000 ₫"
+        },
+        {
+          "dish_name": "GÀ RÁN KHÔNG XƯƠNG LẮC BỘT TỎI GANGWON",
+          "dish_price": 205000,
+          "original_price": 212000,
+          "description": "500Gr Deboned Crispy Fried Chicken With Gangwon Garlic Powder — Served With Fried Rice Cake + Salted Radish.",
+          "discount": "Save 7.000 ₫"
+        },
+        {
+          "dish_name": "GÀ RÁN KHÔNG XƯƠNG SỐT MAYO GREEN",
+          "dish_price": 205000,
+          "original_price": 212000,
+          "description": "500G Deboned Crispy Fried Chicken Covered In Green Mayo Sauce — Creamy Mayo, Green Color From Green Chili & Seaweed, Served With 150G Fried Rice Cakes + Salted Radish.",
+          "discount": "Save 7.000 ₫"
+        },
+        {
+          "dish_name": "GÀ RÁN KHÔNG XƯƠNG VỊ TRUYỀN THỐNG",
+          "dish_price": 199000,
+          "original_price": 211000,
+          "description": "500Gr Boneless Fried Chicken With Crispy Edges, Served With 150Gr Of Traditional Korean Flavored Fried Rice Cakes + Pickled Radish.",
+          "discount": "Save 12.000 ₫"
+        },
+        {
+          "dish_name": "GÀ RÁN CÓ XƯƠNG SỐT KEM HÀNH SEOUL",
+          "dish_price": 199000,
+          "original_price": 221111,
+          "description": "500Gr Bone-In Chicken With Creamy Onion Sauce — Soft, Creamy Cream, Fresh Sweet Onions. Served With 150Gr Fried Rice Cakes + Salted Radish.",
+          "discount": "Save 22.111 ₫"
+        },
+        {
+          "dish_name": "GÀ RÁN CÓ XƯƠNG SỐT MAYO GREEN",
+          "dish_price": 205000,
+          "original_price": 212000,
+          "description": "500G Bone-In Fried Chicken Coated In Crispy Batter, Tossed In A Green Mayonnaise Sauce — Creamy, Green Hue From Green Chili & Seaweed, Served With 150G Fried Rice Cake + Pickled Radish.",
+          "discount": "Save 7.000 ₫"
+        },
+        {
+          "dish_name": "GÀ RÁN CÓ XƯƠNG LẮC BỘT TỎI GANGWON",
+          "dish_price": 205000,
+          "original_price": 212000,
+          "description": "500Gr Of Fried Chicken With Bones Coated In Gangwon Garlic Powder — Served With 150Gr Of Fried Rice Cakes + Pickled Radish.",
+          "discount": "Save 7.000 ₫"
+        },
+        {
+          "dish_name": "Fried Chicken with Bone in Gochujang Sauce",
+          "dish_price": 199000,
+          "original_price": 211000,
+          "description": "500g Crispy Fried Chicken with Gochujang Jeju Sauce (Mildly Spicy) , served with 150g French Fries and Salted Radish.",
+          "discount": "Save 12.000 ₫"
+        },
+        {
+          "dish_name": "Fried Chicken with Bones in Sweet Spicy Busan Sauce",
+          "dish_price": 199000,
+          "original_price": 211000,
+          "description": "500Gr Bone-In Chicken With Korean Busan Sweet Spicy Sauce, Moderately Spicy - Sweet. Served With 150Gr Fried French Fries + Salted Cabbage.",
+          "discount": "Save 12.000 ₫"
+        },
+        {
+          "dish_name": "Fried chicken with traditional flavor",
+          "dish_price": 199000,
+          "original_price": 211000,
+          "description": "500g crispy fried bone-in chicken (traditional flavor) — served with 150g French fries and pickled radish.",
+          "discount": "Save 12.000 ₫"
+        },
+        {
+          "dish_name": "Combo Chiken (For 2-3 People)",
+          "dish_price": 485100,
+          "original_price": 539000,
+          "description": "Includes 800G Of Boneless Crispy Fried Chicken (Shared 2 Flavors: Sweet & Spicy Sauce & Gochujang Sauce) + 1 Choice (Korean Fish Cake Rice Cake / Fried Potato / Chicken Salad) + 1 Can Of Coca-Cola 330Ml + 1 Can Of Sprite 330Ml. Comes With Free White Rice. Suitable For 2-3 People. Portion Size Based On Prepared Dishes.",
+          "discount": "Save 53.900 ₫"
+        },
+        {
+          "dish_name": "Daegu Combo (For 4-5 People)",
+          "dish_price": 599000,
+          "original_price": 629000,
+          "description": "GỒM 1000GR GÀ KHÔNG XƯƠNG – CHỌN 2 (SỐT MAYO GREEN / SỐT GOCHU JEJU /SỐT CAY NGỌT/ BỘT TỎI GANGWON )+ KHOAI TÂY CHIÊN SIZE LỚN +GÀ XÀO PHÔ MAI + 2 CƠM NẮM RONG BIỂN hoặc SALAD ỨC GÀ hoặc đồ uống tuỳ chọn ( chọn 1). TẶNG 1 CƠM TRẮNG Phù hợp nhóm 4-5 người ăn. Định lượng tính theo món sau sơ chế.",
+          "discount": "Save 30.000 ₫"
+        },
+        {
+          "dish_name": "Combo Incheon ( 3-4 người )",
+          "dish_price": 549000,
+          "original_price": 579000,
+          "description": "Includes 3 Boneless Chicken Portions Mixed With 3 Flavors (Mayo Green, Sweet Spicy, Gochu Jeju) + 4 Soft Drinks Of Your Choice. Comes With 200G Of French Fries, Chicken Salad, Or Fish Cake Rice Cake (Choose 1). Suitable For Groups Of 3-4 People. Portion Is Calculated Based On The Prepared Dish.",
+          "discount": "Save 30.000 ₫"
+        },
+        {
+          "dish_name": "Hanchoo Combo (For 2 People)",
+          "dish_price": 239000,
+          "original_price": 251000,
+          "description": "Combo Đôi gồm : 1 phần gà không xương (500gr) và 1 phần Tokbokki Chả Cá (250gr). Tặng kèm salad ức gà hoặc khoai tây chiên 150gr (chọn 1) hoặc Đồ uống tuỳ chọn hoặc cơm nắm rong biển Định lượng tính theo món sau sơ chế.",
+          "discount": "Save 12.000 ₫"
+        },
+        {
+          "dish_name": "Mochi Snow Sauce Chicken Rice (Must Try)",
+          "dish_price": 105000,
+          "original_price": 150000,
+          "description": "Ingredients: White rice, Boneless crispy fried chicken, Egg, Mayonnaise sauce, Seaweed, Pickles on the side.",
+          "discount": "Save 45.000 ₫"
+        },
+        {
+          "dish_name": "Rice cake with fish cake",
+          "dish_price": 89000,
+          "original_price": 178000,
+          "description": "Ingredients: Korean rice cake, Fish cake, Busan sweet and spicy sauce, Side pickled vegetables",
+          "discount": "Save 89.000 ₫"
+        },
+        {
+          "dish_name": "Seaweed soup",
+          "dish_price": 49000,
+          "original_price": 56000,
+          "description": "Seaweed soup - Miyeok-guk is a symbol in Korean culture. The natural taste from the sea blended with a light broth, brings a feeling of warmth and completeness when enjoyed with hot white rice.",
+          "discount": "Save 7.000 ₫"
+        },
+        {
+          "dish_name": "Kimchi Tofu Soup",
+          "dish_price": 69000,
+          "original_price": 81000,
+          "description": "Kimchi Tofu Soup with an perfect balance of spiciness, sourness, and sweetness from soft tofu, creating a warm feeling. Especially delicious when enjoyed with hot white rice.",
+          "discount": "Save 12.000 ₫"
+        },
+        {
+          "dish_name": "SALAD RAU CỦ",
+          "dish_price": 49000,
+          "original_price": 54444,
+          "description": "Vegetable Salad Includes Fresh Lettuce, Tomato, And Green Chili, Cut Into Bite-Sized Pieces. Lightly Mixed With Mayonnaise And Olive Oil For A Mild Creamy Flavor, Topped With Seaweed Flakes And Sesame Seeds For Aroma. A Refreshing, Well-Balanced Dish, Perfect As A Side To Fried Dishes.",
+          "discount": "Save 5.444 ₫"
+        },
+        {
+          "dish_name": "1 Piece of Spicy Sweet Busan Chicken",
+          "dish_price": 59000,
+          "original_price": 65556,
+          "description": "Boneless chicken with a rich Korean-style sweet and spicy sauce, crispy fried skin, tender juicy meat inside, a smooth creamy sauce blending a delicate spicy touch - deep sweet note, evoking red chili’s aroma and distinctive spices, stimulating your taste buds right from the first bite.",
+          "discount": "Save 6.556 ₫"
+        },
+        {
+          "dish_name": "French fries",
+          "dish_price": 39000,
+          "original_price": 43333,
+          "description": "Shredded potatoes, golden fried to perfection, crispy on the outside and fluffy on the inside. The potato flavor shines through, not too salty, and it’s even tastier when served hot. Suitable for pairing with fried chicken or enjoying on its own as a light meal.",
+          "discount": "Save 4.333 ₫"
+        },
+        {
+          "dish_name": "Seaweed Rice Ball",
+          "dish_price": 59000,
+          "original_price": 118000,
+          "description": "Recharge With A Portion Of Traditional Samgak Rice. The Rice Is Tightly Packed By Hand, Filled With Shredded Chicken Mixed With A Layer Of Smooth Mayo Sauce, Delivering Absolute Satisfaction In Both Taste And Nutrition.\\N\\Ningredients: 2 Samgak Rice Balls, Shredded Chicken, Seasoned Seaweed, Mayo Sauce. (~430 Kcal)",
+          "discount": "Save 59.000 ₫"
+        },
+        {
+          "dish_name": "Chicken Breast Salad with Mayonnaise Sauce",
+          "dish_price": 79000,
+          "original_price": 91000,
+          "description": "A perfect choice with Eat Clean + clean protein from steamed chicken breast and abundant fiber from fresh vegetables. A mild creamy Mayo sauce adds to the appeal of this satisfying light meal.Throughput part: Chicken breast, lettuce, cucumber, purple onion, Mayo sauce. (~315 Kcal)",
+          "discount": "Save 12.000 ₫"
+        }
+      ]
+    },
+    {
+      "platform": "GrabFood",
+      "restaurant_name": "Korea House - Món Ăn Hàn Quốc - Hai Bà Trưng",
+      "address": null,
+      "rating": 3.9,
+      "category": "Korea House - Món Ăn Hàn Quốc - Hai Bà Trưng",
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Promo",
+      "restaurant_url": "https://food.grab.com/vn/en/restaurant/korea-house-m%C3%B3n-%C4%83n-h%C3%A0n-qu%E1%BB%91c-hai-b%C3%A0-tr%C6%B0ng-delivery/5-C4B1V6TGG6M1TE?",
+      "menu": []
+    },
+    {
+      "platform": "GrabFood",
+      "restaurant_name": "Bánh Mì Sài Gòn - 204d Đội Cấn",
+      "address": null,
+      "rating": 4.6,
+      "category": "Bánh Mì Sài Gòn - 204d Đội Cấn",
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Promo",
+      "restaurant_url": "https://food.grab.com/vn/en/restaurant/b%C3%A1nh-m%C3%AC-s%C3%A0i-g%C3%B2n-204d-%C4%91%E1%BB%99i-c%E1%BA%A5n-delivery/5-C32YGCBGV3UCE2?",
+      "menu": []
+    },
+    {
+      "platform": "GrabFood",
+      "restaurant_name": "Cơm Thố Anh Nguyễn - Đội Cấn",
+      "address": null,
+      "rating": 4.5,
+      "category": "Cơm Thố Anh Nguyễn - Đội Cấn",
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Promo",
+      "restaurant_url": "https://food.grab.com/vn/en/restaurant/c%C6%A1m-th%E1%BB%91-anh-nguy%E1%BB%85n-%C4%91%E1%BB%99i-c%E1%BA%A5n-delivery/5-C7JTV4B2HGBZRJ?",
+      "menu": []
+    },
+    {
+      "platform": "GrabFood",
+      "restaurant_name": "Mr.Tet Restaurant",
+      "address": null,
+      "rating": 4.6,
+      "category": "Mr.Tet Restaurant",
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Promo",
+      "restaurant_url": "https://food.grab.com/vn/en/restaurant/mr-tet-restaurant-delivery/5-C7W1LXN2GYU3NT?",
+      "menu": []
+    },
+    {
+      "platform": "GrabFood",
+      "restaurant_name": "Phở Bò - Cơm Rang 89",
+      "address": null,
+      "rating": 4.6,
+      "category": "Phở Bò - Cơm Rang 89",
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Promo",
+      "restaurant_url": "https://food.grab.com/vn/en/restaurant/ph%E1%BB%9F-b%C3%B2-c%C6%A1m-rang-89-delivery/5-C4BVR3BZUBXYJN?",
+      "menu": []
+    },
+    {
+      "platform": "GrabFood",
+      "restaurant_name": "Smack Burger",
+      "address": null,
+      "rating": 4.7,
+      "category": "Smack Burger",
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Promo",
+      "restaurant_url": "https://food.grab.com/vn/en/restaurant/smack-burger-delivery/5-C7KTR4BBJB5DJX?",
+      "menu": []
+    },
+    {
+      "platform": "GrabFood",
+      "restaurant_name": "Bami King - Bánh Mì Bò Nướng & Cơm Thố - An Trạch",
+      "address": null,
+      "rating": 4.7,
+      "category": "Bami King - Bánh Mì Bò Nướng & Cơm Thố - An Trạch",
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Promo",
+      "restaurant_url": "https://food.grab.com/vn/en/restaurant/bami-king-b%C3%A1nh-m%C3%AC-b%C3%B2-n%C6%B0%E1%BB%9Bng-c%C6%A1m-th%E1%BB%91-an-tr%E1%BA%A1ch-delivery/VNGFVN0000038c?",
+      "menu": []
+    },
+    {
+      "platform": "GrabFood",
+      "restaurant_name": "Tiệm Nhà Dâu - Gỏi Cuốn Tôm Thịt & Healthy Food",
+      "address": null,
+      "rating": 4.2,
+      "category": "Tiệm Nhà Dâu - Gỏi Cuốn Tôm Thịt & Healthy Food",
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Promo",
+      "restaurant_url": "https://food.grab.com/vn/en/restaurant/ti%E1%BB%87m-nh%C3%A0-d%C3%A2u-g%E1%BB%8Fi-cu%E1%BB%91n-t%C3%B4m-th%E1%BB%8Bt-healthy-food-delivery/5-C4EFFCA2JETWFE?",
+      "menu": []
+    },
+    {
+      "platform": "GrabFood",
+      "restaurant_name": "Cơm Rang Dưa Bò Đức Hạnh 38 Mã Mây",
+      "address": null,
+      "rating": 3.7,
+      "category": "Cơm Rang Dưa Bò Đức Hạnh 38 Mã Mây",
+      "dish_name": null,
+      "dish_price": null,
+      "promotion": "Promo",
+      "restaurant_url": "https://food.grab.com/vn/en/restaurant/c%C6%A1m-rang-d%C6%B0a-b%C3%B2-%C4%91%E1%BB%A9c-h%E1%BA%A1nh-38-m%C3%A3-m%C3%A2y-delivery/5-C3L1CU6HVN4BHE?",
+      "menu": []
+    }
+  ]
+}

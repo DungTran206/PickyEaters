@@ -1,0 +1,31 @@
+[
+  {
+    "user_id": "user_01",
+    "name": "Dũng",
+    "preferred_cuisines": ["Vietnamese", "Korean"],
+    "preferred_flavors": ["spicy"],
+    "disliked_ingredients": [],
+    "budget": 80000,
+    "minimum_rating": 4.3,
+    "preferred_distance": 3.0,
+    "dietary_restrictions": [],
+    "liked_dishes": [
+      "Bún bò Huế đặc biệt (chả, nạm, giò)",
+      "Tokbokki phô mai cay kéo sợi"
+    ],
+    "disliked_dishes": []
+  },
+  {
+    "user_id": "user_new",
+    "name": "Người dùng mới",
+    "preferred_cuisines": [],
+    "preferred_flavors": [],
+    "disliked_ingredients": [],
+    "budget": 0,
+    "minimum_rating": 4.0,
+    "preferred_distance": 5.0,
+    "dietary_restrictions": [],
+    "liked_dishes": [],
+    "disliked_dishes": []
+  }
+]

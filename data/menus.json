@@ -1,0 +1,2213 @@
+[
+  {
+    "id": "d001",
+    "restaurant_id": "r001",
+    "name": "Bún bò Huế đặc biệt (chả, nạm, giò)",
+    "price": 65000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "beef",
+      "noodles",
+      "onion",
+      "herbs",
+      "chili",
+      "pork knuckle"
+    ],
+    "description": "Bún bò Huế chuẩn vị cố đô, nước dùng đậm đà, sa tế cay nồng"
+  },
+  {
+    "id": "d002",
+    "restaurant_id": "r001",
+    "name": "Bún bò nạm gân (không hành)",
+    "price": 55000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "beef",
+      "noodles",
+      "herbs",
+      "chili"
+    ],
+    "description": "Tô bún bò nạm gân giòn sần sật, dành riêng cho người không ăn hành"
+  },
+  {
+    "id": "d003",
+    "restaurant_id": "r001",
+    "name": "Bún bắp bò hoa sa tế",
+    "price": 60000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "beef",
+      "noodles",
+      "onion",
+      "chili"
+    ],
+    "description": "Bắp bò hoa thái mỏng mềm ngọt, sa tế ớt hiểm cay xé lưỡi"
+  },
+  {
+    "id": "d004",
+    "restaurant_id": "r001",
+    "name": "Chả cua Huế hấp (phần thêm)",
+    "price": 20000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Side",
+    "ingredients": [
+      "crab",
+      "pork"
+    ],
+    "description": "Chả cua thơm béo ngậy chuẩn Huế"
+  },
+  {
+    "id": "d005",
+    "restaurant_id": "r002",
+    "name": "Phở bò tái lăn",
+    "price": 75000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "beef",
+      "rice noodles",
+      "onion",
+      "garlic",
+      "herbs"
+    ],
+    "description": "Thịt bò xào lăn tỏi thơm lừng, nước phở ngọt thanh béo ngậy"
+  },
+  {
+    "id": "d006",
+    "restaurant_id": "r002",
+    "name": "Phở bò chín nạm gầu",
+    "price": 70000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "beef",
+      "rice noodles",
+      "onion",
+      "herbs"
+    ],
+    "description": "Phở bò truyền thống nạm gầu giòn béo"
+  },
+  {
+    "id": "d007",
+    "restaurant_id": "r002",
+    "name": "Phở bò tái bắp (không hành)",
+    "price": 75000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "beef",
+      "rice noodles",
+      "herbs"
+    ],
+    "description": "Bắp bò tươi mềm trần tái, nước phở thanh tao không bỏ hành"
+  },
+  {
+    "id": "d008",
+    "restaurant_id": "r002",
+    "name": "Quẩy giòn phở",
+    "price": 10000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Side",
+    "ingredients": [
+      "flour"
+    ],
+    "description": "Quẩy vàng ruộm giòn tan ăn kèm phở"
+  },
+  {
+    "id": "d009",
+    "restaurant_id": "r003",
+    "name": "Cơm tấm sườn bì chả đặc biệt",
+    "price": 79000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "rice",
+      "egg",
+      "scallion",
+      "onion"
+    ],
+    "description": "Sườn nướng mật ong mềm mọng, bì dai giòn, chả trứng béo ngậy"
+  },
+  {
+    "id": "d010",
+    "restaurant_id": "r003",
+    "name": "Cơm tấm sườn cốt lết nướng",
+    "price": 55000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "rice",
+      "scallion"
+    ],
+    "description": "Cơm sườn nướng than hoa thơm lừng đậm đà"
+  },
+  {
+    "id": "d011",
+    "restaurant_id": "r003",
+    "name": "Cơm tấm gà nướng sốt cay",
+    "price": 59000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "chicken",
+      "rice",
+      "chili",
+      "scallion"
+    ],
+    "description": "Đùi gà nướng sốt cay cay kích thích vị giác"
+  },
+  {
+    "id": "d012",
+    "restaurant_id": "r003",
+    "name": "Canh khổ qua dồn thịt (không hành)",
+    "price": 25000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Side",
+    "ingredients": [
+      "bitter melon",
+      "pork"
+    ],
+    "description": "Canh thanh nhiệt giải ngấy"
+  },
+  {
+    "id": "d013",
+    "restaurant_id": "r004",
+    "name": "Bún chả Hà Nội đặc biệt",
+    "price": 65000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "noodles",
+      "papaya",
+      "herbs",
+      "garlic"
+    ],
+    "description": "Chả miếng nướng than hoa và chả viên thơm mềm nước mắm chua ngọt"
+  },
+  {
+    "id": "d014",
+    "restaurant_id": "r004",
+    "name": "Nem cua bể giòn rụm (2 cái)",
+    "price": 40000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Side",
+    "ingredients": [
+      "crab",
+      "pork",
+      "mushroom",
+      "onion"
+    ],
+    "description": "Nem cua bể Hải Phòng vỏ giòn tan nhân đậm đà"
+  },
+  {
+    "id": "d015",
+    "restaurant_id": "r004",
+    "name": "Bún chả nướng không tỏi ớt",
+    "price": 60000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "noodles",
+      "herbs"
+    ],
+    "description": "Bún chả vị thanh, không gia vị nồng"
+  },
+  {
+    "id": "d016",
+    "restaurant_id": "r005",
+    "name": "Bánh mì Huỳnh Hoa đặc biệt siêu nhân",
+    "price": 68000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "bread",
+      "pate",
+      "cucumber",
+      "onion",
+      "chili"
+    ],
+    "description": "Bánh mì đẫm pate bơ tươi cùng 6 loại giò chả thượng hạng"
+  },
+  {
+    "id": "d017",
+    "restaurant_id": "r005",
+    "name": "Bánh mì thịt nướng sốt cay",
+    "price": 55000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "bread",
+      "chili",
+      "cucumber"
+    ],
+    "description": "Bánh mì giòn rụm với thịt nướng sốt cay đậm đà (không hành tây)"
+  },
+  {
+    "id": "d018",
+    "restaurant_id": "r005",
+    "name": "Bánh mì chả lụa pate (không hành)",
+    "price": 48000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "bread",
+      "pate",
+      "cucumber"
+    ],
+    "description": "Bánh mì pate béo ngậy không bỏ hành ngò"
+  },
+  {
+    "id": "d019",
+    "restaurant_id": "r006",
+    "name": "Tokbokki phô mai cay kéo sợi",
+    "price": 69000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "rice cake",
+      "cheese",
+      "chili",
+      "fish cake",
+      "onion"
+    ],
+    "description": "Bánh gạo dẻo quánh sốt gochujang cay ngọt phủ ngập phô mai mozzarella"
+  },
+  {
+    "id": "d020",
+    "restaurant_id": "r006",
+    "name": "Tokbokki hải sản cay nồng",
+    "price": 79000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "rice cake",
+      "squid",
+      "shrimp",
+      "chili",
+      "fish cake"
+    ],
+    "description": "Tokbokki tôm mực tươi sốt cay xé lưỡi kiểu Hàn Quốc"
+  },
+  {
+    "id": "d021",
+    "restaurant_id": "r006",
+    "name": "Cơm trộn Bibimbap thịt bò",
+    "price": 75000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "beef",
+      "rice",
+      "egg",
+      "vegetables",
+      "chili",
+      "sesame"
+    ],
+    "description": "Cơm trộn thố đá thơm phức sốt ớt Hàn Quốc"
+  },
+  {
+    "id": "d022",
+    "restaurant_id": "r006",
+    "name": "Gà rán sốt cay ngọt Hàn Quốc",
+    "price": 89000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "chicken",
+      "chili",
+      "garlic",
+      "sesame"
+    ],
+    "description": "Gà sốt Yangnyeom cay giòn đượm vị"
+  },
+  {
+    "id": "d023",
+    "restaurant_id": "r007",
+    "name": "Gimbap bò Bulgogi",
+    "price": 45000,
+    "spicy": false,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "beef",
+      "rice",
+      "seaweed",
+      "carrot",
+      "egg"
+    ],
+    "description": "Cơm cuộn rong biển nhân thịt bò sốt ngọt mềm ngon"
+  },
+  {
+    "id": "d024",
+    "restaurant_id": "r007",
+    "name": "Gimbap kim chi cay",
+    "price": 42000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "kimchi",
+      "rice",
+      "seaweed",
+      "pork",
+      "chili"
+    ],
+    "description": "Cơm cuộn kim chi giòn chua cay bắt vị"
+  },
+  {
+    "id": "d025",
+    "restaurant_id": "r007",
+    "name": "Mì tương đen Jajangmyeon",
+    "price": 58000,
+    "spicy": false,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "noodles",
+      "pork",
+      "black bean",
+      "onion",
+      "cucumber"
+    ],
+    "description": "Mì sợi dai ngon sốt đậu đen đậm đà kiểu Hàn"
+  },
+  {
+    "id": "d026",
+    "restaurant_id": "r007",
+    "name": "Canh kim chi thịt heo cay ấm bụng (không hành tây)",
+    "price": 55000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "kimchi",
+      "pork",
+      "tofu",
+      "chili"
+    ],
+    "description": "Canh kim chi hầm thịt heo ba chỉ cay thơm ấm nóng"
+  },
+  {
+    "id": "d027",
+    "restaurant_id": "r008",
+    "name": "Mì Udon bò cay Miso",
+    "price": 85000,
+    "spicy": true,
+    "cuisine": "Japanese",
+    "category": "Main",
+    "ingredients": [
+      "beef",
+      "udon noodles",
+      "miso",
+      "chili",
+      "onion"
+    ],
+    "description": "Sợi mì udon tươi dai mềm trong nước dùng miso cay cay béo thơm"
+  },
+  {
+    "id": "d028",
+    "restaurant_id": "r008",
+    "name": "Mì Udon cà ri Nhật Bản",
+    "price": 79000,
+    "spicy": true,
+    "cuisine": "Japanese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "udon noodles",
+      "curry",
+      "carrot",
+      "onion"
+    ],
+    "description": "Nước sốt cà ri Nhật sánh quyện đậm đà"
+  },
+  {
+    "id": "d029",
+    "restaurant_id": "r008",
+    "name": "Mì Udon thịt heo nướng sốt ngọt",
+    "price": 75000,
+    "spicy": false,
+    "cuisine": "Japanese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "udon noodles",
+      "egg"
+    ],
+    "description": "Udon thanh ngọt truyền thống không cay"
+  },
+  {
+    "id": "d030",
+    "restaurant_id": "r008",
+    "name": "Tempura tôm giòn rụm",
+    "price": 35000,
+    "spicy": false,
+    "cuisine": "Japanese",
+    "category": "Side",
+    "ingredients": [
+      "shrimp",
+      "flour"
+    ],
+    "description": "Tôm tẩm bột chiên phồng giòn tan"
+  },
+  {
+    "id": "d031",
+    "restaurant_id": "r009",
+    "name": "Set Sushi cá hồi & cá ngừ tươi",
+    "price": 125000,
+    "spicy": false,
+    "cuisine": "Japanese",
+    "category": "Main",
+    "ingredients": [
+      "salmon",
+      "tuna",
+      "rice",
+      "seaweed",
+      "wasabi"
+    ],
+    "description": "Hải sản tươi sống đạt chuẩn sashimi Nhật Bản"
+  },
+  {
+    "id": "d032",
+    "restaurant_id": "r009",
+    "name": "Cơm lươn Nhật nướng sốt Teriyaki",
+    "price": 145000,
+    "spicy": false,
+    "cuisine": "Japanese",
+    "category": "Main",
+    "ingredients": [
+      "eel",
+      "rice",
+      "teriyaki sauce",
+      "sesame"
+    ],
+    "description": "Lươn nướng mềm béo bóng bẩy đượm sốt Nhật"
+  },
+  {
+    "id": "d033",
+    "restaurant_id": "r009",
+    "name": "Rong biển trộn mè cay Wasabi",
+    "price": 38000,
+    "spicy": true,
+    "cuisine": "Japanese",
+    "category": "Side",
+    "ingredients": [
+      "seaweed",
+      "wasabi",
+      "sesame"
+    ],
+    "description": "Món ăn vặt giòn sần sật the cay xộc mũi"
+  },
+  {
+    "id": "d034",
+    "restaurant_id": "r010",
+    "name": "Súp Tom Yum hải sản chua cay",
+    "price": 85000,
+    "spicy": true,
+    "cuisine": "Thai",
+    "category": "Main",
+    "ingredients": [
+      "shrimp",
+      "squid",
+      "mushroom",
+      "lemongrass",
+      "chili",
+      "lime"
+    ],
+    "description": "Hương vị cốt dừa béo ngậy, lá chanh thơm ngát và ớt hiểm cay xé"
+  },
+  {
+    "id": "d035",
+    "restaurant_id": "r010",
+    "name": "Pad Thai tôm tươi sợi truyền thống",
+    "price": 75000,
+    "spicy": true,
+    "cuisine": "Thai",
+    "category": "Main",
+    "ingredients": [
+      "shrimp",
+      "rice noodles",
+      "peanut",
+      "egg",
+      "sprouts",
+      "chili"
+    ],
+    "description": "Hủ tiếu xào tôm kiểu Thái sốt me chua cay bùi béo"
+  },
+  {
+    "id": "d036",
+    "restaurant_id": "r010",
+    "name": "Cơm chiên trái thơm tôm gà",
+    "price": 79000,
+    "spicy": false,
+    "cuisine": "Thai",
+    "category": "Main",
+    "ingredients": [
+      "pineapple",
+      "shrimp",
+      "chicken",
+      "rice",
+      "cashew"
+    ],
+    "description": "Cơm chiên hạt vàng ươm vị chua ngọt thơm lừng"
+  },
+  {
+    "id": "d037",
+    "restaurant_id": "r010",
+    "name": "Gỏi đu đủ tôm khô Som Tum cay",
+    "price": 49000,
+    "spicy": true,
+    "cuisine": "Thai",
+    "category": "Side",
+    "ingredients": [
+      "papaya",
+      "dried shrimp",
+      "chili",
+      "peanut",
+      "lime"
+    ],
+    "description": "Gỏi đu đủ giòn sần sật chua ngọt cay nồng"
+  },
+  {
+    "id": "d038",
+    "restaurant_id": "r011",
+    "name": "Mì Mama hải sản thố Tom Yum cay cấp 3",
+    "price": 79000,
+    "spicy": true,
+    "cuisine": "Thai",
+    "category": "Main",
+    "ingredients": [
+      "noodles",
+      "shrimp",
+      "squid",
+      "pork",
+      "egg",
+      "chili"
+    ],
+    "description": "Mì thố khổng lồ chuẩn vị đường phố Bangkok cay bỏng lưỡi"
+  },
+  {
+    "id": "d039",
+    "restaurant_id": "r011",
+    "name": "Cơm thịt heo băm xào lá hương nhu cay (Pad Krapow)",
+    "price": 68000,
+    "spicy": true,
+    "cuisine": "Thai",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "basil",
+      "chili",
+      "garlic",
+      "rice",
+      "egg"
+    ],
+    "description": "Thịt heo xào lá quế cay nồng ăn kèm trứng ốp la lòng đào"
+  },
+  {
+    "id": "d040",
+    "restaurant_id": "r011",
+    "name": "Trà sữa Thái đỏ chân trâu",
+    "price": 32000,
+    "spicy": false,
+    "cuisine": "Thai",
+    "category": "Drink",
+    "ingredients": [
+      "tea",
+      "milk",
+      "boba"
+    ],
+    "description": "Trà Thái đậm đà ngọt béo giúp hạ nhiệt món cay"
+  },
+  {
+    "id": "d041",
+    "restaurant_id": "r012",
+    "name": "Cơm tấm sườn chay nướng ngũ vị",
+    "price": 45000,
+    "spicy": false,
+    "cuisine": "Vegetarian",
+    "category": "Main",
+    "ingredients": [
+      "soy protein",
+      "rice",
+      "cucumber",
+      "tomato"
+    ],
+    "description": "Sườn chay từ đạm đậu nành ướp ngũ vị nướng thơm lừng"
+  },
+  {
+    "id": "d042",
+    "restaurant_id": "r012",
+    "name": "Hủ tiếu mì chay chua cay nấm đông cô",
+    "price": 48000,
+    "spicy": true,
+    "cuisine": "Vegetarian",
+    "category": "Main",
+    "ingredients": [
+      "noodles",
+      "mushroom",
+      "tofu",
+      "chili",
+      "herbs"
+    ],
+    "description": "Nước dùng củ quả hầm thanh ngọt, sa tế nấm cay nhẹ"
+  },
+  {
+    "id": "d043",
+    "restaurant_id": "r012",
+    "name": "Bún riêu chay đậu hũ nấm rơm",
+    "price": 42000,
+    "spicy": false,
+    "cuisine": "Vegetarian",
+    "category": "Main",
+    "ingredients": [
+      "noodles",
+      "tofu",
+      "mushroom",
+      "tomato"
+    ],
+    "description": "Nước dùng cà chua thanh mát rượi, đậu hũ chiên vàng"
+  },
+  {
+    "id": "d044",
+    "restaurant_id": "r012",
+    "name": "Nem rán chay Hà Nội (3 cuốn)",
+    "price": 28000,
+    "spicy": false,
+    "cuisine": "Vegetarian",
+    "category": "Side",
+    "ingredients": [
+      "mushroom",
+      "carrot",
+      "glass noodle"
+    ],
+    "description": "Nem chay giòn tan thơm bùi"
+  },
+  {
+    "id": "d045",
+    "restaurant_id": "r013",
+    "name": "Cơm sốt cà ri nấm chay cay Thái",
+    "price": 55000,
+    "spicy": true,
+    "cuisine": "Vegetarian",
+    "category": "Main",
+    "ingredients": [
+      "mushroom",
+      "curry",
+      "coconut milk",
+      "rice",
+      "chili"
+    ],
+    "description": "Cà ri cốt dừa nấm đùi gà thơm béo cay dịu"
+  },
+  {
+    "id": "d046",
+    "restaurant_id": "r013",
+    "name": "Phở cuốn nấm xào chay thanh đạm",
+    "price": 50000,
+    "spicy": false,
+    "cuisine": "Vegetarian",
+    "category": "Main",
+    "ingredients": [
+      "rice paper",
+      "mushroom",
+      "tofu",
+      "herbs"
+    ],
+    "description": "Bánh phở mềm cuộn nấm đùi gà thơm ngọt chấm tương chay"
+  },
+  {
+    "id": "d047",
+    "restaurant_id": "r013",
+    "name": "Salad bơ rong biển hạt điều",
+    "price": 52000,
+    "spicy": false,
+    "cuisine": "Vegetarian",
+    "category": "Side",
+    "ingredients": [
+      "avocado",
+      "seaweed",
+      "cashew",
+      "lettuce"
+    ],
+    "description": "Salad thanh mát tốt cho sức khỏe"
+  },
+  {
+    "id": "d048",
+    "restaurant_id": "r014",
+    "name": "Combo 2 miếng gà rán giòn cay + khoai tây",
+    "price": 79000,
+    "spicy": true,
+    "cuisine": "Western",
+    "category": "Main",
+    "ingredients": [
+      "chicken",
+      "chili",
+      "potato",
+      "flour"
+    ],
+    "description": "Gà rán vỏ giòn rụm, thịt cay đậm đà chuẩn phong cách Louisiana"
+  },
+  {
+    "id": "d049",
+    "restaurant_id": "r014",
+    "name": "Burger gà cay sốt Mayo tỏi",
+    "price": 62000,
+    "spicy": true,
+    "cuisine": "Western",
+    "category": "Main",
+    "ingredients": [
+      "chicken",
+      "bread",
+      "mayo",
+      "onion",
+      "lettuce",
+      "chili"
+    ],
+    "description": "Burger kẹp phi lê gà giòn cay, xà lách tươi và sốt thơm"
+  },
+  {
+    "id": "d050",
+    "restaurant_id": "r014",
+    "name": "Burger bò phô mai không cay (không hành)",
+    "price": 65000,
+    "spicy": false,
+    "cuisine": "Western",
+    "category": "Main",
+    "ingredients": [
+      "beef",
+      "bread",
+      "cheese",
+      "lettuce"
+    ],
+    "description": "Thịt bò nướng phô mai béo ngậy không bỏ hành tây"
+  },
+  {
+    "id": "d051",
+    "restaurant_id": "r014",
+    "name": "Khoai tây chiên lắc phô mai",
+    "price": 32000,
+    "spicy": false,
+    "cuisine": "Western",
+    "category": "Side",
+    "ingredients": [
+      "potato",
+      "cheese"
+    ],
+    "description": "Khoai tây giòn thơm bột phô mai mặn ngọt"
+  },
+  {
+    "id": "d052",
+    "restaurant_id": "r015",
+    "name": "Pizza 4 loại phô mai mật ong (4 Cheese)",
+    "price": 178000,
+    "spicy": false,
+    "cuisine": "Western",
+    "category": "Main",
+    "ingredients": [
+      "flour",
+      "mozzarella",
+      "camembert",
+      "blue cheese",
+      "honey"
+    ],
+    "description": "Pizza thủ công phô mai tươi trứ danh ăn kèm mật ong ngọt lịm"
+  },
+  {
+    "id": "d053",
+    "restaurant_id": "r015",
+    "name": "Mì Ý sốt kem cua cay nhẹ",
+    "price": 165000,
+    "spicy": true,
+    "cuisine": "Western",
+    "category": "Main",
+    "ingredients": [
+      "pasta",
+      "crab",
+      "cream",
+      "tomato",
+      "chili"
+    ],
+    "description": "Thịt cua tươi nấu sốt kem cà chua thơm béo chút cay nồng"
+  },
+  {
+    "id": "d054",
+    "restaurant_id": "r015",
+    "name": "Salad phô mai Burrata trái cây",
+    "price": 135000,
+    "spicy": false,
+    "cuisine": "Western",
+    "category": "Side",
+    "ingredients": [
+      "burrata cheese",
+      "tomato",
+      "basil"
+    ],
+    "description": "Phô mai tươi mịn màng tan chảy trong miệng"
+  },
+  {
+    "id": "d055",
+    "restaurant_id": "r016",
+    "name": "Mẹt bún đậu mắm tôm thập cẩm",
+    "price": 65000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "tofu",
+      "pork",
+      "rice noodles",
+      "shrimp paste",
+      "herbs"
+    ],
+    "description": "Đậu hũ mơ chiên giòn, thịt bắp luộc, chả cốm, nem chua rán và mắm tôm đánh bọt"
+  },
+  {
+    "id": "d056",
+    "restaurant_id": "r016",
+    "name": "Mẹt bún đậu dồi sụn nướng cay",
+    "price": 72000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "tofu",
+      "pork sausage",
+      "rice noodles",
+      "shrimp paste",
+      "chili"
+    ],
+    "description": "Dồi sụn nướng than thơm lừng, chấm ớt mắm tôm cay cay"
+  },
+  {
+    "id": "d057",
+    "restaurant_id": "r016",
+    "name": "Nem chua rán giòn Phố Cổ (5 chiếc)",
+    "price": 40000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Side",
+    "ingredients": [
+      "pork",
+      "flour"
+    ],
+    "description": "Nem chua bùi ngậy chấm tương ớt"
+  },
+  {
+    "id": "d058",
+    "restaurant_id": "r017",
+    "name": "Hủ tiếu Nam Vang khô đặc biệt",
+    "price": 70000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "shrimp",
+      "quail egg",
+      "noodles",
+      "onion",
+      "celery"
+    ],
+    "description": "Sợi hủ tiếu dai trộn nước sốt độc quyền, tôm tươi thịt bằm trứng cút"
+  },
+  {
+    "id": "d059",
+    "restaurant_id": "r017",
+    "name": "Hủ tiếu Nam Vang nước (không hành tỏi)",
+    "price": 65000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "shrimp",
+      "quail egg",
+      "noodles"
+    ],
+    "description": "Nước súp xương ống thanh tao, không bỏ hành hẹ cần tây"
+  },
+  {
+    "id": "d060",
+    "restaurant_id": "r017",
+    "name": "Hủ tiếu sườn non sốt sa tế cay",
+    "price": 75000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork ribs",
+      "noodles",
+      "chili",
+      "onion"
+    ],
+    "description": "Sườn non hầm mềm róc xương cùng sốt sa tế cay đậm đà"
+  },
+  {
+    "id": "d061",
+    "restaurant_id": "r018",
+    "name": "Mì cay hải sản Kim Chi (Cấp 2)",
+    "price": 69000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "noodles",
+      "shrimp",
+      "squid",
+      "kimchi",
+      "mushroom",
+      "chili"
+    ],
+    "description": "Mì cay chuẩn vị Hàn thố đá sôi sùng sục tôm mực tươi rói (không hành tây)"
+  },
+  {
+    "id": "d062",
+    "restaurant_id": "r018",
+    "name": "Mì cay bò Mỹ nấm kim châm (Cấp 3)",
+    "price": 65000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "noodles",
+      "beef",
+      "kimchi",
+      "mushroom",
+      "chili"
+    ],
+    "description": "Thịt bò Mỹ cuộn nấm kim châm ngọt thơm hòa cùng vị cay nồng xé lưỡi"
+  },
+  {
+    "id": "d063",
+    "restaurant_id": "r018",
+    "name": "Takoyaki bánh bạch tuộc nướng (4 viên)",
+    "price": 35000,
+    "spicy": false,
+    "cuisine": "Korean",
+    "category": "Side",
+    "ingredients": [
+      "octopus",
+      "flour",
+      "mayo"
+    ],
+    "description": "Bánh bạch tuộc sốt ngọt cá ngừ bào nhảy múa"
+  },
+  {
+    "id": "d064",
+    "restaurant_id": "r019",
+    "name": "Phần Nem nướng Nha Trang đầy đủ",
+    "price": 58000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "rice paper",
+      "cucumber",
+      "mango",
+      "herbs"
+    ],
+    "description": "Nem nướng thịt xiên thơm, ram chiên giòn rụm cuốn bánh tráng chấm tương đậu phộng"
+  },
+  {
+    "id": "d065",
+    "restaurant_id": "r019",
+    "name": "Nem lụi nướng sa tế cay",
+    "price": 62000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "chili",
+      "rice paper",
+      "herbs"
+    ],
+    "description": "Nem lụi ướp sa tế cay cay cuốn rau sống thanh mát"
+  },
+  {
+    "id": "d066",
+    "restaurant_id": "r019",
+    "name": "Bánh xèo miền Trung giòn rụm",
+    "price": 45000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "shrimp",
+      "sprouts",
+      "flour",
+      "onion"
+    ],
+    "description": "Vỏ bánh xèo giòn tan nhân tôm thịt"
+  },
+  {
+    "id": "d067",
+    "restaurant_id": "r020",
+    "name": "Bánh canh ghẹ nguyên con đặc biệt",
+    "price": 95000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "crab",
+      "noodles",
+      "quail egg",
+      "onion",
+      "chili"
+    ],
+    "description": "Ghẹ tươi sống chắc thịt, nước súp bánh canh sánh đỏ ngọt tự nhiên"
+  },
+  {
+    "id": "d068",
+    "restaurant_id": "r020",
+    "name": "Bánh canh ghẹ thịt xé (không hành)",
+    "price": 75000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "crab",
+      "noodles",
+      "quail egg"
+    ],
+    "description": "Thịt ghẹ xé sẵn thơm ngon không hành ngò"
+  },
+  {
+    "id": "d069",
+    "restaurant_id": "r020",
+    "name": "Bánh canh tôm thịt chả cá",
+    "price": 60000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "shrimp",
+      "fish cake",
+      "noodles"
+    ],
+    "description": "Tô bánh canh đầy ắp chả cá hấp dai ngon"
+  },
+  {
+    "id": "d070",
+    "restaurant_id": "r021",
+    "name": "Bento Tokbokki phô mai sốt cay cay",
+    "price": 68000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "rice cake",
+      "cheese",
+      "chili",
+      "fish cake",
+      "cabbage"
+    ],
+    "description": "Suất cơm bento tokbokki phô mai kèm chả cá xiên và kim chi"
+  },
+  {
+    "id": "d071",
+    "restaurant_id": "r021",
+    "name": "Miến trộn Hàn Quốc Japchae thịt bò",
+    "price": 62000,
+    "spicy": false,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "glass noodle",
+      "beef",
+      "carrot",
+      "spinach",
+      "onion",
+      "sesame"
+    ],
+    "description": "Miến dai thơm nức dầu mè, thịt bò mềm và rau củ tươi xào"
+  },
+  {
+    "id": "d072",
+    "restaurant_id": "r021",
+    "name": "Bánh mandu chiên giòn nhân kim chi cay (4 cái)",
+    "price": 38000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Side",
+    "ingredients": [
+      "pork",
+      "kimchi",
+      "flour",
+      "chili"
+    ],
+    "description": "Sủi cảo kiểu Hàn nhân kim chi chua cay giòn rụm"
+  },
+  {
+    "id": "d073",
+    "restaurant_id": "r022",
+    "name": "Cơm gà xối mỡ đùi góc tư giòn rụm",
+    "price": 55000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "chicken",
+      "rice",
+      "cucumber",
+      "tomato"
+    ],
+    "description": "Đùi gà da giòn rụm, thịt bên trong mọng nước ăn cùng cơm hồng ngọc"
+  },
+  {
+    "id": "d074",
+    "restaurant_id": "r022",
+    "name": "Cơm gà xé sốt mắm tỏi ớt cay",
+    "price": 50000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "chicken",
+      "rice",
+      "chili",
+      "garlic",
+      "cucumber"
+    ],
+    "description": "Thịt gà xé sốt nước mắm chua cay mặn ngọt đậm đà (không hành tây)"
+  },
+  {
+    "id": "d075",
+    "restaurant_id": "r022",
+    "name": "Canh rong biển thịt bằm",
+    "price": 18000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Side",
+    "ingredients": [
+      "seaweed",
+      "pork"
+    ],
+    "description": "Canh thanh mát giải nhiệt cho món cơm chiên"
+  },
+  {
+    "id": "d076",
+    "restaurant_id": "r023",
+    "name": "Há cảo tôm tươi thủy tinh (4 viên)",
+    "price": 68000,
+    "spicy": false,
+    "cuisine": "Chinese",
+    "category": "Main",
+    "ingredients": [
+      "shrimp",
+      "flour",
+      "bamboo shoots"
+    ],
+    "description": "Vỏ bánh trong suốt thấy rõ tôm tươi ngọt chắc bên trong"
+  },
+  {
+    "id": "d077",
+    "restaurant_id": "r023",
+    "name": "Xíu mại gạch cua hấp sốt cay",
+    "price": 65000,
+    "spicy": true,
+    "cuisine": "Chinese",
+    "category": "Main",
+    "ingredients": [
+      "pork",
+      "crab",
+      "chili",
+      "mushroom"
+    ],
+    "description": "Thịt heo xay tươi kèm gạch cua béo ngậy sốt tương ớt Quảng Đông"
+  },
+  {
+    "id": "d078",
+    "restaurant_id": "r023",
+    "name": "Bánh bao kim sa trứng muối tan chảy (3 cái)",
+    "price": 58000,
+    "spicy": false,
+    "cuisine": "Chinese",
+    "category": "Side",
+    "ingredients": [
+      "flour",
+      "egg yolk",
+      "butter",
+      "milk"
+    ],
+    "description": "Nhân trứng muối kim sa vàng óng béo ngậy chảy tràn"
+  },
+  {
+    "id": "d079",
+    "restaurant_id": "r024",
+    "name": "Cơm niêu cá kho tộ ba chỉ",
+    "price": 85000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "fish",
+      "pork",
+      "rice",
+      "pepper",
+      "chili",
+      "onion"
+    ],
+    "description": "Cá lóc kho tộ nước màu dừa kẹo quánh tiêu ớt cay xè đưa cơm"
+  },
+  {
+    "id": "d080",
+    "restaurant_id": "r024",
+    "name": "Cơm niêu sườn non rim mặn ngọt (không hành)",
+    "price": 79000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pork ribs",
+      "rice"
+    ],
+    "description": "Sườn rim đậm đà ăn kèm lớp cơm cháy giòn rụm đáy niêu"
+  },
+  {
+    "id": "d081",
+    "restaurant_id": "r024",
+    "name": "Canh cua rau đay mướp mồng tơi",
+    "price": 45000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Side",
+    "ingredients": [
+      "crab",
+      "vegetables"
+    ],
+    "description": "Món canh quê dân dã mát ruột ngày hè"
+  },
+  {
+    "id": "d082",
+    "restaurant_id": "r025",
+    "name": "Bún riêu cua ốc bò giò đặc biệt",
+    "price": 65000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "crab",
+      "beef",
+      "snail",
+      "pork",
+      "noodles",
+      "tomato",
+      "onion",
+      "herbs"
+    ],
+    "description": "Tô bún riêu đầy ắp riêu cua đồng xịn, ốc nhồi giòn sần sật và thịt bò mềm"
+  },
+  {
+    "id": "d083",
+    "restaurant_id": "r025",
+    "name": "Bún riêu cua sa tế cay (không hành)",
+    "price": 55000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "crab",
+      "tofu",
+      "noodles",
+      "tomato",
+      "chili"
+    ],
+    "description": "Riêu cua đồng thơm ngọt kết hợp ớt chưng sa tế cay nồng bỏng miệng"
+  },
+  {
+    "id": "d084",
+    "restaurant_id": "r025",
+    "name": "Đậu mơ chiên lướt ván giòn chấm mắm tôm",
+    "price": 25000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Side",
+    "ingredients": [
+      "tofu"
+    ],
+    "description": "Đậu phụ rán ngoài giòn trong mềm mịn béo ngậy"
+  },
+  {
+    "id": "d085",
+    "restaurant_id": "r026",
+    "name": "Mì tôm chanh bò cay xé lưỡi ăn vặt",
+    "price": 40000,
+    "spicy": true,
+    "cuisine": "Snack",
+    "category": "Main",
+    "ingredients": [
+      "instant noodles",
+      "beef",
+      "chili",
+      "lime",
+      "egg"
+    ],
+    "description": "Tô mì tôm tuổi thơ nấu chua cay đậm đà thêm thịt bò và trứng chần"
+  },
+  {
+    "id": "d086",
+    "restaurant_id": "r026",
+    "name": "Bánh tráng trộn bò khô sốt me cay",
+    "price": 30000,
+    "spicy": true,
+    "cuisine": "Snack",
+    "category": "Main",
+    "ingredients": [
+      "rice paper",
+      "beef jerky",
+      "quail egg",
+      "mango",
+      "chili",
+      "peanut"
+    ],
+    "description": "Bánh tráng trộn ngập topping xoài chua tép khô bò sợi cay nồng"
+  },
+  {
+    "id": "d087",
+    "restaurant_id": "r026",
+    "name": "Trà sữa nướng trân châu đường đen",
+    "price": 38000,
+    "spicy": false,
+    "cuisine": "Snack",
+    "category": "Drink",
+    "ingredients": [
+      "tea",
+      "milk",
+      "boba",
+      "caramel"
+    ],
+    "description": "Vị trà thơm nướng caramen đậm vị sữa béo"
+  },
+  {
+    "id": "d088",
+    "restaurant_id": "r027",
+    "name": "Bánh cuốn nóng nhân thịt mộc nhĩ chả quế",
+    "price": 45000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "rice flour",
+      "pork",
+      "mushroom",
+      "fried onion",
+      "herbs"
+    ],
+    "description": "Bánh tráng tay mỏng mướt rắc hành phi thơm nức kèm chả quế giòn"
+  },
+  {
+    "id": "d089",
+    "restaurant_id": "r027",
+    "name": "Bánh cuốn nóng thịt bằm (không hành phi)",
+    "price": 45000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "rice flour",
+      "pork",
+      "mushroom"
+    ],
+    "description": "Bánh tráng mỏng mềm mướt tuyệt đối không bỏ hành phi hay hành tây"
+  },
+  {
+    "id": "d090",
+    "restaurant_id": "r027",
+    "name": "Bánh cuốn trứng lòng đào mềm ngậy",
+    "price": 40000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "rice flour",
+      "egg",
+      "pork"
+    ],
+    "description": "Trứng gà ta hấp lòng đào tan chảy béo bùi"
+  },
+  {
+    "id": "d091",
+    "restaurant_id": "r028",
+    "name": "Mì trộn Indomie cay xúc xích trứng lòng đào",
+    "price": 45000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "noodles",
+      "sausage",
+      "egg",
+      "chili",
+      "cucumber"
+    ],
+    "description": "Sợi mì trộn cay the sốt tương cay kèm xúc xích phô mai"
+  },
+  {
+    "id": "d092",
+    "restaurant_id": "r028",
+    "name": "Tokbokki cay ngọt ly lắc chả cá",
+    "price": 42000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "rice cake",
+      "fish cake",
+      "chili"
+    ],
+    "description": "Tokbokki ly ăn liền tiện lợi sốt gochujang cay ngọt vừa miệng"
+  },
+  {
+    "id": "d093",
+    "restaurant_id": "r028",
+    "name": "Gà viên lắc phô mai cay giòn",
+    "price": 38000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Side",
+    "ingredients": [
+      "chicken",
+      "cheese",
+      "chili"
+    ],
+    "description": "Gà viên popcorn lắc phô mai cay thơm giòn rụm"
+  },
+  {
+    "id": "d094",
+    "restaurant_id": "r029",
+    "name": "Combo 1 miếng gà giòn cay + mì Ý sốt bò bằm",
+    "price": 72000,
+    "spicy": true,
+    "cuisine": "Western",
+    "category": "Main",
+    "ingredients": [
+      "chicken",
+      "pasta",
+      "beef",
+      "tomato",
+      "chili"
+    ],
+    "description": "Combo chuẩn no nê với gà chiên giòn cay và đĩa mì Ý sốt bò thơm lừng"
+  },
+  {
+    "id": "d095",
+    "restaurant_id": "r029",
+    "name": "Burger tôm giòn sốt tartar không cay",
+    "price": 52000,
+    "spicy": false,
+    "cuisine": "Western",
+    "category": "Main",
+    "ingredients": [
+      "shrimp",
+      "bread",
+      "mayo",
+      "lettuce"
+    ],
+    "description": "Thịt tôm giòn bùi kèm sốt tartar thơm béo dịu dàng"
+  },
+  {
+    "id": "d096",
+    "restaurant_id": "r029",
+    "name": "Khoai tây chiên cỡ lớn",
+    "price": 28000,
+    "spicy": false,
+    "cuisine": "Western",
+    "category": "Side",
+    "ingredients": [
+      "potato"
+    ],
+    "description": "Khoai tây chiên vàng giòn chấm tương cà"
+  },
+  {
+    "id": "d097",
+    "restaurant_id": "r030",
+    "name": "Cháo ếch Singapore 2 ếch kho sa tế cay xé",
+    "price": 85000,
+    "spicy": true,
+    "cuisine": "Singaporean",
+    "category": "Main",
+    "ingredients": [
+      "frog",
+      "rice",
+      "chili",
+      "soy sauce",
+      "onion"
+    ],
+    "description": "Thịt ếch đồng săn chắc kho kẹo cay nồng ăn cùng cháo trắng lá dứa"
+  },
+  {
+    "id": "d098",
+    "restaurant_id": "r030",
+    "name": "Cháo ếch kho sả ớt cay (không hành tây)",
+    "price": 80000,
+    "spicy": true,
+    "cuisine": "Singaporean",
+    "category": "Main",
+    "ingredients": [
+      "frog",
+      "rice",
+      "chili",
+      "lemongrass"
+    ],
+    "description": "Ếch tươi kho sả ớt cay thơm nức mũi không hành tây"
+  },
+  {
+    "id": "d099",
+    "restaurant_id": "r030",
+    "name": "Cháo ếch Singapore kho hành gừng không cay",
+    "price": 80000,
+    "spicy": false,
+    "cuisine": "Singaporean",
+    "category": "Main",
+    "ingredients": [
+      "frog",
+      "rice",
+      "ginger",
+      "onion",
+      "soy sauce"
+    ],
+    "description": "Ếch kho vị dịu ấm bụng thơm nức mùi gừng"
+  },
+  {
+    "id": "d100",
+    "restaurant_id": "r030",
+    "name": "Trứng bắc thảo ăn kèm cháo",
+    "price": 15000,
+    "spicy": false,
+    "cuisine": "Singaporean",
+    "category": "Side",
+    "ingredients": [
+      "egg"
+    ],
+    "description": "Trứng bắc thảo bùi béo dẻo ngậy"
+  },
+  {
+    "id": "d101",
+    "restaurant_id": "r001",
+    "name": "Bún bắp bò gân sa tế chua cay",
+    "price": 62000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "beef",
+      "noodles",
+      "chili",
+      "herbs"
+    ],
+    "description": "Bún bắp bò hoa gân giòn, nước dùng cay nồng chua ngọt tuyệt hảo (không hành)"
+  },
+  {
+    "id": "d102",
+    "restaurant_id": "r006",
+    "name": "Cơm chiên kim chi phô mai trứng ốp la",
+    "price": 65000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "kimchi",
+      "rice",
+      "cheese",
+      "egg",
+      "chili"
+    ],
+    "description": "Cơm chiên kim chi chua cay phủ ngập phô mai mozzarella kéo sợi (không hành)"
+  },
+  {
+    "id": "d103",
+    "restaurant_id": "r018",
+    "name": "Mì cay thập cẩm bò hải sản (Cấp 1)",
+    "price": 75000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "noodles",
+      "beef",
+      "shrimp",
+      "squid",
+      "chili",
+      "mushroom"
+    ],
+    "description": "Tô mì cay thố đất ngập tràn bò Mỹ và tôm mực tươi ngon"
+  },
+  {
+    "id": "d104",
+    "restaurant_id": "r002",
+    "name": "Phở sốt vang bò gân giòn",
+    "price": 78000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "beef",
+      "rice noodles",
+      "wine sauce",
+      "chili",
+      "herbs",
+      "onion"
+    ],
+    "description": "Phở sốt vang nấu thảo mộc hồi quế thơm ngậy phảng phất vị cay"
+  },
+  {
+    "id": "d105",
+    "restaurant_id": "r007",
+    "name": "Mì cay Shin Ramyun xúc xích phô mai",
+    "price": 55000,
+    "spicy": true,
+    "cuisine": "Korean",
+    "category": "Main",
+    "ingredients": [
+      "instant noodles",
+      "sausage",
+      "cheese",
+      "chili",
+      "egg"
+    ],
+    "description": "Mì gói cay Hàn Quốc nấu cùng phô mai béo ngậy và xúc xích"
+  },
+  {
+    "id": "tx_d01",
+    "restaurant_id": "tx_r01",
+    "name": "Xôi chim bồ câu nướng thơm lừng",
+    "price": 65000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "thịt chim bồ câu",
+      "gạo nếp cái hoa vàng",
+      "hành phi giòn",
+      "hạt sen"
+    ],
+    "description": "Thịt chim bồ câu băm nhỏ xào mộc nhĩ nấm hương đậm đà, quyện với xôi nếp dẻo thơm nức mũi."
+  },
+  {
+    "id": "tx_d02",
+    "restaurant_id": "tx_r01",
+    "name": "Xôi sườn cay sốt mật ong đậm vị",
+    "price": 55000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "sườn sụn non",
+      "sốt cay mật ong",
+      "ớt sa tế",
+      "gạo nếp",
+      "hành phi"
+    ],
+    "description": "Sườn non rim sốt ớt cay ngọt đẫm vị, xôi hạt căng bóng dẻo quánh, ăn cay tê đầu lưỡi cực đã."
+  },
+  {
+    "id": "tx_d03",
+    "restaurant_id": "tx_r01",
+    "name": "Xôi thập cẩm đặc biệt Bà Thu (sườn, chim, trứng ốp)",
+    "price": 60000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "sườn cay",
+      "thịt chim",
+      "trứng ốp la",
+      "chả quế",
+      "pate gan",
+      "dưa góp"
+    ],
+    "description": "Hộp xôi đầy ú ụ với sườn cay đậm vị, thịt chim xào thơm, trứng lòng đào béo ngậy và dưa chua giòn."
+  },
+  {
+    "id": "tx_d04",
+    "restaurant_id": "tx_r01",
+    "name": "Xôi gà xé nấm hương tiêu cay",
+    "price": 48000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "thịt gà ta xé",
+      "nấm hương",
+      "tiêu cay",
+      "nước sốt gà",
+      "hành phi"
+    ],
+    "description": "Gà ta thả vườn dai ngọt xé sợi xào nấm hương đẫm sốt tiêu cay, rưới mỡ gà béo ngậy."
+  },
+  {
+    "id": "tx_d05",
+    "restaurant_id": "tx_r01",
+    "name": "Xôi xéo ruốc hành phi truyền thống",
+    "price": 25000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "đậu xanh tán mịn",
+      "ruốc thịt heo",
+      "hành phi ta",
+      "mỡ nước"
+    ],
+    "description": "Xôi xéo vàng óng ả chuẩn vị Hà Nội, đậu xanh bùi béo cắt lát mỏng tang rưới mỡ nước thơm nức."
+  },
+  {
+    "id": "tx_d06",
+    "restaurant_id": "tx_r02",
+    "name": "Xôi xéo thịt kho trứng lòng đào",
+    "price": 45000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "thịt ba chỉ kho tàu",
+      "trứng lòng đào",
+      "đậu xanh",
+      "gạo nếp",
+      "hành phi"
+    ],
+    "description": "Thịt ba chỉ kho nhừ mềm tan trong miệng, trứng lòng đào dẻo quánh rưới đẫm nước sốt thịt kho lên xôi xéo."
+  },
+  {
+    "id": "tx_d07",
+    "restaurant_id": "tx_r02",
+    "name": "Xôi xéo chả mỡ lạp xưởng nóng hổi",
+    "price": 38000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "chả mỡ nướng",
+      "lạp xưởng tươi",
+      "đậu xanh",
+      "mỡ gà",
+      "hành phi"
+    ],
+    "description": "Chả mỡ nướng thơm ngậy kết hợp lạp xưởng đậm đà rưới nước mỡ hành phi giòn tan."
+  },
+  {
+    "id": "tx_d08",
+    "restaurant_id": "tx_r02",
+    "name": "Xôi gà quay ngũ vị da giòn",
+    "price": 50000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "đùi gà quay",
+      "ngũ vị hương",
+      "mật ong",
+      "gạo nếp",
+      "dưa chuột"
+    ],
+    "description": "Miếng đùi gà quay ngũ vị da nâu óng ả giòn rụm, thịt bên trong mềm mọng ngọt nước ăn cùng xôi trắng dẻo thơm."
+  },
+  {
+    "id": "tx_d09",
+    "restaurant_id": "tx_r02",
+    "name": "Xôi pate trứng ốp giò lụa Cô Lan",
+    "price": 35000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pate gan Hải Phòng",
+      "trứng ốp la",
+      "giò lụa",
+      "hành phi",
+      "tương ớt"
+    ],
+    "description": "Pate gan thơm bùi tan chảy quết đều lên xôi nóng, thêm trứng ốp la lòng đào béo ngậy."
+  },
+  {
+    "id": "tx_d10",
+    "restaurant_id": "tx_r03",
+    "name": "Xôi ngô đậu xanh hành phi thơm béo",
+    "price": 20000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "ngô nếp bung",
+      "đậu xanh tán",
+      "mỡ hành phi",
+      "chút đường vừng"
+    ],
+    "description": "Ngô nếp bung nở mềm dẻo ngọt tự nhiên, trộn đều cùng đỗ xanh bùi và mỡ hành phi thơm nức."
+  },
+  {
+    "id": "tx_d11",
+    "restaurant_id": "tx_r03",
+    "name": "Xôi xéo chả quế pate Cột Đèn",
+    "price": 35000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "chả quế thơm nồng",
+      "pate Cột Đèn",
+      "đậu xanh",
+      "gạo nếp",
+      "hành phi"
+    ],
+    "description": "Chả quế giòn sần sật kẹp pate Cột Đèn béo thơm trứ danh rưới trên đĩa xôi xéo vàng ươm."
+  },
+  {
+    "id": "tx_d12",
+    "restaurant_id": "tx_r03",
+    "name": "Xôi thịt kho tàu dưa góp đậm đà",
+    "price": 42000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "thịt kho tàu",
+      "nước thịt kho",
+      "dưa chuột góp",
+      "gạo nếp",
+      "hành phi"
+    ],
+    "description": "Nước thịt kho keo màu cánh gián đậm đà chan đẫm từng hạt xôi nếp dẻo thơm, ăn kèm dưa góp chua ngọt đỡ ngấy."
+  },
+  {
+    "id": "tx_d13",
+    "restaurant_id": "tx_r04",
+    "name": "Xôi gà nấm xào hành hoa Bác Ngọ",
+    "price": 42000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "thịt gà xé",
+      "nấm hương rừng",
+      "hành hoa",
+      "gạo nếp cái",
+      "hành phi"
+    ],
+    "description": "Thịt gà xào nấm hương thơm lừng vị ngọt tự nhiên, xôi dẻo bùi hạt không bị nhão."
+  },
+  {
+    "id": "tx_d14",
+    "restaurant_id": "tx_r04",
+    "name": "Xôi sườn rim tiêu cay ngọt",
+    "price": 48000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "sườn rim tiêu",
+      "tiêu đen",
+      "ớt cay",
+      "gạo nếp",
+      "hành phi"
+    ],
+    "description": "Sườn non được chặt miếng nhỏ rim kỹ sốt tiêu đen cay nồng, vị ngọt mặn hài hòa đưa miệng."
+  },
+  {
+    "id": "tx_d15",
+    "restaurant_id": "tx_r04",
+    "name": "Xôi thập cẩm Triều Khúc đầy đặn",
+    "price": 45000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "thịt kho",
+      "chả mỡ",
+      "lạp xưởng",
+      "trứng kho",
+      "ruốc thịt"
+    ],
+    "description": "Phần xôi phong phú với đủ loại topping thịt kho, chả mỡ, lạp xưởng và trứng bùi béo."
+  },
+  {
+    "id": "tx_d16",
+    "restaurant_id": "tx_r05",
+    "name": "Xôi sườn nướng mật ong sốt cay Chị Em",
+    "price": 50000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "sườn nướng than",
+      "sốt cay mật ong",
+      "gạo nếp",
+      "hành phi",
+      "đồ chua"
+    ],
+    "description": "Dải sườn nướng than hoa thơm nức mũi quét sốt mật ong cay cay, ăn kèm xôi dẻo hạt."
+  },
+  {
+    "id": "tx_d17",
+    "restaurant_id": "tx_r05",
+    "name": "Xôi xá xíu trứng ốp la sốt dầu hào",
+    "price": 40000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "thịt xá xíu đỏ",
+      "trứng ốp la",
+      "sốt dầu hào",
+      "gạo nếp"
+    ],
+    "description": "Thịt xá xíu mềm thơm đẫm sốt dầu hào thơm phức, trứng ốp la béo ngậy hoà quyện."
+  },
+  {
+    "id": "tx_d18",
+    "restaurant_id": "tx_r06",
+    "name": "Xôi bắp nếp mỡ hành đường vừng",
+    "price": 20000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "bắp nếp bung",
+      "mỡ hành phi",
+      "muối vừng lạc",
+      "dừa nạo"
+    ],
+    "description": "Món ăn sáng tuổi thơ dân dã với bắp nếp bung dẻo thơm, thêm chút muối vừng bùi bùi dừa tươi."
+  },
+  {
+    "id": "tx_d19",
+    "restaurant_id": "tx_r06",
+    "name": "Xôi vò hạt sen thơm bùi",
+    "price": 28000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "gạo nếp",
+      "hạt sen tươi",
+      "đậu xanh",
+      "chút mỡ gà"
+    ],
+    "description": "Hạt xôi tơi đều bọc một lớp đậu xanh vàng mịn, hạt sen chín bở ngọt bùi thanh tao."
+  },
+  {
+    "id": "tx_d20",
+    "restaurant_id": "tx_r07",
+    "name": "Xôi mặn thập cẩm tôm khô lạp xưởng",
+    "price": 35000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "tôm khô xào",
+      "lạp xưởng chiên",
+      "thịt xé",
+      "hành phi",
+      "mỡ hành"
+    ],
+    "description": "Xôi mặn theo phong cách miền Nam độc đáo với tôm khô đậm đà, lạp xưởng béo ngọt và mỡ hành xanh mướt."
+  },
+  {
+    "id": "tx_d21",
+    "restaurant_id": "tx_r07",
+    "name": "Xôi lòng mề gà xào cay",
+    "price": 38000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "lòng mề gà",
+      "ớt sừng cay",
+      "hành tây",
+      "gạo nếp",
+      "tiêu"
+    ],
+    "description": "Lòng mề gà giòn sần sật xào cay thơm nồng, ăn kèm xôi trắng nóng hổi cực kỳ đưa vị."
+  },
+  {
+    "id": "tx_d22",
+    "restaurant_id": "tx_r08",
+    "name": "Phở bò tái lăn thơm nức tỏi",
+    "price": 60000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "thịt thăn bò",
+      "bánh phở tươi",
+      "nước hầm xương bò",
+      "hành hoa",
+      "tỏi phi"
+    ],
+    "description": "Thịt bò thăn thái mỏng xào lăn trên chảo gang đượm lửa, nước dùng phở ngọt thanh trong veo."
+  },
+  {
+    "id": "tx_d23",
+    "restaurant_id": "tx_r08",
+    "name": "Phở bò sốt vang gân giòn đậm vị",
+    "price": 65000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "bò sốt vang",
+      "quế hồi",
+      "rượu vang đỏ",
+      "bánh phở",
+      "rau thơm"
+    ],
+    "description": "Gân bò dẻo giòn sốt vang sánh mịn màu đỏ vang óng ả, thơm nức mùi quế hồi thảo mộc."
+  },
+  {
+    "id": "tx_d24",
+    "restaurant_id": "tx_r09",
+    "name": "Bún chả que tre nướng than hoa đặc biệt",
+    "price": 55000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "chả viên nướng",
+      "chả miếng ba chỉ",
+      "nước mắm chua ngọt",
+      "bún tươi",
+      "rau sống"
+    ],
+    "description": "Chả nướng kẹp que tre trên than hồng xèo xèo thơm ngát, nước chấm ấm nóng chua thanh hài hòa."
+  },
+  {
+    "id": "tx_d25",
+    "restaurant_id": "tx_r09",
+    "name": "Nem cua bể giòn rụm Hải Phòng",
+    "price": 25000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Side",
+    "ingredients": [
+      "thịt cua bể",
+      "tôm tươi",
+      "mộc nhĩ",
+      "miến dong",
+      "bánh đa nem"
+    ],
+    "description": "Vỏ nem giòn rụm, nhân đầy thịt cua biển và tôm tươi ngọt lịm."
+  },
+  {
+    "id": "tx_d26",
+    "restaurant_id": "tx_r10",
+    "name": "Cơm tấm sườn nướng bì chả đặc biệt",
+    "price": 55000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "sườn cốt lết nướng",
+      "chả trứng hấp",
+      "bì heo trộn thính",
+      "gạo tấm",
+      "mỡ hành"
+    ],
+    "description": "Miếng sườn cốt lết to bản ướp đẫm gia vị nướng than vàng ruộm, nước mắm cơm tấm kẹo dẻo."
+  },
+  {
+    "id": "tx_d27",
+    "restaurant_id": "tx_r11",
+    "name": "Mẹt bún đậu mắm tôm đầy đủ (thịt chân giò, chả cốm, nem rán)",
+    "price": 50000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "đậu phụ làng Mơ lướt ván",
+      "thịt chân giò luộc",
+      "chả cốm nóng",
+      "nem rán",
+      "mắm tôm Thanh Hóa"
+    ],
+    "description": "Đậu Mơ rán giòn ngoài xốp trong béo ngậy, chả cốm dẻo thơm, mắm tôm đánh sủi bọt dậy mùi quất ớt."
+  },
+  {
+    "id": "tx_d28",
+    "restaurant_id": "tx_r13",
+    "name": "Bún ốc mít sườn cay chua thanh nồng",
+    "price": 55000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "ốc mít béo giòn",
+      "sườn thăn ninh nhừ",
+      "giấm bỗng nếp",
+      "cà chua",
+      "ớt chưng cay"
+    ],
+    "description": "Ốc mít to béo giòn sần sật, sườn ninh mềm ngọt xương trong nước dùng giấm bỗng chua thanh dịu mát cay tê tê."
+  },
+  {
+    "id": "tx_d29",
+    "restaurant_id": "tx_r14",
+    "name": "Bánh mì dân tổ sốt bơ pate trứng xào thập cẩm",
+    "price": 35000,
+    "spicy": true,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "pate gan",
+      "trứng gà",
+      "lạp xưởng",
+      "chả lụa",
+      "bơ thơm",
+      "ớt bột"
+    ],
+    "description": "Topping xào chung trên chảo bơ nóng sốt xình xịch, nhồi căng phồng vào chiếc bánh mì nướng giòn rụm."
+  },
+  {
+    "id": "tx_d30",
+    "restaurant_id": "tx_r19",
+    "name": "Cháo sườn sụn niêu đất ruốc quẩy giòn",
+    "price": 35000,
+    "spicy": false,
+    "cuisine": "Vietnamese",
+    "category": "Main",
+    "ingredients": [
+      "sườn sụn non",
+      "bột gạo tẻ xay mịn",
+      "quẩy giòn",
+      "ruốc thịt heo",
+      "tiêu bột"
+    ],
+    "description": "Cháo bột sánh mịn thơm ngậy mùi xương hầm, sườn sụn ninh mềm giòn sần sật ăn cùng quẩy nóng."
+  }
+]

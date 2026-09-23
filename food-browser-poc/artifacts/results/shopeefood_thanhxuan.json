@@ -1,0 +1,509 @@
+{
+  "platform": "ShopeeFood",
+  "restaurants": [
+    {
+      "id": "tx_r01",
+      "name": "Xôi Chim & Xôi Sườn Cay Bà Thu",
+      "cuisine": "Vietnamese",
+      "rating": 4.9,
+      "distance_km": 1.2,
+      "delivery_fee": 14000,
+      "address": "105 Nguyễn Tuân, Thanh Xuân, Hà Nội",
+      "open_hours": "06:00 - 22:30",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Xôi Chim & Xôi Sườn Cay Bà Thu",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r01",
+      "menu": [
+        {
+          "dish_name": "Xôi chim bồ câu nướng thơm lừng",
+          "dish_price": 65000,
+          "original_price": 74750,
+          "description": "Thịt chim bồ câu băm nhỏ xào mộc nhĩ nấm hương đậm đà, quyện với xôi nếp dẻo thơm nức mũi.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi sườn cay sốt mật ong đậm vị",
+          "dish_price": 55000,
+          "original_price": 63249,
+          "description": "Sườn non rim sốt ớt cay ngọt đẫm vị, xôi hạt căng bóng dẻo quánh, ăn cay tê đầu lưỡi cực đã.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi thập cẩm đặc biệt Bà Thu (sườn, chim, trứng ốp)",
+          "dish_price": 60000,
+          "original_price": 69000,
+          "description": "Hộp xôi đầy ú ụ với sườn cay đậm vị, thịt chim xào thơm, trứng lòng đào béo ngậy và dưa chua giòn.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi gà xé nấm hương tiêu cay",
+          "dish_price": 48000,
+          "original_price": 55199,
+          "description": "Gà ta thả vườn dai ngọt xé sợi xào nấm hương đẫm sốt tiêu cay, rưới mỡ gà béo ngậy.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi xéo ruốc hành phi truyền thống",
+          "dish_price": 25000,
+          "original_price": 28749,
+          "description": "Xôi xéo vàng óng ả chuẩn vị Hà Nội, đậu xanh bùi béo cắt lát mỏng tang rưới mỡ nước thơm nức.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r02",
+      "name": "Xôi Xéo & Xôi Thịt Kho Tàu Cô Lan",
+      "cuisine": "Vietnamese",
+      "rating": 4.8,
+      "distance_km": 0.9,
+      "delivery_fee": 12000,
+      "address": "18 Khương Đình, Thanh Xuân, Hà Nội",
+      "open_hours": "06:00 - 14:00, 17:00 - 22:00",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Xôi Xéo & Xôi Thịt Kho Tàu Cô Lan",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r02",
+      "menu": [
+        {
+          "dish_name": "Xôi xéo thịt kho trứng lòng đào",
+          "dish_price": 45000,
+          "original_price": 51749,
+          "description": "Thịt ba chỉ kho nhừ mềm tan trong miệng, trứng lòng đào dẻo quánh rưới đẫm nước sốt thịt kho lên xôi xéo.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi xéo chả mỡ lạp xưởng nóng hổi",
+          "dish_price": 38000,
+          "original_price": 43700,
+          "description": "Chả mỡ nướng thơm ngậy kết hợp lạp xưởng đậm đà rưới nước mỡ hành phi giòn tan.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi gà quay ngũ vị da giòn",
+          "dish_price": 50000,
+          "original_price": 57499,
+          "description": "Miếng đùi gà quay ngũ vị da nâu óng ả giòn rụm, thịt bên trong mềm mọng ngọt nước ăn cùng xôi trắng dẻo thơm.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi pate trứng ốp giò lụa Cô Lan",
+          "dish_price": 35000,
+          "original_price": 40250,
+          "description": "Pate gan thơm bùi tan chảy quết đều lên xôi nóng, thêm trứng ốp la lòng đào béo ngậy.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r03",
+      "name": "Xôi Ngô & Xôi Xéo Mỡ Hành Tô Vĩnh Diện",
+      "cuisine": "Vietnamese",
+      "rating": 4.8,
+      "distance_km": 1.6,
+      "delivery_fee": 15000,
+      "address": "45 Tô Vĩnh Diện, Thanh Xuân, Hà Nội",
+      "open_hours": "06:00 - 21:30",
+      "platform": "GrabFood",
+      "restaurant_name": "Xôi Ngô & Xôi Xéo Mỡ Hành Tô Vĩnh Diện",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r03",
+      "menu": [
+        {
+          "dish_name": "Xôi ngô đậu xanh hành phi thơm béo",
+          "dish_price": 20000,
+          "original_price": 23000,
+          "description": "Ngô nếp bung nở mềm dẻo ngọt tự nhiên, trộn đều cùng đỗ xanh bùi và mỡ hành phi thơm nức.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi xéo chả quế pate Cột Đèn",
+          "dish_price": 35000,
+          "original_price": 40250,
+          "description": "Chả quế giòn sần sật kẹp pate Cột Đèn béo thơm trứ danh rưới trên đĩa xôi xéo vàng ươm.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi thịt kho tàu dưa góp đậm đà",
+          "dish_price": 42000,
+          "original_price": 48299,
+          "description": "Nước thịt kho keo màu cánh gián đậm đà chan đẫm từng hạt xôi nếp dẻo thơm, ăn kèm dưa góp chua ngọt đỡ ngấy.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r04",
+      "name": "Xôi Gà Nấm & Xôi Xéo Bác Ngọ",
+      "cuisine": "Vietnamese",
+      "rating": 4.7,
+      "distance_km": 1.4,
+      "delivery_fee": 13000,
+      "address": "34 Triều Khúc, Thanh Xuân, Hà Nội",
+      "open_hours": "06:30 - 22:00",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Xôi Gà Nấm & Xôi Xéo Bác Ngọ",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r04",
+      "menu": [
+        {
+          "dish_name": "Xôi gà nấm xào hành hoa Bác Ngọ",
+          "dish_price": 42000,
+          "original_price": 48299,
+          "description": "Thịt gà xào nấm hương thơm lừng vị ngọt tự nhiên, xôi dẻo bùi hạt không bị nhão.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi sườn rim tiêu cay ngọt",
+          "dish_price": 48000,
+          "original_price": 55199,
+          "description": "Sườn non được chặt miếng nhỏ rim kỹ sốt tiêu đen cay nồng, vị ngọt mặn hài hòa đưa miệng.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi thập cẩm Triều Khúc đầy đặn",
+          "dish_price": 45000,
+          "original_price": 51749,
+          "description": "Phần xôi phong phú với đủ loại topping thịt kho, chả mỡ, lạp xưởng và trứng bùi béo.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r05",
+      "name": "Xôi Chị Em - Xôi Thập Cẩm & Sườn Nướng",
+      "cuisine": "Vietnamese",
+      "rating": 4.6,
+      "distance_km": 1.1,
+      "delivery_fee": 12000,
+      "address": "220 Nguyễn Trãi, Thanh Xuân, Hà Nội",
+      "open_hours": "07:00 - 23:00",
+      "platform": "GrabFood",
+      "restaurant_name": "Xôi Chị Em - Xôi Thập Cẩm & Sườn Nướng",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r05",
+      "menu": [
+        {
+          "dish_name": "Xôi sườn nướng mật ong sốt cay Chị Em",
+          "dish_price": 50000,
+          "original_price": 57499,
+          "description": "Dải sườn nướng than hoa thơm nức mũi quét sốt mật ong cay cay, ăn kèm xôi dẻo hạt.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi xá xíu trứng ốp la sốt dầu hào",
+          "dish_price": 40000,
+          "original_price": 46000,
+          "description": "Thịt xá xíu mềm thơm đẫm sốt dầu hào thơm phức, trứng ốp la béo ngậy hoà quyện.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r06",
+      "name": "Xôi Bắp & Xôi Đậu Xanh Phố Cổ",
+      "cuisine": "Vietnamese",
+      "rating": 4.5,
+      "distance_km": 2.0,
+      "delivery_fee": 16000,
+      "address": "12 Hoàng Văn Thái, Thanh Xuân, Hà Nội",
+      "open_hours": "06:00 - 13:00",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Xôi Bắp & Xôi Đậu Xanh Phố Cổ",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r06",
+      "menu": [
+        {
+          "dish_name": "Xôi bắp nếp mỡ hành đường vừng",
+          "dish_price": 20000,
+          "original_price": 23000,
+          "description": "Món ăn sáng tuổi thơ dân dã với bắp nếp bung dẻo thơm, thêm chút muối vừng bùi bùi dừa tươi.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi vò hạt sen thơm bùi",
+          "dish_price": 28000,
+          "original_price": 32199,
+          "description": "Hạt xôi tơi đều bọc một lớp đậu xanh vàng mịn, hạt sen chín bở ngọt bùi thanh tao.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r07",
+      "name": "Xôi Mặn Thập Cẩm Chợ Chính Kinh",
+      "cuisine": "Vietnamese",
+      "rating": 4.6,
+      "distance_km": 0.8,
+      "delivery_fee": 10000,
+      "address": "8 Chính Kinh, Thanh Xuân, Hà Nội",
+      "open_hours": "06:00 - 21:00",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Xôi Mặn Thập Cẩm Chợ Chính Kinh",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r07",
+      "menu": [
+        {
+          "dish_name": "Xôi mặn thập cẩm tôm khô lạp xưởng",
+          "dish_price": 35000,
+          "original_price": 40250,
+          "description": "Xôi mặn theo phong cách miền Nam độc đáo với tôm khô đậm đà, lạp xưởng béo ngọt và mỡ hành xanh mướt.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Xôi lòng mề gà xào cay",
+          "dish_price": 38000,
+          "original_price": 43700,
+          "description": "Lòng mề gà giòn sần sật xào cay thơm nồng, ăn kèm xôi trắng nóng hổi cực kỳ đưa vị.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r08",
+      "name": "Phở Bò Tái Lăn & Sốt Vang Bát Đàn - Thanh Xuân",
+      "cuisine": "Vietnamese",
+      "rating": 4.8,
+      "distance_km": 1.8,
+      "delivery_fee": 16000,
+      "address": "88 Lê Trọng Tấn, Thanh Xuân, Hà Nội",
+      "open_hours": "06:00 - 21:30",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Phở Bò Tái Lăn & Sốt Vang Bát Đàn - Thanh Xuân",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r08",
+      "menu": [
+        {
+          "dish_name": "Phở bò tái lăn thơm nức tỏi",
+          "dish_price": 60000,
+          "original_price": 69000,
+          "description": "Thịt bò thăn thái mỏng xào lăn trên chảo gang đượm lửa, nước dùng phở ngọt thanh trong veo.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Phở bò sốt vang gân giòn đậm vị",
+          "dish_price": 65000,
+          "original_price": 74750,
+          "description": "Gân bò dẻo giòn sốt vang sánh mịn màu đỏ vang óng ả, thơm nức mùi quế hồi thảo mộc.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r09",
+      "name": "Bún Chả Sinh Từ - Nướng Than Hoa",
+      "cuisine": "Vietnamese",
+      "rating": 4.7,
+      "distance_km": 1.3,
+      "delivery_fee": 14000,
+      "address": "48 Nguyễn Trãi, Thanh Xuân, Hà Nội",
+      "open_hours": "07:30 - 21:00",
+      "platform": "GrabFood",
+      "restaurant_name": "Bún Chả Sinh Từ - Nướng Than Hoa",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r09",
+      "menu": [
+        {
+          "dish_name": "Bún chả que tre nướng than hoa đặc biệt",
+          "dish_price": 55000,
+          "original_price": 63249,
+          "description": "Chả nướng kẹp que tre trên than hồng xèo xèo thơm ngát, nước chấm ấm nóng chua thanh hài hòa.",
+          "discount": "Ưu đãi quán"
+        },
+        {
+          "dish_name": "Nem cua bể giòn rụm Hải Phòng",
+          "dish_price": 25000,
+          "original_price": 28749,
+          "description": "Vỏ nem giòn rụm, nhân đầy thịt cua biển và tôm tươi ngọt lịm.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r10",
+      "name": "Cơm Tấm Sườn Bì Chả Ali Triều Khúc",
+      "cuisine": "Vietnamese",
+      "rating": 4.6,
+      "distance_km": 1.5,
+      "delivery_fee": 14000,
+      "address": "25 Triều Khúc, Thanh Xuân, Hà Nội",
+      "open_hours": "09:30 - 21:30",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Cơm Tấm Sườn Bì Chả Ali Triều Khúc",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r10",
+      "menu": [
+        {
+          "dish_name": "Cơm tấm sườn nướng bì chả đặc biệt",
+          "dish_price": 55000,
+          "original_price": 63249,
+          "description": "Miếng sườn cốt lết to bản ướp đẫm gia vị nướng than vàng ruộm, nước mắm cơm tấm kẹo dẻo.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r11",
+      "name": "Bún Đậu Mắm Tôm Mơ Quán",
+      "cuisine": "Vietnamese",
+      "rating": 4.7,
+      "distance_km": 1.0,
+      "delivery_fee": 12000,
+      "address": "15 Ngõ 190 Nguyễn Trãi, Thanh Xuân, Hà Nội",
+      "open_hours": "09:00 - 21:30",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Bún Đậu Mắm Tôm Mơ Quán",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r11",
+      "menu": [
+        {
+          "dish_name": "Mẹt bún đậu mắm tôm đầy đủ (thịt chân giò, chả cốm, nem rán)",
+          "dish_price": 50000,
+          "original_price": 57499,
+          "description": "Đậu Mơ rán giòn ngoài xốp trong béo ngậy, chả cốm dẻo thơm, mắm tôm đánh sủi bọt dậy mùi quất ớt.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r12",
+      "name": "Bún Riêu Cua Bắp Bò Giò Tai",
+      "cuisine": "Vietnamese",
+      "rating": 4.6,
+      "distance_km": 1.7,
+      "delivery_fee": 15000,
+      "address": "110 Vũ Tông Phan, Thanh Xuân, Hà Nội",
+      "open_hours": "06:30 - 21:00",
+      "platform": "GrabFood",
+      "restaurant_name": "Bún Riêu Cua Bắp Bò Giò Tai",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r12",
+      "menu": []
+    },
+    {
+      "id": "tx_r13",
+      "name": "Bún Ốc Sườn Cay Nóng Khương Đình",
+      "cuisine": "Vietnamese",
+      "rating": 4.8,
+      "distance_km": 0.7,
+      "delivery_fee": 10000,
+      "address": "215 Khương Đình, Thanh Xuân, Hà Nội",
+      "open_hours": "06:00 - 21:00",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Bún Ốc Sườn Cay Nóng Khương Đình",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r13",
+      "menu": [
+        {
+          "dish_name": "Bún ốc mít sườn cay chua thanh nồng",
+          "dish_price": 55000,
+          "original_price": 63249,
+          "description": "Ốc mít to béo giòn sần sật, sườn ninh mềm ngọt xương trong nước dùng giấm bỗng chua thanh dịu mát cay tê tê.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r14",
+      "name": "Bánh Mì Dân Tổ & Pate Nóng Hải Phòng",
+      "cuisine": "Vietnamese",
+      "rating": 4.6,
+      "distance_km": 1.2,
+      "delivery_fee": 12000,
+      "address": "64 Nguyễn Tuân, Thanh Xuân, Hà Nội",
+      "open_hours": "06:00 - 23:00",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Bánh Mì Dân Tổ & Pate Nóng Hải Phòng",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r14",
+      "menu": [
+        {
+          "dish_name": "Bánh mì dân tổ sốt bơ pate trứng xào thập cẩm",
+          "dish_price": 35000,
+          "original_price": 40250,
+          "description": "Topping xào chung trên chảo bơ nóng sốt xình xịch, nhồi căng phồng vào chiếc bánh mì nướng giòn rụm.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r15",
+      "name": "Bánh Cuốn Nóng Gia An - Nhân Hòa",
+      "cuisine": "Vietnamese",
+      "rating": 4.6,
+      "distance_km": 1.9,
+      "delivery_fee": 16000,
+      "address": "62 Nhân Hòa, Thanh Xuân, Hà Nội",
+      "open_hours": "06:30 - 21:00",
+      "platform": "GrabFood",
+      "restaurant_name": "Bánh Cuốn Nóng Gia An - Nhân Hòa",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r15",
+      "menu": []
+    },
+    {
+      "id": "tx_r16",
+      "name": "Mì Cay Seoul 7 Cấp Độ & Tokbokki",
+      "cuisine": "Korean",
+      "rating": 4.6,
+      "distance_km": 1.5,
+      "delivery_fee": 14000,
+      "address": "142 Triều Khúc, Thanh Xuân, Hà Nội",
+      "open_hours": "09:00 - 22:30",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Mì Cay Seoul 7 Cấp Độ & Tokbokki",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r16",
+      "menu": []
+    },
+    {
+      "id": "tx_r17",
+      "name": "Gà Rán Giòn Tan & Burger Mom's Touch",
+      "cuisine": "Western",
+      "rating": 4.5,
+      "distance_km": 2.1,
+      "delivery_fee": 16000,
+      "address": "52 Quan Nhân, Thanh Xuân, Hà Nội",
+      "open_hours": "09:00 - 22:00",
+      "platform": "GrabFood",
+      "restaurant_name": "Gà Rán Giòn Tan & Burger Mom's Touch",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r17",
+      "menu": []
+    },
+    {
+      "id": "tx_r18",
+      "name": "Nem Nướng Nha Trang Cô Ba Tô Vĩnh Diện",
+      "cuisine": "Vietnamese",
+      "rating": 4.7,
+      "distance_km": 1.6,
+      "delivery_fee": 15000,
+      "address": "78 Tô Vĩnh Diện, Thanh Xuân, Hà Nội",
+      "open_hours": "09:30 - 21:30",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Nem Nướng Nha Trang Cô Ba Tô Vĩnh Diện",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r18",
+      "menu": []
+    },
+    {
+      "id": "tx_r19",
+      "name": "Cháo Sườn Sụn & Cháo Ngô Niêu Đất",
+      "cuisine": "Vietnamese",
+      "rating": 4.8,
+      "distance_km": 1.0,
+      "delivery_fee": 12000,
+      "address": "12 Nguyễn Quý Đức, Thanh Xuân, Hà Nội",
+      "open_hours": "06:30 - 22:30",
+      "platform": "ShopeeFood",
+      "restaurant_name": "Cháo Sườn Sụn & Cháo Ngô Niêu Đất",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r19",
+      "menu": [
+        {
+          "dish_name": "Cháo sườn sụn niêu đất ruốc quẩy giòn",
+          "dish_price": 35000,
+          "original_price": 40250,
+          "description": "Cháo bột sánh mịn thơm ngậy mùi xương hầm, sườn sụn ninh mềm giòn sần sật ăn cùng quẩy nóng.",
+          "discount": "Ưu đãi quán"
+        }
+      ]
+    },
+    {
+      "id": "tx_r20",
+      "name": "Chè Sầu Liên Đà Nẵng & Trà Sữa Ăn Vặt",
+      "cuisine": "Vietnamese",
+      "rating": 4.7,
+      "distance_km": 0.8,
+      "delivery_fee": 10000,
+      "address": "38 Chính Kinh, Thanh Xuân, Hà Nội",
+      "open_hours": "09:00 - 23:00",
+      "platform": "GrabFood",
+      "restaurant_name": "Chè Sầu Liên Đà Nẵng & Trà Sữa Ăn Vặt",
+      "restaurant_url": "https://shopeefood.vn/ha-noi/tx_r20",
+      "menu": []
+    }
+  ]
+}

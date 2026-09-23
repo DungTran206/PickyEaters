@@ -1,0 +1,242 @@
+[
+  {
+    "id": "p001",
+    "restaurant_id": "r001",
+    "code": "BUNBO20K",
+    "type": "discount",
+    "value": 20000,
+    "max_discount": 20000,
+    "minimum_order": 50000,
+    "description": "Giảm ngay 20.000đ cho đơn từ 50.000đ tại Bún Bò O An"
+  },
+  {
+    "id": "p002",
+    "restaurant_id": "r001",
+    "code": "FREESHIPAN",
+    "type": "freeship",
+    "value": 15000,
+    "max_discount": 15000,
+    "minimum_order": 40000,
+    "description": "Miễn phí vận chuyển tối đa 15.000đ"
+  },
+  {
+    "id": "p003",
+    "restaurant_id": "r003",
+    "code": "COMBI15K",
+    "type": "discount",
+    "value": 15000,
+    "max_discount": 15000,
+    "minimum_order": 50000,
+    "description": "Giảm 15.000đ cho đơn Cơm Tấm từ 50.000đ"
+  },
+  {
+    "id": "p004",
+    "restaurant_id": "r006",
+    "code": "KOREADEAL",
+    "type": "discount",
+    "value": 25000,
+    "max_discount": 25000,
+    "minimum_order": 65000,
+    "description": "Giảm 25.000đ cho món Tokbokki & BBQ từ 65.000đ"
+  },
+  {
+    "id": "p005",
+    "restaurant_id": "r006",
+    "code": "FREESHIPKOREA",
+    "type": "freeship",
+    "value": 15000,
+    "max_discount": 15000,
+    "minimum_order": 50000,
+    "description": "Freeship tới 15.000đ cho đồ ăn Hàn Quốc"
+  },
+  {
+    "id": "p006",
+    "restaurant_id": "r007",
+    "code": "GIMBAP10K",
+    "type": "discount",
+    "value": 10000,
+    "max_discount": 10000,
+    "minimum_order": 40000,
+    "description": "Giảm 10.000đ cho đơn từ 40.000đ"
+  },
+  {
+    "id": "p007",
+    "restaurant_id": "r008",
+    "code": "UDON15PCT",
+    "type": "percent",
+    "value": 15,
+    "max_discount": 20000,
+    "minimum_order": 60000,
+    "description": "Giảm 15% tối đa 20.000đ cho đơn Mì Udon từ 60.000đ"
+  },
+  {
+    "id": "p008",
+    "restaurant_id": "r010",
+    "code": "THAITOMYUM20",
+    "type": "discount",
+    "value": 20000,
+    "max_discount": 20000,
+    "minimum_order": 70000,
+    "description": "Giảm 20.000đ cho đơn món Thái từ 70.000đ"
+  },
+  {
+    "id": "p009",
+    "restaurant_id": "r011",
+    "code": "TUKTUKFREESHIP",
+    "type": "freeship",
+    "value": 18000,
+    "max_discount": 18000,
+    "minimum_order": 60000,
+    "description": "Freeship 100% phí ship cho TukTuk Cha"
+  },
+  {
+    "id": "p010",
+    "restaurant_id": "r012",
+    "code": "CHAYANLAC10",
+    "type": "discount",
+    "value": 10000,
+    "max_discount": 10000,
+    "minimum_order": 35000,
+    "description": "Giảm 10.000đ cho bữa cơm chay thanh đạm"
+  },
+  {
+    "id": "p011",
+    "restaurant_id": "r014",
+    "code": "POPEYESDEAL",
+    "type": "discount",
+    "value": 20000,
+    "max_discount": 20000,
+    "minimum_order": 60000,
+    "description": "Giảm 20.000đ cho combo gà rán"
+  },
+  {
+    "id": "p012",
+    "restaurant_id": "r016",
+    "code": "MAMTOM5K",
+    "type": "discount",
+    "value": 10000,
+    "max_discount": 10000,
+    "minimum_order": 50000,
+    "description": "Giảm 10.000đ cho mẹt bún đậu thập cẩm"
+  },
+  {
+    "id": "p013",
+    "restaurant_id": "r018",
+    "code": "MICAYSEOUL20K",
+    "type": "discount",
+    "value": 20000,
+    "max_discount": 20000,
+    "minimum_order": 60000,
+    "description": "Giảm sốc 20.000đ cho các tín đồ mì cay thố đá"
+  },
+  {
+    "id": "p014",
+    "restaurant_id": "r018",
+    "code": "FREESHIPMICAY",
+    "type": "freeship",
+    "value": 12000,
+    "max_discount": 12000,
+    "minimum_order": 50000,
+    "description": "Freeship toàn bộ đơn Mì Cay Seoul"
+  },
+  {
+    "id": "p015",
+    "restaurant_id": "r021",
+    "code": "DOOKKI15K",
+    "type": "discount",
+    "value": 15000,
+    "max_discount": 15000,
+    "minimum_order": 55000,
+    "description": "Giảm 15.000đ cho bento tokbokki"
+  },
+  {
+    "id": "p016",
+    "restaurant_id": "r022",
+    "code": "COMGAXOI10K",
+    "type": "discount",
+    "value": 10000,
+    "max_discount": 10000,
+    "minimum_order": 45000,
+    "description": "Giảm 10.000đ cho cơm gà xối mỡ giòn rụm"
+  },
+  {
+    "id": "p017",
+    "restaurant_id": "r026",
+    "code": "ANVAT5K",
+    "type": "discount",
+    "value": 8000,
+    "max_discount": 8000,
+    "minimum_order": 25000,
+    "description": "Giảm 8.000đ cho đồ ăn vặt và trà sữa"
+  },
+  {
+    "id": "p018",
+    "restaurant_id": "r028",
+    "code": "PARKHANG20PCT",
+    "type": "percent",
+    "value": 20,
+    "max_discount": 20000,
+    "minimum_order": 40000,
+    "description": "Giảm 20% tối đa 20.000đ cho mì trộn Tokbokki Park Hang"
+  },
+  {
+    "id": "tx_promo_01",
+    "restaurant_id": "tx_r01",
+    "code": "XOIBATHU15K",
+    "type": "discount",
+    "value": 15000,
+    "max_discount": 15000,
+    "minimum_order": 45000,
+    "description": "Giảm 15.000đ cho đơn xôi từ 45k tại Xôi Chim Bà Thu"
+  },
+  {
+    "id": "tx_promo_02",
+    "restaurant_id": "tx_r02",
+    "code": "FREESHIPCOLAN",
+    "type": "freeship",
+    "value": 15000,
+    "max_discount": 15000,
+    "minimum_order": 35000,
+    "description": "Miễn phí vận chuyển tới 15k đơn từ 35k tại Xôi Cô Lan Khương Đình"
+  },
+  {
+    "id": "tx_promo_03",
+    "restaurant_id": "tx_r03",
+    "code": "XOINGO10K",
+    "type": "discount",
+    "value": 10000,
+    "max_discount": 10000,
+    "minimum_order": 30000,
+    "description": "Giảm 10.000đ cho đơn xôi từ 30k tại Tô Vĩnh Diện"
+  },
+  {
+    "id": "tx_promo_04",
+    "restaurant_id": "tx_r04",
+    "code": "BACNGO20PCT",
+    "type": "percent",
+    "value": 20,
+    "max_discount": 20000,
+    "minimum_order": 40000,
+    "description": "Giảm 20% tối đa 20.000đ cho xôi gà nấm Bác Ngọ Triều Khúc"
+  },
+  {
+    "id": "tx_promo_08",
+    "restaurant_id": "tx_r08",
+    "code": "PHOBATDAN10K",
+    "type": "discount",
+    "value": 10000,
+    "max_discount": 10000,
+    "minimum_order": 50000,
+    "description": "Giảm 10.000đ cho tô phở bò Bát Đàn Thanh Xuân"
+  },
+  {
+    "id": "tx_promo_13",
+    "restaurant_id": "tx_r13",
+    "code": "BUNOC5K",
+    "type": "discount",
+    "value": 10000,
+    "max_discount": 10000,
+    "minimum_order": 45000,
+    "description": "Giảm 10k tô bún ốc sườn cay Khương Đình"
+  }
+]

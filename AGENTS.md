@@ -1,0 +1,134 @@
+# Personal Food Agent — Codex Engineering Instructions
+
+## Mission
+
+This repository is a personal Food Agent. Codex must preserve the architecture below while implementing, refactoring, testing, and debugging.
+
+The core pipeline is:
+
+USER
+→ UNDERSTAND
+→ TaskModel
+→ PLAN
+→ ACT
+→ OBSERVE
+→ VALIDATE
+→ RE-PLAN
+→ COMPOSE
+→ RANK
+→ RESPOND
+
+The project is intentionally designed so that the LLM understands and plans, while deterministic services/tools retrieve and validate real food data.
+
+## Non-negotiable architecture rules
+
+1. UNDERSTAND owns raw-language interpretation.
+   - Raw user text is converted into one validated TaskModel.
+   - Do not make downstream components parse the original user message again.
+   - Do not add recommendation logic to the Understand prompt.
+
+2. TaskModel is the contract between understanding and planning.
+   - Treat it as the source of truth for the current task.
+   - Keep durable profile and session state separate from the current TaskModel.
+   - Validate all model output before downstream use.
+
+3. PLAN owns strategy.
+   - Decide whether clarification is required.
+   - Decompose multi-object tasks.
+   - Select retrieval/action capabilities.
+   - Decide bounded replanning.
+   - Do not fabricate restaurant/menu facts.
+
+4. ACT owns deterministic capabilities.
+   - Retrieval, geocoding, distance calculation, price calculation, promotions, composition primitives, and validation belong here.
+   - Prefer small composable tools over a single "do everything" tool.
+
+5. OBSERVE returns structured evidence.
+   - Tool outputs must be machine-readable.
+   - Preserve enough provenance to trace final price, distance, rating, and promotion claims.
+
+6. VALIDATE owns hard-constraint checking.
+   - Hard constraints must not be silently relaxed.
+   - Replanning may change search strategy or soft preferences, but must not violate hard exclusions/constraints.
+
+7. RE-PLAN is a bounded strategy loop.
+   - Do not hard-code one special-case fallback such as only "5 km → 10 km".
+   - Replanning should be driven by structured failure/observation state.
+
+8. COMPOSE builds multi-object orders.
+   - Multiple objects are not automatically independent searches.
+   - Use TaskModel relationships such as same_order or same_restaurant when explicitly represented.
+   - Budget validation for a composed order happens after composition.
+
+9. RANK does not rediscover intent.
+   - Ranking consumes structured candidates + TaskModel/preferences.
+   - Do not parse raw text in ranking.
+
+10. RESPOND must not invent facts.
+    - Every factual claim about candidates should be traceable to structured tool output.
+
+## Current TaskModel principles
+
+- `objects` describe requested order components.
+- `hard_constraints` are explicit hard requirements.
+- `soft_preferences` represent explicit priorities/preferences.
+- `excluded_concepts` excludes a whole food concept.
+- `ingredient_excludes` excludes ingredients from dishes.
+- `semantic_attributes` preserve open-ended qualitative language that does not have a dedicated field.
+- `relationships` express relationships among object indices, such as `same_order` or `same_restaurant`.
+- `follow_up` represents the user's relation to a previous interaction.
+- `context.party_size` defaults to 1.
+- `context.conversation_ref` may only reference an ordinal supplied by `last_shown_candidates`.
+
+Do not copy durable-profile values into TaskModel unless the user explicitly states them in the current request. The profile can be combined later by Plan.
+
+## Semantic safety rules
+
+- Negation has priority over positive extraction:
+  "không muốn ăn cơm" must not produce an object for "cơm".
+- "đồ nước" means a broth/liquid-based main-food concept in this project, not `Drink`.
+  Preserve it as a semantic attribute or open concept; do not turn it into a beverage.
+- Do not force nuanced language such as "cay nhẹ", "ăn nhẹ", "mát mát", or "ngồi lâu được" into a boolean/enum that cannot represent it.
+- Do not infer cuisine, budget, rating priority, or distance priority without evidence.
+- Do not invent candidate IDs in Understand.
+
+## Implementation workflow
+
+Before changing architecture:
+1. Inspect the relevant code and tests.
+2. Identify the current contract and call graph.
+3. Make the smallest coherent change.
+4. Add/update tests for the contract.
+5. Run the focused tests.
+6. Run the broader suite when practical.
+7. Report remaining failures instead of hiding them.
+
+Do not rewrite the whole system just to satisfy one example.
+
+## Anti-patterns
+
+Do not introduce:
+- a new god tool replacing `recommend_dishes_with_radius` with another giant function;
+- raw-text parsing in ranking/composition/validation;
+- duplicated NLU logic between LLM and mock/fallback paths;
+- arbitrary defaults hidden in Understand;
+- silent hard-constraint relaxation;
+- fake scraper defaults or fabricated production data;
+- candidate facts generated by the LLM;
+- tests that only assert exact wording instead of semantic contract behavior.
+
+## Definition of done for architecture changes
+
+A change is not complete until:
+- the intended layer owns the new responsibility;
+- TaskModel/session/tool contracts are explicit;
+- regression tests cover the changed behavior;
+- no downstream layer needs to inspect raw user text to recover intent;
+- hard constraints remain enforceable;
+- existing unrelated behavior is not silently broken.
+
+## Preferred Codex behavior
+
+For non-trivial changes, first give a short implementation plan and identify affected files/tests. Then implement.
+
+When requirements conflict with this document, preserve the explicit user requirement unless it would break a stated contract; if so, explain the conflict before changing the contract.
