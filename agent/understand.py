@@ -76,7 +76,7 @@ def _try_llm_understand(
 
     is_groq = bool(groq_key) or api_key.startswith("gsk_")
     default_base = "https://api.groq.com/openai/v1" if is_groq else "https://api.openai.com/v1"
-    default_model = "llama-3.3-70b-versatile" if is_groq else "gpt-4o-mini"
+    default_model = "qwen/qwen3.8-27b" if is_groq else "gpt-4o-mini"
 
     base_url = os.getenv("OPENAI_BASE_URL", default_base)
     model = os.getenv("OPENAI_MODEL_NAME", default_model)
@@ -93,15 +93,36 @@ def _try_llm_understand(
 
     try:
         client = OpenAI(api_key=api_key, base_url=base_url)
-        response = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": UNDERSTAND_SYSTEM_PROMPT},
-                {"role": "user", "content": user_message},
-            ],
-            temperature=0,
-            max_tokens=1024,
-        )
+
+        # Attempt with response_format=json_object (supported by OpenAI and most providers).
+        # Groq supports it for most models; fall back gracefully if the provider rejects it.
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": UNDERSTAND_SYSTEM_PROMPT},
+                    {"role": "user", "content": user_message},
+                ],
+                temperature=0,
+                max_tokens=600,
+                response_format={"type": "json_object"},
+            )
+        except Exception as fmt_exc:
+            # Some providers / models do not support response_format; fall back to plain chat.
+            logger.info(
+                "[understand] response_format not supported by provider (%s); retrying without it.",
+                fmt_exc,
+            )
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": UNDERSTAND_SYSTEM_PROMPT},
+                    {"role": "user", "content": user_message},
+                ],
+                temperature=0,
+                max_tokens=600,
+            )
+
         raw = response.choices[0].message.content or ""
         return _parse_and_validate(raw)
     except Exception as exc:
@@ -110,10 +131,22 @@ def _try_llm_understand(
 
 
 def _parse_and_validate(raw: str) -> Optional[TaskModel]:
-    """Parse LLM output JSON and validate with Pydantic. Returns None on failure."""
+    """Parse LLM output JSON and validate with Pydantic. Returns None on failure.
+
+    Designed to handle both pure JSON responses (from json_object mode) and
+    responses that wrap JSON in markdown fences (from plain chat mode).
+    """
     # Strip markdown code fences if model wraps the JSON
     cleaned = re.sub(r"```(?:json)?\s*", "", raw).strip().rstrip("```").strip()
-    # Find first { ... } block
+
+    # Try direct parse first (expected path when response_format=json_object is used)
+    try:
+        data = json.loads(cleaned)
+        return TaskModel.model_validate(data)
+    except (json.JSONDecodeError, ValidationError):
+        pass
+
+    # Fallback: find first {...} block (handles extra text or reasoning preamble)
     match = re.search(r"\{.*\}", cleaned, re.DOTALL)
     if not match:
         logger.warning("[understand] LLM returned no JSON: %s", raw[:200])
@@ -383,8 +416,6 @@ def _regex_extract_objects_and_semantics(text: str, task: TaskModel) -> None:
                     _make_semantic_attribute(display_text, "object", text)
                 )
                 break
-    if "ngoi lau duoc" in text:
-        task.semantic_attributes.append(_make_semantic_attribute("ngồi lâu được", "venue", text))
     for phrase, display_text in (
         ("sang trong", "sang trọng"), ("doi qua", "đói quá"), ("ngon", "ngon")
     ):

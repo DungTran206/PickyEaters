@@ -11,6 +11,10 @@ from services.search import (
 )
 from services.pricing import calculate_final_price as svc_calculate_price
 from services.recommendation import rank_candidates, format_recommendations_output
+from agent.composer import compose_candidates, is_composed_order_request
+from agent.validator import validate_candidates_list
+from agent.replan import diagnose_and_replan
+from agent.task_model import TaskModel
 
 
 # ---------------------------------------------------------------------------
@@ -30,13 +34,19 @@ def tool_recommend_dishes_with_radius(
     task_model: Optional[Dict[str, Any]] = None,
     initial_radius: float = 5.0,
     max_radius: float = 10.0,
+    semantic_keywords: Optional[List[str]] = None,
+    secondary_keywords: Optional[List[str]] = None,
+    composition_strategy: Optional[str] = None,
+    **kwargs: Any,
 ) -> Dict[str, Any]:
     """
     Search dishes around user's address with automatic 5km -> 10km radius expansion and reasoning.
     """
     pref = db_get_preferences(user_id)
     eff_address = user_address or pref.address or "Cầu Giấy, Hà Nội"
-    eff_budget = max_price if max_price is not None else (pref.budget or 80000)
+    # Profile budget is a soft preference/baseline, NOT a hard filter unless user stated it.
+    # When max_price is None, search broadly without ceiling; VALIDATE will enforce TaskModel constraints.
+    eff_budget = max_price if max_price is not None else None
     eff_dislikes = disliked_ingredients if disliked_ingredients is not None else pref.disliked_ingredients
 
     search_res = search_with_radius_expansion(
@@ -50,27 +60,146 @@ def tool_recommend_dishes_with_radius(
         excluded_concepts=excluded_concepts,
         initial_radius=initial_radius,
         max_radius=max_radius,
+        semantic_keywords=semantic_keywords,
+        secondary_keywords=secondary_keywords,
     )
 
     dishes = search_res["dishes"]
     search_radius_km = search_res["search_radius_km"]
     is_radius_expanded = search_res["is_radius_expanded"]
 
-    candidates = rank_candidates(
-        dishes=dishes,
-        user_pref=pref,
-        task_model=task_model,
-        user_address=eff_address,
-        search_radius_km=search_radius_km,
-        is_radius_expanded=is_radius_expanded,
-        top_k=4
-    )
+    # Parse task_model to TaskModel object if possible
+    task_obj = None
+    if task_model:
+        try:
+            task_obj = TaskModel(**task_model) if isinstance(task_model, dict) else task_model
+        except Exception:
+            pass
+
+    # Check if multi-object compose
+    composed = []
+    if task_obj and is_composed_order_request(task_obj):
+        composed = compose_candidates(
+            task=task_obj,
+            dishes=dishes,
+            user_address=eff_address,
+            user_pref=pref,
+            restaurants=search_res.get("restaurants"),
+            search_radius_km=search_radius_km,
+            is_radius_expanded=is_radius_expanded,
+        )
+        if composed:
+            candidates = rank_candidates(
+                dishes=[],
+                user_pref=pref,
+                task_model=task_model,
+                user_address=eff_address,
+                search_radius_km=search_radius_km,
+                is_radius_expanded=is_radius_expanded,
+                top_k=4,
+                precomputed_candidates=composed,
+            )
+        else:
+            candidates = []
+    else:
+        candidates = rank_candidates(
+            dishes=dishes,
+            user_pref=pref,
+            task_model=task_model,
+            user_address=eff_address,
+            search_radius_km=search_radius_km,
+            is_radius_expanded=is_radius_expanded,
+            top_k=4,
+            restaurants=search_res.get("restaurants"),
+        )
+
+    # VALIDATE layer: enforce hard constraints across all candidates
+    rejected_evidence = []
+    if task_obj:
+        valid_candidates, rejected = validate_candidates_list(candidates, task_obj, pref)
+        candidates = valid_candidates
+        rejected_evidence = rejected
+
+    # RE-PLAN layer: bounded execution loop (max 1 automatic retry)
+    # Diagnose structured failure, then EXECUTE the strategy if actionable.
+    replan_action = None
+    if len(candidates) == 0 and task_obj:
+        replan_action = diagnose_and_replan(
+            task=task_obj,
+            rejected_candidates=rejected_evidence,
+            current_radius_km=search_radius_km,
+            is_radius_expanded=is_radius_expanded,
+            dishes_retrieved_count=len(dishes)
+        )
+
+        # Execute actionable strategies automatically (bounded: 1 retry)
+        if replan_action and replan_action.strategy == "expand_radius" and not is_radius_expanded:
+            new_radius = replan_action.suggested_radius_km or 10.0
+            retry_res = search_with_radius_expansion(
+                user_address=eff_address,
+                keyword=keyword,
+                cuisine=cuisine,
+                max_price=eff_budget,
+                min_price=min_price,
+                spicy=spicy,
+                disliked_ingredients=eff_dislikes,
+                excluded_concepts=excluded_concepts,
+                initial_radius=new_radius,
+                max_radius=new_radius,
+                semantic_keywords=semantic_keywords,
+                secondary_keywords=secondary_keywords,
+            )
+            retry_dishes = retry_res["dishes"]
+            search_radius_km = retry_res["search_radius_km"]
+            is_radius_expanded = True  # Mark as expanded for downstream display
+
+            # Compose / Rank / Validate again on retry results
+            if task_obj and is_composed_order_request(task_obj):
+                retry_composed = compose_candidates(
+                    task=task_obj,
+                    dishes=retry_dishes,
+                    user_address=eff_address,
+                    user_pref=pref,
+                    restaurants=retry_res.get("restaurants"),
+                    search_radius_km=search_radius_km,
+                    is_radius_expanded=is_radius_expanded,
+                )
+                retry_candidates = rank_candidates(
+                    dishes=[],
+                    user_pref=pref,
+                    task_model=task_model,
+                    user_address=eff_address,
+                    search_radius_km=search_radius_km,
+                    is_radius_expanded=is_radius_expanded,
+                    top_k=4,
+                    precomputed_candidates=retry_composed,
+                ) if retry_composed else []
+            else:
+                retry_candidates = rank_candidates(
+                    dishes=retry_dishes,
+                    user_pref=pref,
+                    task_model=task_model,
+                    user_address=eff_address,
+                    search_radius_km=search_radius_km,
+                    is_radius_expanded=is_radius_expanded,
+                    top_k=4,
+                    restaurants=retry_res.get("restaurants"),
+                )
+
+            if task_obj:
+                retry_candidates, _ = validate_candidates_list(retry_candidates, task_obj, pref)
+
+            if retry_candidates:
+                # RE-PLAN succeeded: use expanded results, clear replan_action so UI shows normal cards
+                candidates = retry_candidates
+                replan_action = None  # Transparent auto-recovery; no banner needed
 
     formatted = format_recommendations_output(
         candidates=candidates,
         user_pref=pref,
         is_radius_expanded=is_radius_expanded,
-        user_address=eff_address
+        user_address=eff_address,
+        replan_action=replan_action,
     )
 
     return {
@@ -79,7 +208,8 @@ def tool_recommend_dishes_with_radius(
         "is_radius_expanded": is_radius_expanded,
         "radius_note": search_res["message"],
         "formatted_text": formatted,
-        "candidates": [c.model_dump() for c in candidates]
+        "candidates": [c.model_dump() for c in candidates],
+        "replan_action": replan_action.model_dump() if replan_action else None,
     }
 
 def tool_get_user_preferences(user_id: str) -> Dict[str, Any]:
@@ -233,7 +363,7 @@ OPENAI_TOOLS = [
                         "description": "The unique identifier of the user (e.g. 'user_01')"
                     }
                 },
-                "required": ["user_id", "task_model"]
+                "required": ["user_id"]
             }
         }
     },
@@ -392,7 +522,10 @@ TOOL_DISPATCHER = {
         excluded_concepts=args.get("excluded_concepts"),
         task_model=args.get("task_model"),
         initial_radius=args.get("initial_radius", 5.0),
-        max_radius=args.get("max_radius", 10.0)
+        max_radius=args.get("max_radius", 10.0),
+        semantic_keywords=args.get("semantic_keywords"),
+        secondary_keywords=args.get("secondary_keywords"),
+        composition_strategy=args.get("composition_strategy"),
     ),
     "search_restaurants": lambda args: tool_search_restaurants(
         location=args.get("location"),
