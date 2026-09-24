@@ -356,7 +356,7 @@ KEYWORD_SYNONYMS = {
     "com suon": ["com suon", "com tam", "suon"],
     "com": ["com", "rice"],
     "bun bo": ["bun bo", "bun bo hue"],
-    "bun cha": ["bun cha", "nem cua be"],
+    "bun cha": ["bun cha"],
     "pho": ["pho", "pho bo", "pho ga", "pho cuon", "pho tai"],
     "tokbokki": ["tokbokki", "topokki", "banh gao", "rice cake"],
     "mi cay": ["mi cay", "ramen", "mi"],
@@ -404,6 +404,26 @@ def _match_keyword(keyword: Optional[str], dish_name: str, dish_desc: str = "", 
         if not any(x in combined for x in ["xoi xeo", "xoi ga", "xoi chim", "xoi suon", "xoi thit", "xoi bap", "xoi ngo", "xoi man", "xoi pate", "xoi nep", "xoi vo"]):
             return False
 
+    # Disambiguation: "phô mai" (cheese) or "phố cổ / phố" (street) is not "phở" (noodle soup)
+    if norm_kw in ["pho", "pho bo", "pho ga", "pho tai"] and any(x in combined for x in ["pho mai", "pho co", "khu pho"]):
+        if not re.search(r'\b(pho bo|pho ga|pho tai|pho nam|pho xao|pho tron|pho cuon|quan pho|banh pho)\b', combined):
+            return False
+
+    # Disambiguation: "miền nam/bắc/trung" (region) is not "miến" (glass noodles)
+    if norm_kw in ["mien", "mien ga", "mien tron", "mien xao"] and any(r in combined for r in ["mien nam", "mien bac", "mien trung", "mien tay"]):
+        if not re.search(r'\b(mien ga|mien luon|mien tron|mien xao|mien mang|bat mien|to mien)\b', combined):
+            return False
+
+    # Disambiguation: "chảo / trên chảo" (frying pan) is not "cháo" (porridge)
+    if norm_kw in ["chao", "chao suon", "chao ga", "chao long"] and any(p in combined for p in ["tren chao", "chao bo", "chao nong", "chao gang"]):
+        if not re.search(r'\b(chao suon|chao ga|chao long|chao dinh duong|chao vit|chao ca|chao ngo|bat chao|to chao|quan chao)\b', combined):
+            return False
+
+    # Disambiguation: "cánh gà / cánh gián" (wing) is not "canh" (soup)
+    if norm_kw in ["canh", "bat canh", "to canh"] and any(c in combined for c in ["canh gian", "canh ga", "canh vit"]):
+        if not re.search(r'\b(canh chua|canh rong bien|canh kho qua|canh rau|canh thit|canh ngao|canh cua|canh bau|canh bi|canh kim chi|bat canh|to canh)\b', combined):
+            return False
+
     # Direct phrase match with word boundary
     kw_pattern = r'\b' + re.escape(norm_kw) + r'\b'
     if re.search(kw_pattern, combined):
@@ -411,12 +431,16 @@ def _match_keyword(keyword: Optional[str], dish_name: str, dish_desc: str = "", 
 
     # Check synonyms with word boundaries
     for key, syns in KEYWORD_SYNONYMS.items():
-        if norm_kw == key or norm_kw in syns:
+        if norm_kw == key:
             for s in syns:
                 s_pat = r'\b' + re.escape(s) + r'\b'
                 if re.search(s_pat, combined):
                     return True
-            # Predefined specific food concept: do not loosely split into words
+            return False
+        elif norm_kw in syns:
+            s_pat = r'\b' + re.escape(norm_kw) + r'\b'
+            if re.search(s_pat, combined):
+                return True
             return False
 
     # Multi-word match: all non-stopwords from query must be in text
@@ -472,6 +496,7 @@ def search_dishes(
     restaurant_id: Optional[str] = None,
     disliked_ingredients: Optional[List[str]] = None,
     excluded_concepts: Optional[List[str]] = None,
+    semantic_keywords: Optional[List[str]] = None,
     data_dir: str = DATA_DIR
 ) -> List[Dish]:
     dishes = load_menus(data_dir)
@@ -490,6 +515,9 @@ def search_dishes(
             continue
         if keyword and not _match_keyword(keyword, d.name, d.description, d.cuisine):
             continue
+        if not keyword and semantic_keywords:
+            if not any(_match_keyword(sk, d.name, d.description, d.cuisine) for sk in semantic_keywords):
+                continue
         if excluded_concepts and any(
             normalize_text(concept) in normalize_text(f"{d.name} {d.description} {d.category}")
             for concept in excluded_concepts
@@ -516,14 +544,17 @@ def search_with_radius_expansion(
     minimum_rating: Optional[float] = None,
     initial_radius: float = 5.0,
     max_radius: float = 10.0,
+    semantic_keywords: Optional[List[str]] = None,
+    secondary_keywords: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Search dishes and restaurants in two stages:
     1. First stage: scan within initial_radius (default 5.0 km)
     2. If fewer than 2 distinct recommendations are found, scale up to max_radius (10.0 km).
     """
-    # When keyword is specified, don't over-restrict restaurant list by cuisine initially
-    rest_cuisine_filter = None if keyword else cuisine
+    # When keyword or semantic_keywords is specified, don't over-restrict restaurant list by cuisine initially
+    has_dish_hint = bool(keyword or semantic_keywords)
+    rest_cuisine_filter = None if has_dish_hint else cuisine
 
     # Stage 1: Initial 5.0 km radius
     rests_5km = search_restaurants(
@@ -545,8 +576,18 @@ def search_with_radius_expansion(
             restaurant_id=r_id,
             disliked_ingredients=disliked_ingredients,
             excluded_concepts=excluded_concepts,
+            semantic_keywords=semantic_keywords,
         )
         dishes_5km.extend(matched)
+        if matched and secondary_keywords:
+            for sk in secondary_keywords:
+                sec_matched = search_dishes(
+                    keyword=sk,
+                    restaurant_id=r_id,
+                    disliked_ingredients=disliked_ingredients,
+                    excluded_concepts=excluded_concepts,
+                )
+                dishes_5km.extend(sec_matched)
 
     # Check if we have enough options in 5km (at least 2)
     if len(dishes_5km) >= 2:
@@ -578,11 +619,21 @@ def search_with_radius_expansion(
             restaurant_id=r_id,
             disliked_ingredients=disliked_ingredients,
             excluded_concepts=excluded_concepts,
+            semantic_keywords=semantic_keywords,
         )
         dishes_10km.extend(matched)
+        if matched and secondary_keywords:
+            for sk in secondary_keywords:
+                sec_matched = search_dishes(
+                    keyword=sk,
+                    restaurant_id=r_id,
+                    disliked_ingredients=disliked_ingredients,
+                    excluded_concepts=excluded_concepts,
+                )
+                dishes_10km.extend(sec_matched)
 
-    # If still fewer than 2 dishes, relax cuisine filter if keyword was given
-    if len(dishes_10km) < 2 and cuisine and keyword:
+    # If still fewer than 2 dishes, relax cuisine filter if dish hint was given
+    if len(dishes_10km) < 2 and cuisine and (keyword or semantic_keywords):
         for r_id in rest_ids_10km:
             matched = search_dishes(
                 keyword=keyword,
@@ -593,10 +644,36 @@ def search_with_radius_expansion(
                 restaurant_id=r_id,
                 disliked_ingredients=disliked_ingredients,
                 excluded_concepts=excluded_concepts,
+                semantic_keywords=semantic_keywords,
             )
+            dishes_10km.extend(matched)
+            if matched and secondary_keywords:
+                for sk in secondary_keywords:
+                    sec_matched = search_dishes(
+                        keyword=sk,
+                        restaurant_id=r_id,
+                        disliked_ingredients=disliked_ingredients,
+                        excluded_concepts=excluded_concepts,
+                    )
+                    dishes_10km.extend(sec_matched)
             for m in matched:
                 if m.id not in {d.id for d in dishes_10km}:
                     dishes_10km.append(m)
+
+    # If 0 dishes found in 10km and max_price was set, check if dishes exist without max_price
+    # so VALIDATE and RE-PLAN layers can detect budget_too_tight with structured evidence.
+    if len(dishes_10km) == 0 and max_price is not None and (keyword or semantic_keywords):
+        for r_id in rest_ids_10km:
+            unbudgeted = search_dishes(
+                keyword=keyword,
+                cuisine=cuisine,
+                max_price=None,
+                restaurant_id=r_id,
+                disliked_ingredients=disliked_ingredients,
+                excluded_concepts=excluded_concepts,
+                semantic_keywords=semantic_keywords,
+            )
+            dishes_10km.extend(unbudgeted)
 
     return {
         "dishes": dishes_10km,

@@ -31,7 +31,7 @@ class SemanticAttribute(BaseModel):
 
     text: str
     strength: Literal["hard", "soft"] = "soft"
-    target: Literal["object", "venue", "order"]
+    target: Literal["object", "order"]
 
 
 class Relationship(BaseModel):

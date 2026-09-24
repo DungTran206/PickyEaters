@@ -1,4 +1,4 @@
-﻿# PROJECT LOG — PickyEaters Food Agent
+# PROJECT LOG — PickyEaters Food Agent
 > **Bộ não thứ 2** — ghi lại mọi quyết định kiến trúc, cải tiến từng component, vấn đề tồn đọng và hướng tiếp theo.
 > Cập nhật sau mỗi sprint / session làm việc.
 
@@ -72,16 +72,18 @@ Pipeline: `UNDERSTAND → TaskModel → PLAN → ACT → OBSERVE → VALIDATE �
 #### Thay đổi thực hiện
 | File | Thay đổi |
 |------|----------|
-| `agent/understand.py` | Rewrite: thêm `understand_llm()` làm primary path; giữ regex làm fallback |
-| `agent/prompts.py` | Thêm `UNDERSTAND_SYSTEM_PROMPT` cho NLU |
+| `agent/understand.py` | Rewrite: thêm `_try_llm_understand()` làm primary path; giữ regex làm fallback |
+| `agent/prompts.py` | Thêm `UNDERSTAND_SYSTEM_PROMPT` cho NLU tiếng Việt |
+| `tests/test_understand.py` | 20 unit tests (LLM mocked + regex fallback) |
+| `scripts/repl_understand.py` | CLI REPL tương tác trực tiếp trên terminal để người dùng tự kiểm tra NLU |
+| `scripts/test_understand_manual.py` | Script test tự động với 12 test case mẫu |
 
 #### Contract đầu ra (không thay đổi)
 `understand(user_text, last_shown_candidates) -> TaskModel` — interface không đổi với `agent.py`.
 
-#### Kết quả mong đợi
-- "muốn ăn gì đó thanh thanh, không nhiều dầu mỡ" → `semantic_attributes` đúng.
-- "xôi sườn hay cơm tấm gì đó rẻ rẻ thôi" → `objects: [{concept: xôi sườn}, {concept: cơm tấm}]`.
-- "không muốn ăn cơm" → `excluded_concepts: [cơm]`, không có object nào là cơm.
+#### Công cụ tự kiểm tra trên Terminal:
+- Chạy: `python -m scripts.repl_understand`
+- Cho phép gõ câu tự do, xem phân tích trực quan hoặc xem raw JSON (gõ `:json`).
 
 ---
 
@@ -96,27 +98,248 @@ Pipeline: `UNDERSTAND → TaskModel → PLAN → ACT → OBSERVE → VALIDATE �
 
 ---
 
+### Session 4 — Tinh chỉnh UNDERSTAND theo nghiệp vụ Food Delivery
+**Date:** 2026-09-24
+
+#### Quyết định nghiệp vụ quan trọng từ User:
+1. **Bản chất hệ thống**: Đây là nền tảng **tư vấn đặt món ăn giao tận nơi (Food Delivery)** qua app (như ShopeeFood/GrabFood), KHÔNG phải tìm quán ăn tại chỗ.
+2. **Loại bỏ `venue`**: Target của `SemanticAttribute` chỉ còn 2 loại:
+   - `object`: Thuộc tính món ăn (thanh đạm, cay nhẹ, đồ nước, giòn tan, ít ngọt, nhiều đạm...).
+   - `order`: Thuộc tính đơn hàng / bữa ăn (ăn trưa nhanh, ăn xế, ăn đêm nhẹ bụng, no lâu, giải bia rượu...).
+   - Loại bỏ hoàn toàn các thuộc tính quán ngồi tại chỗ (như ngồi lâu, view đẹp, điều hoà).
+3. **Trọng tâm hiện tại**: Tiếp tục tập trung tối đa vào tầng **UNDERSTAND** để hiểu thật sâu và phân tích chuẩn xác ngôn ngữ người dùng Việt Nam khi đặt đồ ăn về. Tạm hoãn việc xây tầng validate dị ứng/ràng buộc cứng.
+4. **Fix Rate Limit Groq**: Đổi `max_tokens` từ 1024 về 500 để không vượt ngưỡng OTPM 1000 của Groq on-demand free tier.
+
+| File | Thay đổi |
+|------|----------|
+| `agent/task_model.py` | Đổi `target: Literal["object", "order"]` (loại bỏ `venue`) |
+| `agent/prompts.py` | Cập nhật system prompt định hình rõ trợ lý Food Delivery, chuẩn hóa quy tắc target `object` / `order` |
+| `agent/understand.py` | Loại bỏ `venue` khỏi fallback regex, hạ `max_tokens=500` tránh lỗi OTPM 1000 |
+| `tests/conftest.py` | Thêm mock API key để bảo đảm 51 unit tests chạy độc lập và không tốn quota |
+
+---
+
+### Session 5 — Nâng cấp tầng PLAN (Semantic Category Mapping & Multi-Object Decomposition)
+**Date:** 2026-09-24
+
+#### Thay đổi thực hiện:
+1. **Năng lực Ánh xạ Ngữ nghĩa (Semantic Category Mapping)**:
+   - Khi người dùng không nêu tên món cụ thể (`concept = None`) mà chỉ nói cảm tính (ví dụ: *"muốn ăn đồ nước"*, *"thanh đạm"*, *"ăn nhẹ"*, *"chắc bụng"*, *"ăn no"*):
+   - [agent/planner.py](file:///d:/dung/PickyEaters/agent/planner.py) tự động phân giải `semantic_attributes` thành danh mục các từ khóa món ăn (`semantic_keywords`: phở, bún, miến, cháo, súp...).
+   - [services/search.py](file:///d:/dung/PickyEaters/services/search.py) và [agent/tools.py](file:///d:/dung/PickyEaters/agent/tools.py) tiếp nhận `semantic_keywords` để lọc chuẩn xác món dạng nước, không còn bị trả về món khô hay cơm xôi ngẫu nhiên.
+2. **Khắc phục lỗi nhầm lẫn ngữ nghĩa ẩm thực (Vietnamese Food Disambiguation)**:
+   - `phở`: Không bị nhầm sang `phô mai` (cheese) hoặc `phố cổ` (street name).
+   - `miến`: Không bị nhầm sang `miền nam / miền bắc / miền tây` (địa lý).
+   - `cháo`: Không bị nhầm sang `chảo / trên chảo nóng` (dụng cụ nấu).
+   - `canh`: Không bị nhầm sang `cánh gà` / `màu cánh gián`.
+3. **Phân rã đơn nhiều món (Multi-Object Decomposition)**:
+   - Tách món chính (`keyword`) và món phụ/nước uống (`secondary_keywords`).
+   - Tự động nhận diện chiến lược giao hàng cùng quán (`composition_strategy: "same_restaurant"`).
+4. **Kiểm thử**:
+   - Tạo file unit test chuyên biệt [tests/test_planner.py](file:///d:/dung/PickyEaters/tests/test_planner.py) (7 tests).
+   - Toàn bộ suite **58/58 tests passed 100%**.
+
+| File | Thay đổi |
+|------|----------|
+| `agent/planner.py` | Viết lại logic lập kế hoạch: `resolve_semantic_keywords`, phân rã đa món, chiến lược gom đơn |
+| `services/search.py` | Hỗ trợ `semantic_keywords` trong `search_dishes` và `search_with_radius_expansion`; bổ sung disambiguation cho phở/miến/cháo/canh |
+| `agent/tools.py` | Cập nhật `tool_recommend_dishes_with_radius` nhận `semantic_keywords` & `secondary_keywords` |
+| `tests/test_planner.py` | Thêm 7 unit tests kiểm tra toàn diện tầng PLAN |
+
+---
+
+### Session 6 — Nâng cấp tầng RANK & RESPOND (Chấm điểm ngữ nghĩa & Giải thích minh bạch)
+**Date:** 2026-09-24
+
+#### Thay đổi thực hiện:
+1. **Chấm điểm ngữ nghĩa cảm tính (`semantic_score`)**:
+   - [services/recommendation.py](file:///d:/dung/PickyEaters/services/recommendation.py) bổ sung hàm `evaluate_semantic_match`:
+     - *"đồ nước / nước dùng"*: Thưởng +3.0 điểm cho phở/bún/miến/cháo có nước, phạt -2.0 nếu là món khô (cơm, xôi, bánh mì).
+     - *"thanh thanh / thanh đạm / nhẹ bụng"*: Thưởng +2.5 điểm cho món luộc, hấp, cháo, cuốn, canh; phạt -2.0 cho món mỡ ngấy (thịt kho, chiên giòn, xôi mỡ).
+     - *"ăn no / chắc bụng"*: Thưởng +2.5 điểm cho cơm, xôi, bún đậu, mì xào.
+     - *"cay nhẹ / hơi cay"*: Thưởng +2.0 điểm nếu món the cay êm dịu, không phạt nếu không cay gắt.
+     - *"ăn trưa nhanh / gọn nhẹ"*: Thưởng +1.5 điểm cho các món tiện lợi văn phòng.
+2. **Sinh lời giải thích minh bạch (Explainable Reasoning)**:
+   - Tầng **RESPOND** trích xuất lý do gợi ý trực tiếp vào từng thẻ món ăn:
+     `🍃 Chuẩn vị thanh đạm: thanh nhẹ dễ nuốt, êm bụng không gây ngấy`
+     hoặc `🍜 Chuẩn điệu món nước: nước dùng nóng hổi, xì xụp đậm đà giải ngấy`.
+3. **Kiểm thử tự động**:
+   - Tạo bộ unit test [tests/test_recommendation.py](file:///d:/dung/PickyEaters/tests/test_recommendation.py) (5 tests) kiểm tra toàn diện điểm ngữ nghĩa, đẩy món khớp cảm tính lên Top 1 và hiển thị giải thích.
+   - Toàn bộ test suite **63/63 tests passed 100%**.
+
+| File | Thay đổi |
+|------|----------|
+| `services/recommendation.py` | Thêm `evaluate_semantic_match`, trường `semantic_score`, bullet point cảm tính trong `generate_detailed_reasoning`, hỗ trợ lookup `restaurants` |
+| `tests/test_recommendation.py` | Tạo mới 5 unit tests kiểm thử logic xếp hạng cảm tính và giải thích |
+
+---
+
+---
+
+### Session 7 — Xây dựng tầng COMPOSE (Ghép đơn Combo đa món cùng quán & Xác thực ngân sách hậu kỳ)
+**Date:** 2026-09-24
+
+#### Thay đổi thực hiện:
+1. **Khởi tạo Module `agent/composer.py`**:
+   - `is_composed_order_request`: Nhận diện đơn yêu cầu nhiều món (`len(task.objects) > 1`) và có quan hệ `same_restaurant` / `same_order` hoặc có `role` là `Drink` / `Side`.
+   - `match_dish_to_task_object`: So khớp món ăn với đối tượng yêu cầu (theo concept, vai trò Role, và phân loại Category: Main/Drink/Side). Ngăn chặn việc gán nhầm món phụ/nước vào vai trò món chính.
+   - `compose_candidates`:
+     - Gom nhóm các món tìm kiếm được theo từng nhà hàng (`restaurant_id`).
+     - Chỉ tạo combo đối với những quán có đồng thời đầy đủ món chính và các món phụ/đồ uống yêu cầu.
+     - Tính tổng bill combo (`subtotal`), áp dụng voucher khuyến mãi tối ưu nhất trên toàn bộ đơn hàng.
+     - **Chỉ tính 1 lần phí ship duy nhất (`delivery_fee`)** cho cả combo từ cùng 1 quán thay vì nhân đôi.
+     - **Xác thực ngân sách hậu kỳ (Post-composition Budget Validation - Rule 8 trong AGENTS.md)**: Kiểm tra `subtotal` và `final_price` với `hard_constraints.price_max` trên tổng toàn đơn combo. Loại bỏ ngay những combo vượt ngân sách.
+2. **Nâng cấp `services/recommendation.py` & `agent/tools.py`**:
+   - `RecommendationCandidate` bổ sung trường `items: List[Dish]` để đại diện cho combo nhiều món (tương thích 100% với đơn 1 món).
+   - `format_recommendations_output`: Thiết kế giao diện thẻ Combo chuyên nghiệp:
+     - Tên combo: `Combo: [Món chính] + [Món phụ/Đồ uống] — [Tên quán]`
+     - Chi tiết từng món & giá niêm yết
+     - Tổng đơn, voucher tiết kiệm, phí ship chung 1 lần
+     - Lý do gợi ý: Tiết kiệm phí ship khi đặt cùng quán, đúng gu...
+   - `search_with_radius_expansion` tiếp nhận `secondary_keywords` để quét thêm các món phụ/đồ uống của các quán ứng viên.
+3. **Sửa lỗi ngầm (Bugfix) trong Synonym Matching**:
+   - Khắc phục lỗi trong `services/search.py`: Khi user tìm món cụ thể (như `phở bò`), synonym không còn bị mở rộng ngược về gốc `phở` làm khớp nhầm sang `quẩy giòn phở` hay `phở gà`.
+   - Xóa `nem cua bể` khỏi synonym của `bún chả`.
+4. **Kiểm thử tự động**:
+   - Tạo file unit test chuyên biệt [tests/test_composer.py](file:///d:/dung/PickyEaters/tests/test_composer.py) (6 tests).
+   - Toàn bộ test suite **69/69 tests passed 100%**.
+
+| File | Thay đổi |
+|------|----------|
+| `agent/composer.py` | Tạo mới module COMPOSE phụ trách ghép combo cùng quán và xác thực ngân sách hậu kỳ |
+| `database/models.py` | Thêm trường `items: List[Dish]` vào `RecommendationCandidate` |
+| `services/search.py` | Hỗ trợ `secondary_keywords` trong `search_with_radius_expansion`; fix synonym expansion |
+| `agent/tools.py` | Tích hợp `compose_candidates` trong `tool_recommend_dishes_with_radius` |
+| `services/recommendation.py` | Hỗ trợ `precomputed_candidates` trong `rank_candidates` và định dạng hiển thị combo trong `format_recommendations_output` |
+| `tests/test_composer.py` | Tạo mới 6 unit tests kiểm thử toàn diện tầng COMPOSE |
+
+---
+
+---
+
+### Session 8 — Xây dựng tầng VALIDATE độc lập & Tối ưu Chit-Chat
+**Date:** 2026-09-24
+
+#### Thay đổi thực hiện:
+1. **Khởi tạo Module `agent/validator.py`**:
+   - Tuân thủ nguyên tắc số 6 trong `AGENTS.md`: *"VALIDATE owns hard-constraint checking. Hard constraints must not be silently relaxed."*
+   - Cung cấp mô hình dữ liệu bằng chứng lỗi có cấu trúc:
+     - `ConstraintViolation`: Ghi rõ loại vi phạm (`price_max`, `price_min`, `spicy`, `ingredient_exclude`, `excluded_concept`), trường dữ liệu, thông điệp lỗi, giá trị thực tế của món vs. giá trị mong muốn của user.
+     - `ValidationResult`: Chứa boolean `is_valid` và danh sách vi phạm `violations`.
+   - `validate_candidate`: Kiểm tra từng candidate (món đơn hoặc combo) với tất cả các ràng buộc cứng:
+     - Ngân sách tối đa `price_max` (kiểm tra cả subtotal và final_price).
+     - Mức giá tối thiểu `price_min`.
+     - Độ cay `spicy` (phát hiện cả trường hợp user yêu cầu không cay nhưng món cay, hoặc yêu cầu món cay nhưng đơn không có món cay nào).
+     - Nguyên liệu kiêng `ingredient_excludes` (kết hợp cả từ `TaskModel` và durable `UserPreference`).
+     - Món cấm / loại trừ `excluded_concepts` (ví dụ: cấm ăn xôi / cơm).
+   - `validate_candidates_list`: Phân tách danh sách ứng viên thành `valid_candidates` và `rejected_candidates` kèm theo bằng chứng lỗi chi tiết — làm dữ liệu đầu vào có cấu trúc cho tầng **RE-PLAN**.
+2. **Tích hợp vào luồng thực thi `agent/tools.py`**:
+   - `tool_recommend_dishes_with_radius` kích hoạt `validate_candidates_list` để sàng lọc sạch sẽ mọi ứng viên trước khi chuyển sang tầng hiển thị/xếp hạng.
+3. **Tối ưu phản hồi cho câu hỏi ngoài lề (Chit-Chat)**:
+   - Khi người dùng nhập câu không liên quan ẩm thực (*"ngoài trời đang mưa hay nắng"*):
+     - `UNDERSTAND` phân loại chính xác `intent: "chit_chat"`, không sinh `objects` hay ràng buộc giả mạo.
+     - `PLAN` chặn hoàn toàn việc gọi search tools, tiết kiệm tài nguyên.
+     - `agent/agent.py`: Bổ sung `max_tokens=400` cho `chat.completions.create` để không bị vượt ngưỡng OTPM 1000 của Groq on-demand free tier.
+4. **Kiểm thử tự động**:
+   - Tạo file unit test chuyên biệt [tests/test_validator.py](file:///d:/dung/PickyEaters/tests/test_validator.py) (7 tests).
+   - Toàn bộ test suite **76/76 tests passed 100%**.
+
+| File | Thay đổi |
+|------|----------|
+| `agent/validator.py` | Tạo mới module VALIDATE độc lập kiểm tra hard constraints và sinh ConstraintViolation có cấu trúc |
+| `agent/tools.py` | Tích hợp `validate_candidates_list` trước khi định dạng và xếp hạng |
+| `agent/agent.py` | Đặt `max_tokens=400` tránh lỗi OTPM 1000 của Groq trong luồng hội thoại |
+| `tests/test_validator.py` | Tạo mới 7 unit tests kiểm thử toàn diện tầng VALIDATE |
+
+---
+
+### Session 9 (2026-09-24) — Tầng RE-PLAN Loop (Phản hồi thích ứng dựa trên bằng chứng lỗi có cấu trúc)
+
+1. **Triển khai kiến trúc RE-PLAN có cấu trúc (`agent/replan.py`)**:
+   - Tuân thủ nguyên tắc số 6 và số 7 trong `AGENTS.md`: *RE-PLAN là một bounded strategy loop, không fix cứng fallback 5km -> 10km, không âm thầm nới lỏng hard constraints mà phải dựa trên bằng chứng lỗi có cấu trúc.*
+   - Định nghĩa `ReplanAction` với các chiến lược thích ứng:
+     - `suggest_budget_adjustment`: Khi toàn bộ ứng viên bị loại vì vượt ngân sách (`price_max`), tìm mức giá sàn thấp nhất hiện có quanh khu vực để gợi ý nới ngân sách chính xác hoặc gợi ý món rẻ hơn thay thế (bánh mì, xôi, cháo...).
+     - `suggest_alternatives`: Khi toàn bộ ứng viên vi phạm kiêng kỵ nguyên liệu (`ingredient_exclude`), giải thích an toàn và đề xuất chuyển dòng món khác.
+     - `expand_radius`: Khi không tìm thấy quán nào trong 5km ban đầu, đề xuất mở rộng lên 10km.
+     - `suggest_combo_substitute`: Khi tìm combo cùng quán thất bại, đề xuất ưu tiên món chính rồi chọn nước có sẵn tại quán.
+     - `clarify_concept`: Hỏi rõ thêm sở thích khi không còn phương án khả dĩ trong 10km.
+2. **Tích hợp vào luồng thực thi & hiển thị (`agent/tools.py` & `services/recommendation.py`)**:
+   - `tool_recommend_dishes_with_radius`: Khi `len(candidates) == 0`, tự động kích hoạt `diagnose_and_replan(...)` dựa trên `rejected_candidates` từ tầng VALIDATE.
+   - `format_recommendations_output`: Định dạng banner chiến lược RE-PLAN (⚠️ **HỆ THỐNG ĐANG ĐIỀU CHỈNH KẾ HOẠCH (RE-PLAN)**) cực kỳ rõ ràng, trung thực, giải thích cặn kẽ nguyên nhân và đưa ra lời khuyên hành động.
+3. **Kiểm thử tự động**:
+   - Tạo bộ test độc lập [tests/test_replan.py](file:///d:/dung/PickyEaters/tests/test_replan.py) (4 tests).
+   - Toàn bộ test suite **80/80 tests passed 100%**.
+
+| File | Thay đổi |
+|------|----------|
+| `agent/replan.py` | Tạo mới module RE-PLAN chẩn đoán nguyên nhân thất bại và sinh ReplanAction |
+| `agent/tools.py` | Kích hoạt `diagnose_and_replan` khi không còn ứng viên hợp lệ sau VALIDATE |
+| `services/recommendation.py` | Hiển thị thông điệp chẩn đoán RE-PLAN thân thiện và minh bạch |
+| `tests/test_replan.py` | Tạo mới 4 unit tests kiểm thử các kịch bản Replan |
+
+---
+
 ## 📋 Component Status
 
 | Component | Layer | Status | Notes |
 |-----------|-------|--------|-------|
-| `understand.py` | UNDERSTAND | 🔧 In Progress | Migrating to LLM extraction |
-| `task_model.py` | Contract | ✅ Stable | Pydantic schema validated |
-| `planner.py` | PLAN | ✅ Basic | Translates TaskModel → tool args |
-| `tools.py` | ACT | ✅ Working | `recommend_dishes_with_radius` |
-| `services/search.py` | ACT | ✅ Fixed | Geocoding scoped, keyword boundary fixed |
-| `services/recommendation.py` | RANK | ✅ Working | Rating-based sort + diversity |
-| VALIDATE | VALIDATE | ❌ Missing | Hard constraint check not standalone |
-| RE-PLAN | RE-PLAN | ⚠️ Basic | Only radius expansion |
-| COMPOSE | COMPOSE | ❌ Missing | Multi-object orders not composed |
+| `understand.py` | UNDERSTAND | 🚀 Active | LLM Qwen-3.8-27b chuyên sâu Food Delivery |
+| `task_model.py` | Contract | ✅ Stable | Pydantic schema chuẩn (object/order) |
+| `planner.py` | PLAN | 🚀 Upgraded | Semantic Category Mapping + Multi-Object Strategy |
+| `tools.py` | ACT | 🚀 Upgraded | Nhận semantic_keywords & secondary_keywords |
+| `services/search.py` | ACT | 🚀 Upgraded | Disambiguation ngữ nghĩa ẩm thực sâu + Secondary retrieval |
+| `validator.py` | VALIDATE | 🚀 Upgraded | Kiểm tra hard constraints nghiêm ngặt + Sinh bằng chứng lỗi có cấu trúc |
+| `replan.py` | RE-PLAN | 🚀 Active | Bounded strategy loop chẩn đoán lỗi & phản hồi thích ứng |
+| `composer.py` | COMPOSE | 🚀 Upgraded | Ghép combo cùng quán + 1 lần phí ship + Validate ngân sách hậu kỳ |
+| `services/recommendation.py` | RANK & RESPOND | 🚀 Upgraded | Chấm điểm cảm tính + Định dạng thẻ combo siêu trực quan |
+
+---
+
+### Session 10 (2026-09-24) — Kiến trúc Refactor theo Code Review
+
+Thực hiện 6 fix ưu tiên cao từ Code Review chuyên sâu:
+
+1. **Bug Fix: OpenAI Tool Schema** — Xóa `task_model` khỏi `required` của `get_user_preferences`. Thêm test validate tất cả tool schemas.
+2. **Structured Output UNDERSTAND** — Bật `response_format=json_object`, fallback graceful, cải tiến `_parse_and_validate` (direct parse trước, regex chỉ là fallback).
+3. **Profile Budget Separation** — `eff_budget=None` khi user không nói giá. Search rộng, VALIDATE enforce `price_max` từ TaskModel.
+4. **Unified Orchestrator** — Xóa `_run_llm_loop()` (LLM tự do tool-calling). Thay bằng `_run_deterministic_pipeline()` duy nhất cho cả LLM và no-LLM mode. LLM chỉ được dùng tại UNDERSTAND + `_generate_llm_reply()`.
+5. **RE-PLAN Execution Loop** — `expand_radius` tự động chạy lại `search_with_radius_expansion` (bounded: 1 retry) thay vì chỉ thông báo.
+6. **Tests mới** — `tests/test_architecture_fixes.py` với **14 tests** cover toàn bộ fix trên.
+
+| File | Thay đổi |
+|------|----------|
+| `agent/agent.py` | Viết lại: unified deterministic orchestrator |
+| `agent/understand.py` | Structured Output + improved parse |
+| `agent/tools.py` | Schema bug fix, profile budget separation, RE-PLAN execution |
+| `tests/test_architecture_fixes.py` | Tạo mới 14 unit tests |
+
+**Tổng: 95/95 tests passed (100%)**
+
+---
+
+## 📋 Component Status
+
+| Component | Layer | Status | Notes |
+|-----------|-------|--------|-------|
+| `understand.py` | UNDERSTAND | 🚀 Upgraded | LLM + `response_format=json_object` + Regex Fallback |
+| `task_model.py` | Contract | ✅ Stable | Pydantic schema chuẩn (object/order) |
+| `agent.py` | Orchestrator | 🚀 Upgraded | **Unified Deterministic Pipeline** — LLM không còn tự do tool-calling |
+| `planner.py` | PLAN | 🚀 Upgraded | Semantic Category Mapping + Multi-Object Strategy |
+| `tools.py` | ACT | 🚀 Upgraded | Schema fixed, budget separation, RE-PLAN auto-execution |
+| `services/search.py` | ACT | 🚀 Upgraded | Disambiguation ngữ nghĩa ẩm thực sâu + Secondary retrieval |
+| `validator.py` | VALIDATE | 🚀 Upgraded | Hard constraints + Structured violation evidence |
+| `replan.py` | RE-PLAN | 🚀 Upgraded | Bounded execution loop — auto-retry expand_radius |
+| `composer.py` | COMPOSE | 🚀 Upgraded | Combo cùng quán + 1 lần phí ship + Budget post-composition |
+| `services/recommendation.py` | RANK & RESPOND | 🚀 Upgraded | Semantic scoring + Combo cards + RE-PLAN banner |
 
 ---
 
 ## 🔮 Next Priorities (Backlog)
 
-1. **[NOW] UNDERSTAND** — LLM structured extraction (current sprint)
-2. **[NEXT] VALIDATE** — Tách validate thành module riêng, enforce hard constraints explicitly
-3. **[NEXT] RE-PLAN** — Bounded replan loop: không chỉ mở rộng radius mà còn relax soft prefs
-4. **[LATER] COMPOSE** — Multi-object ordering với budget check sau composition
-5. **[LATER] Real geocoding** — Nominatim / Google Maps thay dummy coordinates
-6. **[LATER] Real data** — Scraper thực tế thay seed data tĩnh
+1. **Giao diện người dùng (Rich Web UI / Streamlit / Chat Prototype)**: Demo trực quan luồng pipeline đầy đủ.
+2. **Provenance & Freshness**: Bổ sung `data_source`, `crawled_at`, `confidence` vào `RecommendationCandidate`.
+3. **Session Store**: Tách session state ra khỏi biến global trong `api.py`, hỗ trợ multi-worker.
+4. **Fine-Tuning / SLM**: Gom log tương tác thành Dataset, fine-tune model 3B/7B chuyên biệt ẩm thực Việt.
+
+
+

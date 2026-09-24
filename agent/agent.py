@@ -1,13 +1,16 @@
 import json
+import logging
 import os
 from typing import Any, Dict, List, Optional
 from dotenv import load_dotenv
 from agent.prompts import FOOD_AGENT_SYSTEM_PROMPT
-from agent.tools import OPENAI_TOOLS, execute_tool
+from agent.tools import execute_tool
 from agent.understand import understand
 from agent.planner import plan_recommendation
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 
 class FoodAgent:
@@ -45,6 +48,7 @@ class FoodAgent:
         self.model = model or os.getenv("OPENAI_MODEL_NAME", default_model)
         self.force_mock = force_mock
 
+        # Conversation history kept for LLM reply-generation context only
         self.messages: List[Dict[str, Any]] = [
             {"role": "system", "content": FOOD_AGENT_SYSTEM_PROMPT}
         ]
@@ -59,7 +63,7 @@ class FoodAgent:
                 from openai import OpenAI
                 self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
             except Exception as e:
-                print(f"[Warning] Failed to initialize OpenAI client: {e}. Falling back to simulation mode.")
+                logger.warning("Failed to initialize OpenAI client: %s. Falling back to structured output.", e)
                 self.client = None
 
     def reset_conversation(self):
@@ -79,16 +83,27 @@ class FoodAgent:
     ) -> Dict[str, Any]:
         """
         Execute one conversational turn.
-        Optionally updates persistent name and address if provided.
-        Returns response, tool calls, and structured candidates.
+
+        Architecture guarantee (AGENTS.md):
+        Every turn goes through the SAME deterministic pipeline regardless of
+        whether a real LLM client is available:
+
+            UNDERSTAND → (TaskModel) → PLAN → ACT → COMPOSE → VALIDATE
+                → RE-PLAN (bounded) → RANK → RESPOND
+
+        The LLM (when available) is used ONLY in two places:
+          1. UNDERSTAND: to extract TaskModel from raw user text.
+          2. RESPOND: to compose a friendly reply wrapping structured output.
+
+        Tool routing is NEVER delegated to the LLM's free tool-calling choice.
         """
-        tool_call_logs = []
+        tool_call_logs: List[Dict[str, Any]] = []
         prior_candidates = self.last_candidates
         self.last_candidates = []
         self.last_search_radius_km = 5.0
         self.last_is_radius_expanded = False
 
-        # Update name and address in DB if provided
+        # ── Persist optional name / address updates ──────────────────────────
         if user_name:
             execute_tool("update_user_preference", {
                 "user_id": self.user_id,
@@ -102,22 +117,20 @@ class FoodAgent:
                 "value": user_address
             })
 
+        # ── UNDERSTAND ────────────────────────────────────────────────────────
         last_shown = [
             {"ordinal": str(index), "name": candidate.get("dish", {}).get("name", "")}
             for index, candidate in enumerate(prior_candidates, 1)
         ]
         task_model = understand(user_input, last_shown)
-        self.messages.append({
-            "role": "user",
-            "content": "TaskModel cho lượt hiện tại:\n" + json.dumps(task_model.model_dump(mode="json"), ensure_ascii=False),
-        })
 
-        if self.client:
-            final_text = self._run_llm_loop(tool_call_logs)
-        else:
-            final_text = self._run_mock_loop(task_model, tool_call_logs, user_address=user_address)
+        # ── Deterministic pipeline execution ─────────────────────────────────
+        final_text = self._run_deterministic_pipeline(task_model, tool_call_logs, user_address)
 
+        # ── Append to conversation history for LLM reply-generation context ──
+        self.messages.append({"role": "user", "content": user_input})
         self.messages.append({"role": "assistant", "content": final_text})
+
         return {
             "response": final_text,
             "task_model": task_model.model_dump(mode="json"),
@@ -127,89 +140,45 @@ class FoodAgent:
             "is_radius_expanded": self.last_is_radius_expanded,
         }
 
-    def _run_llm_loop(self, tool_call_logs: List[Dict[str, Any]], max_turns: int = 8) -> str:
-        """Execute real LLM tool-calling loop."""
-        for _ in range(max_turns):
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=self.messages,
-                tools=OPENAI_TOOLS,
-                tool_choice="auto"
-            )
-            msg = response.choices[0].message
+    # =========================================================================
+    # Unified pipeline — runs identically for LLM and no-LLM modes
+    # =========================================================================
 
-            if msg.tool_calls:
-                self.messages.append(msg.model_dump())
-                for call in msg.tool_calls:
-                    func_name = call.function.name
-                    try:
-                        func_args = json.loads(call.function.arguments)
-                    except Exception:
-                        func_args = {}
-
-                    try:
-                        result = execute_tool(func_name, func_args)
-                    except Exception as ex:
-                        result = {"error": str(ex)}
-
-                    # Capture candidates and radius info from tools
-                    if isinstance(result, dict) and "candidates" in result:
-                        self.last_candidates = result["candidates"]
-                        self.last_search_radius_km = result.get("search_radius_km", 5.0)
-                        self.last_is_radius_expanded = result.get("is_radius_expanded", False)
-
-                    tool_call_logs.append({
-                        "tool": func_name,
-                        "arguments": func_args,
-                        "result": result
-                    })
-
-                    self.messages.append({
-                        "role": "tool",
-                        "tool_call_id": call.id,
-                        "content": json.dumps(result, ensure_ascii=False)
-                    })
-            else:
-                return msg.content or ""
-
-        return "Tôi đã phân tích và tìm kiếm xong cho bạn rồi nè!"
-
-    def _run_mock_loop(
+    def _run_deterministic_pipeline(
         self,
         task_model: Any,
         tool_call_logs: List[Dict[str, Any]],
-        user_address: Optional[str] = None
+        user_address: Optional[str] = None,
     ) -> str:
         """
-        Deterministic autonomous fallback loop simulating LLM tool calls.
-        Executes actual tools sequentially and formats output according to instructions.
+        Single unified execution engine for ALL pipeline stages.
+
+        Both LLM-available and no-LLM modes run through this same path.
+        When self.client is available, the LLM generates the final reply text;
+        otherwise the structured formatted output is returned directly.
         """
+        # ── Step 1: Fetch profile (ACT – deterministic) ───────────────────────
         pref_args = {"user_id": self.user_id}
         pref = execute_tool("get_user_preferences", pref_args)
         tool_call_logs.append({"tool": "get_user_preferences", "arguments": pref_args, "result": pref})
         effective_address = user_address or pref.get("address") or "Cầu Giấy, Hà Nội"
+
+        # ── Step 2: Non-recommendation intents ───────────────────────────────
         if task_model.intent == "state_preference":
-            if task_model.ingredient_excludes:
-                pref_type, value = "disliked_ingredients", task_model.ingredient_excludes[0]
-            elif task_model.soft_preferences.cuisine_affinity:
-                pref_type, value = "preferred_cuisines", task_model.soft_preferences.cuisine_affinity[0]
-            elif task_model.hard_constraints.spicy is not None:
-                pref_type, value = "preferred_flavors", "spicy" if task_model.hard_constraints.spicy else "non-spicy"
-            else:
-                return "Đã ghi nhận sở thích của bạn."
-            args = {"user_id": self.user_id, "preference_type": pref_type, "value": value}
-            result = execute_tool("update_user_preference", args)
-            tool_call_logs.append({"tool": "update_user_preference", "arguments": args, "result": result})
-            return result.get("message", "Đã cập nhật sở thích.")
+            return self._handle_state_preference(task_model, tool_call_logs)
 
         if task_model.intent == "chit_chat":
-            return "Tao đây. Mày muốn tìm món gì?"
-        if task_model.intent == "provide_info":
-            return "Tao chưa có đủ ngữ cảnh để xác định quán hoặc món mày đang hỏi."
+            return self._respond_chit_chat(user_input=self.messages[-1].get("content", "") if self.messages else "")
 
+        if task_model.intent == "provide_info":
+            return "Tôi chưa có đủ ngữ cảnh để xác định quán hoặc món bạn đang hỏi."
+
+        # ── Step 3: PLAN ──────────────────────────────────────────────────────
         rec_args = plan_recommendation(task_model, self.user_id, effective_address, pref)
         if rec_args is None:
-            return "Tao chưa rõ mày đang muốn tìm món nào."
+            return "Tôi chưa rõ bạn đang muốn tìm món nào, bạn có thể nói cụ thể hơn không?"
+
+        # ── Step 4: ACT → COMPOSE → VALIDATE → RE-PLAN → RANK ─────────────
         rec_result = execute_tool("recommend_dishes_with_radius", rec_args)
         tool_call_logs.append({
             "tool": "recommend_dishes_with_radius",
@@ -221,4 +190,90 @@ class FoodAgent:
         self.last_search_radius_km = rec_result.get("search_radius_km", 5.0)
         self.last_is_radius_expanded = rec_result.get("is_radius_expanded", False)
 
-        return rec_result.get("formatted_text", "Đã tìm thấy món cho bạn!")
+        structured_output = rec_result.get("formatted_text", "Đã tìm thấy món cho bạn!")
+
+        # ── Step 5: RESPOND — LLM wraps the structured output (optional) ─────
+        if self.client:
+            return self._generate_llm_reply(structured_output)
+        return structured_output
+
+    # =========================================================================
+    # Intent-specific handlers
+    # =========================================================================
+
+    def _handle_state_preference(
+        self,
+        task_model: Any,
+        tool_call_logs: List[Dict[str, Any]],
+    ) -> str:
+        """Handle state_preference intent deterministically."""
+        if task_model.ingredient_excludes:
+            pref_type, value = "disliked_ingredients", task_model.ingredient_excludes[0]
+        elif task_model.soft_preferences.cuisine_affinity:
+            pref_type, value = "preferred_cuisines", task_model.soft_preferences.cuisine_affinity[0]
+        elif task_model.hard_constraints.spicy is not None:
+            pref_type, value = "preferred_flavors", "spicy" if task_model.hard_constraints.spicy else "non-spicy"
+        else:
+            return "Đã ghi nhận sở thích của bạn."
+        args = {"user_id": self.user_id, "preference_type": pref_type, "value": value}
+        result = execute_tool("update_user_preference", args)
+        tool_call_logs.append({"tool": "update_user_preference", "arguments": args, "result": result})
+        return result.get("message", "Đã cập nhật sở thích.")
+
+    def _respond_chit_chat(self, user_input: str = "") -> str:
+        """Return a short chit-chat reply. LLM can be used for natural variation."""
+        if self.client and user_input:
+            try:
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "Bạn là trợ lý tìm món ăn giao tận nơi. "
+                                "Hãy trả lời ngắn gọn, thân thiện khi người dùng nói chuyện ngoài lề, "
+                                "rồi khéo léo hỏi xem họ muốn ăn gì."
+                            ),
+                        },
+                        {"role": "user", "content": user_input},
+                    ],
+                    max_tokens=150,
+                    temperature=0.7,
+                )
+                return response.choices[0].message.content or "Tôi là trợ lý tìm món ăn. Bạn muốn ăn gì hôm nay?"
+            except Exception as exc:
+                logger.warning("[agent] chit_chat LLM call failed: %s", exc)
+        return "Tôi là trợ lý tìm món ăn. Bạn muốn ăn gì hôm nay nhỉ?"
+
+    def _generate_llm_reply(self, structured_output: str) -> str:
+        """
+        Use LLM to compose a friendly, natural-sounding reply that WRAPS
+        (not replaces) the structured output produced by the deterministic pipeline.
+
+        The LLM here acts as a RESPOND layer ONLY — it must not call tools or
+        invent facts. It receives the already-formatted recommendation text and
+        simply presents it in a conversational tone.
+        """
+        try:
+            wrap_prompt = (
+                "Dưới đây là kết quả từ hệ thống tìm kiếm món ăn (đã được tính toán và xác thực). "
+                "Hãy trình bày lại cho người dùng một cách tự nhiên, thân thiện, ngắn gọn. "
+                "KHÔNG thêm bất kỳ thông tin nào không có trong kết quả bên dưới. "
+                "KHÔNG tự tạo tên quán, giá, rating. Giữ nguyên các số liệu đã có.\n\n"
+                f"--- KẾT QUẢ ---\n{structured_output}"
+            )
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": FOOD_AGENT_SYSTEM_PROMPT},
+                    {"role": "user", "content": wrap_prompt},
+                ],
+                max_tokens=700,
+                temperature=0.3,
+            )
+            return response.choices[0].message.content or structured_output
+        except Exception as exc:
+            logger.warning(
+                "[agent] LLM reply generation failed (%s); using structured output directly.", exc
+            )
+            return structured_output

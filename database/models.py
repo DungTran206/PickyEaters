@@ -71,6 +71,7 @@ class RecommendationCandidate(BaseModel):
     dish: Dish
     restaurant: Restaurant
     pricing: PricingCalculation
+    items: List[Dish] = Field(default_factory=list)
     scores: Dict[str, float] = Field(default_factory=dict)
     total_score: float = 0.0
     explanation: str = ""
