@@ -85,7 +85,7 @@ class TestSemanticEvaluation:
         score, reasons = evaluate_semantic_match(spicy_dish, rest, [{"text": "cay nhẹ"}])
 
         assert score > 0
-        assert any("cay vừa phải" in r for r in reasons)
+        assert any("cay nhẹ" in r for r in reasons)
 
 
 class TestReasoningAndRanking:
@@ -106,7 +106,7 @@ class TestReasoningAndRanking:
             task_model=task_model,
         )
 
-        assert "Chuẩn vị thanh đạm" in reasoning
+        assert "thanh đạm" in reasoning
         assert "Cách bạn chỉ 1.5km" in reasoning
 
     def test_semantic_match_promotes_dish_to_top1(self):

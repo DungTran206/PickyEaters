@@ -1,16 +1,23 @@
 import json
 import logging
 import os
+import re
 from typing import Any, Dict, List, Optional
 from dotenv import load_dotenv
 from agent.prompts import FOOD_AGENT_SYSTEM_PROMPT
 from agent.tools import execute_tool
 from agent.understand import understand
 from agent.planner import plan_recommendation
+from agent.task_model import TaskModel
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+
+def _numbers(text: str) -> set:
+    """Numeric tokens in text, separators stripped ("15,000" and "15.000" -> "15000")."""
+    return {re.sub(r"[.,]", "", n) for n in re.findall(r"\d[\d.,]*\d|\d", text)}
 
 
 class FoodAgent:
@@ -53,9 +60,11 @@ class FoodAgent:
             {"role": "system", "content": FOOD_AGENT_SYSTEM_PROMPT}
         ]
 
+        # Session state (kept separate from the per-turn TaskModel):
+        # the options the user last saw and the effective task that produced them.
         self.last_candidates: List[Dict[str, Any]] = []
-        self.last_search_radius_km: float = 5.0
-        self.last_is_radius_expanded: bool = False
+        self.last_task: Optional[TaskModel] = None
+        self.shown_dish_ids: List[str] = []  # every dish shown in the current follow-up chain
 
         self.client = None
         if self.api_key and not self.force_mock:
@@ -72,8 +81,8 @@ class FoodAgent:
             {"role": "system", "content": FOOD_AGENT_SYSTEM_PROMPT}
         ]
         self.last_candidates = []
-        self.last_search_radius_km = 5.0
-        self.last_is_radius_expanded = False
+        self.last_task = None
+        self.shown_dish_ids = []
 
     def run(
         self,
@@ -99,9 +108,7 @@ class FoodAgent:
         """
         tool_call_logs: List[Dict[str, Any]] = []
         prior_candidates = self.last_candidates
-        self.last_candidates = []
-        self.last_search_radius_km = 5.0
-        self.last_is_radius_expanded = False
+        self._turn_result: Dict[str, Any] = {}
 
         # ── Persist optional name / address updates ──────────────────────────
         if user_name:
@@ -125,7 +132,9 @@ class FoodAgent:
         task_model = understand(user_input, last_shown)
 
         # ── Deterministic pipeline execution ─────────────────────────────────
-        final_text = self._run_deterministic_pipeline(task_model, tool_call_logs, user_address)
+        final_text = self._run_deterministic_pipeline(
+            task_model, tool_call_logs, user_address, user_input, prior_candidates
+        )
 
         # ── Append to conversation history for LLM reply-generation context ──
         self.messages.append({"role": "user", "content": user_input})
@@ -135,9 +144,9 @@ class FoodAgent:
             "response": final_text,
             "task_model": task_model.model_dump(mode="json"),
             "tool_calls": tool_call_logs,
-            "candidates": self.last_candidates,
-            "search_radius_km": self.last_search_radius_km,
-            "is_radius_expanded": self.last_is_radius_expanded,
+            "candidates": self._turn_result.get("candidates", []),
+            "search_radius_km": self._turn_result.get("search_radius_km", 5.0),
+            "is_radius_expanded": self._turn_result.get("is_radius_expanded", False),
         }
 
     # =========================================================================
@@ -149,6 +158,8 @@ class FoodAgent:
         task_model: Any,
         tool_call_logs: List[Dict[str, Any]],
         user_address: Optional[str] = None,
+        user_input: str = "",
+        prior_candidates: Optional[List[Dict[str, Any]]] = None,
     ) -> str:
         """
         Single unified execution engine for ALL pipeline stages.
@@ -168,13 +179,17 @@ class FoodAgent:
             return self._handle_state_preference(task_model, tool_call_logs)
 
         if task_model.intent == "chit_chat":
-            return self._respond_chit_chat(user_input=self.messages[-1].get("content", "") if self.messages else "")
+            return self._respond_chit_chat(user_input=user_input)
 
         if task_model.intent == "provide_info":
-            return "Tôi chưa có đủ ngữ cảnh để xác định quán hoặc món bạn đang hỏi."
+            return self._describe_referenced_candidate(task_model, prior_candidates or [])
 
         # ── Step 3: PLAN ──────────────────────────────────────────────────────
-        rec_args = plan_recommendation(task_model, self.user_id, effective_address, pref)
+        rec_args = plan_recommendation(
+            task_model, self.user_id, effective_address, pref,
+            previous_task=self.last_task, previous_candidates=prior_candidates,
+            shown_dish_ids=self.shown_dish_ids,
+        )
         if rec_args is None:
             return "Tôi chưa rõ bạn đang muốn tìm món nào, bạn có thể nói cụ thể hơn không?"
 
@@ -186,9 +201,20 @@ class FoodAgent:
             "result": rec_result
         })
 
-        self.last_candidates = rec_result.get("candidates", [])
-        self.last_search_radius_km = rec_result.get("search_radius_km", 5.0)
-        self.last_is_radius_expanded = rec_result.get("is_radius_expanded", False)
+        self._turn_result = rec_result
+        self.last_task = TaskModel.model_validate(rec_args["task_model"])
+        # Keep the previously shown options when nothing new was found,
+        # so "món số 1" / "rẻ hơn" still refer to what the user last saw.
+        if rec_result.get("candidates"):
+            self.last_candidates = rec_result["candidates"]
+        # A fresh request starts a new follow-up chain.
+        if task_model.follow_up is None or task_model.follow_up.type == "new_request":
+            self.shown_dish_ids = []
+        self.shown_dish_ids += [
+            item["id"]
+            for cand in rec_result.get("candidates", [])
+            for item in (cand.get("items") or [cand["dish"]])
+        ]
 
         structured_output = rec_result.get("formatted_text", "Đã tìm thấy món cho bạn!")
 
@@ -219,6 +245,36 @@ class FoodAgent:
         result = execute_tool("update_user_preference", args)
         tool_call_logs.append({"tool": "update_user_preference", "arguments": args, "result": result})
         return result.get("message", "Đã cập nhật sở thích.")
+
+    @staticmethod
+    def _describe_referenced_candidate(
+        task_model: TaskModel, prior_candidates: List[Dict[str, Any]]
+    ) -> str:
+        """Answer an info question about a shown option using only its structured data."""
+        ref = task_model.context.conversation_ref
+        if not (ref and ref.isdigit() and 0 < int(ref) <= len(prior_candidates)):
+            return "Tôi chưa có đủ ngữ cảnh để xác định quán hoặc món bạn đang hỏi."
+
+        cand = prior_candidates[int(ref) - 1]
+        dish, rest, pricing = cand["dish"], cand["restaurant"], cand["pricing"]
+        items = cand.get("items") or [dish]
+        lines = [f"**Món số {ref}: {' + '.join(i['name'] for i in items)} — {rest['name']}**"]
+        for item in items:
+            if item.get("description"):
+                lines.append(f"- {item['name']}: {item['description']}")
+        lines.append(
+            f"- 💵 Giá thực tế: {pricing['final_price']:,}đ "
+            f"(món {pricing['original_price']:,}đ, "
+            f"{'ship ước tính' if 'delivery_fee' in rest.get('estimated_fields', []) else 'ship'} "
+            f"{pricing['delivery_fee']:,}đ)"
+        )
+        if rest.get("address"):
+            lines.append(f"- 🏠 Địa chỉ quán: {rest['address']}")
+        if rest.get("open_hours"):
+            lines.append(f"- 🕒 Giờ mở cửa (theo dữ liệu quán): {rest['open_hours']}")
+        rating = f"⭐ {rest['rating']} trên {rest['platform']}" if rest.get("rating") is not None else "chưa có đánh giá"
+        lines.append(f"- 📍 Khoảng cách: {rest['distance_km']} km | {rating}")
+        return "\n".join(lines)
 
     def _respond_chit_chat(self, user_input: str = "") -> str:
         """Return a short chit-chat reply. LLM can be used for natural variation."""
@@ -271,7 +327,17 @@ class FoodAgent:
                 max_tokens=700,
                 temperature=0.3,
             )
-            return response.choices[0].message.content or structured_output
+            reply = response.choices[0].message.content or ""
+            if not reply:
+                return structured_output
+            invented = _numbers(reply) - _numbers(structured_output)
+            if invented:
+                logger.warning(
+                    "[agent] LLM reply contains numbers not in verified output %s; using structured output.",
+                    sorted(invented),
+                )
+                return structured_output
+            return reply
         except Exception as exc:
             logger.warning(
                 "[agent] LLM reply generation failed (%s); using structured output directly.", exc

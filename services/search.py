@@ -58,6 +58,17 @@ def normalize_text(text: str) -> str:
     return stripped.strip()
 
 
+def mentions_concept(concept: str, text: str) -> bool:
+    """True if `concept` appears in `text` as whole words (diacritic-insensitive).
+
+    Whole-word matching keeps "gà" from matching "ngậy"/"bánh gạo" and "cơm" from "combo".
+    """
+    norm_concept = normalize_text(concept)
+    if not norm_concept:
+        return False
+    return re.search(r"\b" + re.escape(norm_concept) + r"\b", normalize_text(text)) is not None
+
+
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Calculate distance in kilometers between two GPS coordinates using Haversine formula."""
     R = 6371.0  # Earth radius in km
@@ -150,11 +161,79 @@ def calculate_distance_km(user_address: str, restaurant_address: str, default_km
 # Data Loading & Enrichment (Local DB + Crawled Browser PoC)
 # ---------------------------------------------------------------------------
 
-def _load_crawled_data() -> Tuple[List[Restaurant], List[Dish], List[Promotion]]:
-    """Load and convert real crawled data from GrabFood and ShopeeFood."""
+# Crawled records often lack a delivery fee / delivery time. We keep a clearly-labelled
+# estimate so a total price can be computed, and record it in Restaurant.estimated_fields.
+ESTIMATED_DELIVERY_FEE = 15000
+ESTIMATED_DELIVERY_MINS = 20
+
+
+def _district_from_address(address: str) -> str:
+    """The address segment naming a known district (source text), or "" if none."""
+    for part in address.split(","):
+        if any(key in normalize_text(part) for key in DISTRICT_COORDINATES):
+            return part.strip()
+    return ""
+
+
+def _crawled_restaurant(r: Dict[str, Any], platform: str, r_id: str) -> Optional[Restaurant]:
+    """Convert one crawled record, using only source values.
+
+    - No address / address we cannot locate → skipped (distance and delivery area unknown).
+    - Missing or out-of-range rating → None (never a made-up rating).
+    - Missing delivery fee / time → labelled estimate in estimated_fields.
+    - Missing cuisine → name-based guess, labelled as estimated.
+    """
+    address = (r.get("address") or "").strip()
+    if not address or get_address_coordinates(address) is None:
+        return None
+
+    name = r.get("restaurant_name") or r.get("name") or ""
+    if not name:
+        return None
+
+    raw_rating = r.get("rating")
+    rating = float(raw_rating) if raw_rating is not None and 1.0 <= float(raw_rating) <= 5.0 else None
+
+    estimated: List[str] = []
+    delivery_fee = r.get("delivery_fee")
+    if delivery_fee is None:
+        delivery_fee = ESTIMATED_DELIVERY_FEE
+        estimated.append("delivery_fee")
+    delivery_mins = r.get("delivery_time_mins")
+    if delivery_mins is None:
+        delivery_mins = ESTIMATED_DELIVERY_MINS
+        estimated.append("delivery_time_mins")
+    cuisine = r.get("cuisine")
+    if not cuisine:
+        lowered = name.lower()
+        cuisine = "Fast Food" if "burger" in lowered or "chicken" in lowered else "Vietnamese"
+        estimated.append("cuisine")
+
+    return Restaurant(
+        id=r_id,
+        name=name,
+        cuisine=cuisine,
+        rating=rating,
+        # Recomputed from the address at query time; only used if the user's address can't be located.
+        distance_km=float(r.get("distance_km") or 2.0),
+        delivery_fee=int(delivery_fee),
+        district=_district_from_address(address),
+        platform=platform,
+        delivery_time_mins=int(delivery_mins),
+        address=address,
+        open_hours=r.get("open_hours") or "",
+        estimated_fields=estimated,
+    )
+
+
+def _load_crawled_data() -> Tuple[List[Restaurant], List[Dish]]:
+    """Load crawled GrabFood/ShopeeFood data without inventing missing facts.
+
+    Promotion text such as "Flash Sale" carries no amount or conditions, so no
+    Promotion objects are created from it.
+    """
     crawled_restaurants: List[Restaurant] = []
     crawled_menus: List[Dish] = []
-    crawled_promos: List[Promotion] = []
 
     files = [
         (os.path.join(POC_RESULTS_DIR, "shopeefood.json"), "ShopeeFood", "sf"),
@@ -168,67 +247,41 @@ def _load_crawled_data() -> Tuple[List[Restaurant], List[Dish], List[Promotion]]
         try:
             with open(fpath, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            rests = data.get("restaurants", [])
-            for idx, r in enumerate(rests):
+            skipped = 0
+            for idx, r in enumerate(data.get("restaurants", [])):
                 r_id = f"{prefix}_rest_{idx+1}"
-                name = r.get("restaurant_name") or f"Quán {platform} #{idx+1}"
-                address = r.get("address") or ("Cầu Giấy, Hà Nội" if idx == 0 else "Ba Đình, Hà Nội")
-                rating = float(r.get("rating") or 4.7)
-
-                rest_obj = Restaurant(
-                    id=r_id,
-                    name=name,
-                    cuisine="Fast Food" if "burger" in name.lower() or "chicken" in name.lower() else "Vietnamese",
-                    rating=rating,
-                    distance_km=2.0,
-                    delivery_fee=15000,
-                    district="Cầu Giấy" if "cầu giấy" in address.lower() else "Ba Đình",
-                    platform=platform,
-                    delivery_time_mins=20,
-                    address=address,
-                    open_hours="08:00 - 22:00"
-                )
+                rest_obj = _crawled_restaurant(r, platform, r_id)
+                if rest_obj is None:
+                    skipped += 1
+                    continue
                 crawled_restaurants.append(rest_obj)
 
-                # Promotion
-                if r.get("promotion"):
-                    promo_obj = Promotion(
-                        id=f"promo_{r_id}",
-                        restaurant_id=r_id,
-                        code="FLASH_SALE" if "flash" in str(r.get("promotion")).lower() else "DEAL_HOT",
-                        type="discount",
-                        value=15000,
-                        max_discount=30000,
-                        minimum_order=50000,
-                        description=str(r.get("promotion"))
-                    )
-                    crawled_promos.append(promo_obj)
-
-                # Menu dishes
-                menu = r.get("menu", [])
-                for d_idx, d in enumerate(menu):
-                    dish_id = f"{r_id}_d_{d_idx+1}"
+                for d_idx, d in enumerate(r.get("menu", [])):
                     dish_name = d.get("dish_name", "")
-                    price = int(d.get("dish_price") or 65000)
+                    price = d.get("dish_price")
+                    if not dish_name or price is None:
+                        continue  # no invented prices
                     desc = d.get("description") or ""
                     is_spicy = bool("cay" in dish_name.lower() or "chili" in desc.lower() or "spicy" in desc.lower() or "sốt cay" in desc.lower())
-
-                    dish_obj = Dish(
-                        id=dish_id,
+                    crawled_menus.append(Dish(
+                        id=f"{r_id}_d_{d_idx+1}",
                         restaurant_id=r_id,
                         name=dish_name,
-                        price=price,
+                        price=int(price),
                         spicy=is_spicy,
                         cuisine=rest_obj.cuisine,
                         category="Main",
+                        # No ingredient list in the crawl: derived from the description text.
                         ingredients=[w for w in desc.split(",") if len(w.strip()) > 2],
-                        description=desc
-                    )
-                    crawled_menus.append(dish_obj)
+                        ingredients_source="description",
+                        description=desc,
+                    ))
+            if skipped:
+                print(f"[Search] Skipped {skipped} crawled restaurants without a locatable address in {os.path.basename(fpath)}")
         except Exception as e:
             print(f"[Search] Warning loading crawled data from {fpath}: {e}")
 
-    return crawled_restaurants, crawled_menus, crawled_promos
+    return crawled_restaurants, crawled_menus
 
 
 def load_restaurants(data_dir: str = DATA_DIR, reload: bool = False) -> List[Restaurant]:
@@ -240,7 +293,7 @@ def load_restaurants(data_dir: str = DATA_DIR, reload: bool = False) -> List[Res
             base_restaurants = [Restaurant(**r) for r in data]
 
         # Merge with real crawled restaurants
-        crawled_rests, _, _ = _load_crawled_data()
+        crawled_rests, _ = _load_crawled_data()
         existing_names = {normalize_text(r.name) for r in base_restaurants}
         for cr in crawled_rests:
             if normalize_text(cr.name) not in existing_names:
@@ -260,7 +313,7 @@ def load_menus(data_dir: str = DATA_DIR, reload: bool = False) -> List[Dish]:
             base_menus = [Dish(**d) for d in data]
 
         # Merge with crawled dishes
-        _, crawled_dishes, _ = _load_crawled_data()
+        _, crawled_dishes = _load_crawled_data()
         existing_dish_ids = {d.id for d in base_menus}
         for cd in crawled_dishes:
             if cd.id not in existing_dish_ids:
@@ -277,16 +330,7 @@ def load_promotions(data_dir: str = DATA_DIR, reload: bool = False) -> List[Prom
         file_path = os.path.join(data_dir, "promotions.json")
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-            base_promos = [Promotion(**p) for p in data]
-
-        _, _, crawled_promos = _load_crawled_data()
-        existing_promo_ids = {p.id for p in base_promos}
-        for cp in crawled_promos:
-            if cp.id not in existing_promo_ids:
-                base_promos.append(cp)
-                existing_promo_ids.add(cp.id)
-
-        _PROMOTIONS_CACHE = base_promos
+            _PROMOTIONS_CACHE = [Promotion(**p) for p in data]
     return _PROMOTIONS_CACHE
 
 
@@ -476,14 +520,14 @@ def search_restaurants(
 
         if radius_km is not None and r_copy.distance_km > radius_km:
             continue
-        if minimum_rating is not None and r_copy.rating < minimum_rating:
+        if minimum_rating is not None and (r_copy.rating is None or r_copy.rating < minimum_rating):
             continue
         if cuisine and not _match_cuisine(cuisine, r_copy.cuisine, r_copy.name):
             continue
 
         results.append(r_copy)
 
-    results.sort(key=lambda x: (x.distance_km, -x.rating))
+    results.sort(key=lambda x: (x.distance_km, -(x.rating or 0.0)))
     return results
 
 
@@ -519,7 +563,7 @@ def search_dishes(
             if not any(_match_keyword(sk, d.name, d.description, d.cuisine) for sk in semantic_keywords):
                 continue
         if excluded_concepts and any(
-            normalize_text(concept) in normalize_text(f"{d.name} {d.description} {d.category}")
+            mentions_concept(concept, f"{d.name} {d.description} {d.category}")
             for concept in excluded_concepts
         ):
             continue

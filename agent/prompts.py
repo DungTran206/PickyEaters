@@ -82,7 +82,8 @@ Nhiệm vụ DUY NHẤT của bạn: phân tích một câu/đoạn tiếng Vi�
 
 ### Follow-up
 - "rẻ hơn" → refine + reason: lower_price + priority_order: ["price"]
-- "đắt quá", "tìm cái khác" → reject_previous
+- "đắt quá" → reject_previous + reason: too_expensive
+- "tìm cái khác", "món khác đi" → reject_previous + reason: null
 - "thôi tìm X khác đi" → new_request
 - Tham chiếu ("món số 2", "cái này") → conversation_ref
 

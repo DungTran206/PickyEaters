@@ -55,16 +55,99 @@ def resolve_semantic_keywords(task: TaskModel) -> List[str]:
     return keywords
 
 
+PRICE_FOLLOW_UP_REASONS = {"lower_price", "too_expensive"}
+
+
+def merge_follow_up(task: TaskModel, previous: Optional[TaskModel]) -> TaskModel:
+    """Carry the previous request forward when the user refines or rejects it.
+
+    "rẻ hơn đi" has no objects of its own; it means "the same request, cheaper".
+    Current explicit values win; exclusions accumulate; new_request starts fresh.
+    """
+    if previous is None or task.follow_up is None or task.follow_up.type == "new_request":
+        return task
+
+    merged = previous.model_copy(deep=True)
+    merged.intent = task.intent
+    merged.follow_up = task.follow_up
+    if task.objects:
+        merged.objects = task.objects
+        merged.relationships = task.relationships
+        merged.semantic_attributes = task.semantic_attributes
+    else:
+        seen = {a.text for a in merged.semantic_attributes}
+        merged.semantic_attributes += [a for a in task.semantic_attributes if a.text not in seen]
+
+    current = task.hard_constraints
+    if current.price_min is not None or current.price_max is not None:
+        merged.hard_constraints.price_min = current.price_min
+        merged.hard_constraints.price_max = current.price_max
+    if current.spicy is not None:
+        merged.hard_constraints.spicy = current.spicy
+
+    merged.ingredient_excludes = list(dict.fromkeys(merged.ingredient_excludes + task.ingredient_excludes))
+    merged.excluded_concepts = list(dict.fromkeys(merged.excluded_concepts + task.excluded_concepts))
+    if task.soft_preferences.cuisine_affinity:
+        merged.soft_preferences.cuisine_affinity = task.soft_preferences.cuisine_affinity
+    merged.soft_preferences.priority_order = list(dict.fromkeys(
+        task.soft_preferences.priority_order + merged.soft_preferences.priority_order
+    ))
+    # party_size defaults to 1, so only an explicit different value overrides the previous turn.
+    if task.context.party_size != 1:
+        merged.context.party_size = task.context.party_size
+    merged.context.conversation_ref = task.context.conversation_ref
+    return TaskModel.model_validate(merged.model_dump())
+
+
+def follow_up_constraints(
+    task: TaskModel,
+    previous_candidates: List[Dict[str, Any]],
+    shown_dish_ids: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Derive request-scoped constraints from follow_up + the previously shown candidates.
+
+    - reject_previous → do not show again any dish shown so far in this follow-up chain
+      (shown_dish_ids) or in the last results.
+    - price-related reason → cheaper (final price incl. ship) than the referenced option:
+      the one named by conversation_ref, otherwise the first one shown.
+    """
+    follow_up = task.follow_up
+    if not follow_up or follow_up.type == "new_request" or not previous_candidates:
+        return {}
+
+    constraints: Dict[str, Any] = {}
+    if follow_up.type == "reject_previous":
+        last_shown = [
+            item["id"]
+            for cand in previous_candidates
+            for item in (cand.get("items") or [cand["dish"]])
+        ]
+        constraints["exclude_dish_ids"] = list(dict.fromkeys((shown_dish_ids or []) + last_shown))
+    if follow_up.reason in PRICE_FOLLOW_UP_REASONS:
+        ref = task.context.conversation_ref
+        index = int(ref) - 1 if ref and ref.isdigit() and 0 < int(ref) <= len(previous_candidates) else 0
+        constraints["max_final_price"] = previous_candidates[index]["pricing"]["final_price"] - 1
+    return constraints
+
+
 def plan_recommendation(
     task: TaskModel,
     user_id: str,
     user_address: Optional[str] = None,
     profile: Optional[Dict[str, Any]] = None,
+    previous_task: Optional[TaskModel] = None,
+    previous_candidates: Optional[List[Dict[str, Any]]] = None,
+    shown_dish_ids: Optional[List[str]] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Translate a validated TaskModel and available profile into action arguments."""
+    """Translate a validated TaskModel, session state and profile into action arguments.
+
+    Session state (previous_task / previous_candidates) is only used to resolve follow-ups;
+    the returned "task_model" is the effective task after merging.
+    """
     if task.intent != "request_recommendation":
         return None
     profile = profile or {}
+    task = merge_follow_up(task, previous_task)
 
     # Extract primary concept from Main object
     primary_concept = next((obj.concept for obj in task.objects if obj.concept and obj.role == "Main"), None)
@@ -105,4 +188,5 @@ def plan_recommendation(
         "initial_radius": profile.get("preferred_distance") or 5.0,
         "max_radius": max(profile.get("preferred_distance") or 5.0, 10.0),
         "task_model": task.model_dump(mode="json"),
+        **follow_up_constraints(task, previous_candidates or [], shown_dish_ids),
     }

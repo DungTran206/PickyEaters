@@ -382,16 +382,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Pricing
       const finalPrice    = pricing.final_price    || dish.price || 0;
-      const originalPrice = pricing.original_price || dish.price || 0;
       const savings       = pricing.savings        || 0;
+      // Price before the discount, on the same basis as finalPrice (dishes + ship)
+      const originalPrice = finalPrice + savings;
 
       // Distance
       const dist        = rest.distance_km || 0;
-      const isWithin5km = dist <= 5.0;
-      const distClass   = isWithin5km ? 'within-5km' : 'expanded-10km';
-      const distLabel   = isWithin5km
-        ? `📍 ${dist} km (trong 5km)`
-        : `🚀 ${dist} km (mở rộng 10km)`;
+      const expanded    = cand.is_radius_expanded === true;
+      const distClass   = expanded ? 'expanded-10km' : 'within-5km';
+      const distLabel   = expanded
+        ? `🚀 ${dist} km (đã mở rộng bán kính lên ${cand.search_radius_km} km)`
+        : `📍 ${dist} km`;
 
       const isSpicy = dish.spicy || false;
 
@@ -411,10 +412,11 @@ document.addEventListener('DOMContentLoaded', () => {
         reasoningPoints = [
           `🎯 Khớp gu: ${dish.name}`,
           `📍 Khoảng cách: ${dist} km từ vị trí của bạn`,
-          `💵 Giá cả hợp lý: ${finalPrice.toLocaleString('vi-VN')}đ`
+          `💵 Giá: ${finalPrice.toLocaleString('vi-VN')}đ`
         ];
       }
 
+      const estimated = rest.estimated_fields || [];
       const rankClass = rank === 1 ? 'rank-1' : '';
       const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
 
@@ -446,10 +448,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
           <div class="rec-meta-tags">
             <span class="meta-pill dist ${distClass}">${distLabel}</span>
-            <span class="meta-pill rating">⭐ ${rest.rating || 4.5}</span>
+            <span class="meta-pill rating">${rest.rating != null ? '⭐ ' + rest.rating : 'Chưa có đánh giá'}</span>
             <span class="meta-pill ${isSpicy ? 'spicy' : 'non-spicy'}">${isSpicy ? '🌶️ Có cay' : '🌱 Không cay'}</span>
             ${pricing.applied_promotion_code ? `<span class="meta-pill deal">🔥 Mã: ${escapeHtml(pricing.applied_promotion_code)}</span>` : ''}
-            <span class="meta-pill dist">⏱️ ~${rest.delivery_time_mins || 20} phút</span>
+            ${rest.delivery_time_mins && !estimated.includes('delivery_time_mins') ? `<span class="meta-pill dist">⏱️ ~${rest.delivery_time_mins} phút</span>` : ''}
           </div>
 
           <!-- AI Reasoning Box -->

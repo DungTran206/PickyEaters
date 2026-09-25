@@ -23,7 +23,7 @@ class Restaurant(BaseModel):
     id: str
     name: str
     cuisine: str
-    rating: float
+    rating: Optional[float] = None  # None = source has no (valid) rating
     distance_km: float
     delivery_fee: int
     district: str = "Cầu Giấy"
@@ -31,6 +31,9 @@ class Restaurant(BaseModel):
     delivery_time_mins: int = 20
     address: str = ""
     open_hours: str = ""
+    # Fields holding a placeholder/estimate instead of source data (e.g. crawled restaurants
+    # without a delivery fee). RESPOND must label or omit these; never state them as fact.
+    estimated_fields: List[str] = Field(default_factory=list)
 
 
 class Dish(BaseModel):
@@ -42,6 +45,8 @@ class Dish(BaseModel):
     cuisine: str = "Vietnamese"
     category: str = "Main"
     ingredients: List[str] = Field(default_factory=list)
+    # "menu" = real ingredient list; "description" = derived from the dish description text
+    ingredients_source: str = "menu"
     description: str = ""
 
 
@@ -72,6 +77,7 @@ class RecommendationCandidate(BaseModel):
     restaurant: Restaurant
     pricing: PricingCalculation
     items: List[Dish] = Field(default_factory=list)
+    quantity: int = 1  # portions of each item (TaskModel.context.party_size); pricing covers all portions
     scores: Dict[str, float] = Field(default_factory=dict)
     total_score: float = 0.0
     explanation: str = ""

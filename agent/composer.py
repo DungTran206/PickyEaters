@@ -150,8 +150,9 @@ def compose_candidates(
         selected_secondaries = [m_list[0] for m_list in matched_secondaries_per_obj if m_list]
         combo_items = [best_main] + selected_secondaries
 
-        # Calculate combo pricing
-        subtotal = sum(item.price for item in combo_items)
+        # Calculate combo pricing: one portion of each item per person, one delivery fee
+        quantity = task.context.party_size
+        subtotal = sum(item.price for item in combo_items) * quantity
         available_promos = get_promotions(r_id)
         best_promo = None
         best_savings = 0
@@ -188,6 +189,7 @@ def compose_candidates(
             restaurant=rest,
             pricing=best_calc,
             items=combo_items,
+            quantity=quantity,
             search_radius_km=search_radius_km,
             is_radius_expanded=is_radius_expanded,
             explanation=f"Combo {names_str} tại {rest.name}"

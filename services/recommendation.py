@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict, Any, Tuple
 from database.models import Dish, Restaurant, UserPreference, RecommendationCandidate, PricingCalculation
 from services.pricing import calculate_final_price
-from services.search import get_restaurant_by_id, get_promotions, is_ingredient_disliked, normalize_text
+from services.search import get_restaurant_by_id, get_promotions, is_ingredient_disliked, mentions_concept, normalize_text
 
 
 def evaluate_semantic_match(
@@ -10,7 +10,10 @@ def evaluate_semantic_match(
     semantic_attrs: List[Any]
 ) -> Tuple[float, List[str]]:
     """
-    Score dish against qualitative semantic attributes and generate persuasive Vietnamese explanations.
+    Score dish against qualitative semantic attributes.
+
+    Reasons say which requested attribute matched and on what basis (dish name/description
+    keywords or the dish's spicy flag); they never describe taste or texture the data doesn't hold.
     """
     if not semantic_attrs:
         return 0.0, []
@@ -34,7 +37,7 @@ def evaluate_semantic_match(
             is_dry = any(w in norm_name for w in ["bun dau", "bun cha", "pho cuon", "pho tron", "mien tron", "mi tron", "banh mi", "xoi", "pizza", "burger", "com"])
             if is_broth and not is_dry:
                 score += 3.0
-                reasons.append("🍜 Chuẩn điệu món nước: nước dùng nóng hổi, xì xụp đậm đà giải ngấy")
+                reasons.append(f"🍜 Hợp ý \"{text}\": thuộc nhóm món nước (theo tên/mô tả món)")
             else:
                 score -= 2.0
 
@@ -44,7 +47,7 @@ def evaluate_semantic_match(
             is_heavy = any(w in norm_combined for w in ["thit kho", "mo hanh", "xoi thit", "suon cay", "chien gion", "sot bo", "pate", "ga ran", "pizza", "burger"])
             if is_light:
                 score += 2.5
-                reasons.append("🍃 Chuẩn vị thanh đạm: thanh nhẹ dễ nuốt, êm bụng không gây ngấy")
+                reasons.append(f"🍃 Hợp ý \"{text}\": thuộc nhóm món thanh đạm (theo tên/mô tả món)")
             elif is_heavy:
                 score -= 2.0
 
@@ -53,20 +56,22 @@ def evaluate_semantic_match(
             is_substantial = any(w in norm_combined for w in ["com", "xoi", "mi xao", "bun cha", "bun dau", "ga ran", "suon", "thit kho", "pizza", "burger"])
             if is_substantial:
                 score += 2.5
-                reasons.append("🍱 Phần ăn chắc bụng: suất ăn no lâu, giàu năng lượng cho người đang đói")
+                reasons.append(f"🍱 Hợp ý \"{text}\": thuộc nhóm món chắc bụng (theo tên/mô tả món)")
 
         # 4. Cay nhẹ / hơi cay
         elif any(k in norm_text for k in ("cay nhe", "hoi cay", "cay vua")):
-            if dish.spicy or any(w in norm_combined for w in ["cay nhe", "the cay", "sot cay", "hoi cay"]):
+            mild_hint = next((w for w in ["cay nhe", "hoi cay", "the cay"] if w in norm_combined), None)
+            if mild_hint or dish.spicy or "sot cay" in norm_combined:
                 score += 2.0
-                reasons.append("🌶️ Độ cay vừa phải: the the tê lưỡi, kích thích vị giác dễ chịu")
+                basis = "mô tả món ghi vị cay nhẹ" if mild_hint else "món được quán đánh dấu là cay, mức độ cay chưa rõ"
+                reasons.append(f"🌶️ Hợp ý \"{text}\": {basis}")
 
         # 5. Ăn trưa nhanh / gọn nhẹ
         elif any(k in norm_text for k in ("an trua nhanh", "nhanh gon", "an nhanh")):
             is_quick = any(w in norm_combined for w in ["banh mi", "com van phong", "bun", "xoi", "goi cuon"])
             if is_quick:
                 score += 1.5
-                reasons.append("⚡ Bữa ăn nhanh gọn: tiện lợi, đóng hộp sạch sẽ thích hợp ăn trưa văn phòng")
+                reasons.append(f"⚡ Hợp ý \"{text}\": thuộc nhóm món ăn nhanh (theo tên/mô tả món)")
 
     return score, reasons
 
@@ -115,7 +120,7 @@ def score_candidate(
     if task_model:
         task = task_model if isinstance(task_model, dict) else task_model.model_dump(mode="json")
         concepts = [obj.get("concept") for obj in task.get("objects", []) if obj.get("concept")]
-        if any(normalize_text(concept) in normalize_text(dish.name) for concept in concepts):
+        if any(mentions_concept(concept, dish.name) for concept in concepts):
             scores["request_match"] += 3.0
         cuisines = task.get("soft_preferences", {}).get("cuisine_affinity", [])
         if any(normalize_text(cuisine) in normalize_text(dish.cuisine) for cuisine in cuisines):
@@ -143,7 +148,9 @@ def score_candidate(
     scores["distance_score"] = round(max(0.0, (10.0 - restaurant.distance_km) / 10.0) * 2.5, 2)
 
     # 5. Rating Score (4.0 - 5.0 scaled, high priority)
-    scores["rating_score"] = round(((restaurant.rating - 3.5) / 1.5) * 4.5, 2)
+    # Unknown rating scores neutral (0), not a guessed value.
+    if restaurant.rating is not None:
+        scores["rating_score"] = round(((restaurant.rating - 3.5) / 1.5) * 4.5, 2)
 
     # 6. Promotion Score
     if pricing.savings > 0:
@@ -159,11 +166,14 @@ def generate_detailed_reasoning(
     user_pref: Optional[UserPreference] = None,
     task_model: Optional[Dict[str, Any]] = None,
     search_radius_km: float = 5.0,
-    is_radius_expanded: bool = False
+    is_radius_expanded: bool = False,
+    quantity: int = 1,
 ) -> str:
     """
-    Generate clear, persuasive Vietnamese reasoning explaining exactly WHY this dish is recommended.
-    Always generates at least 3 meaningful points.
+    Explain WHY this dish is recommended (Vietnamese).
+
+    RESPOND rule: every point must be traceable to structured data — the dish,
+    restaurant, pricing, TaskModel or profile. No unsupported claims.
     """
     points = []
 
@@ -176,57 +186,77 @@ def generate_detailed_reasoning(
 
     # 1. Craving / Request Match
     concepts = [obj.get("concept") for obj in task.get("objects", []) if obj.get("concept")]
-    if any(normalize_text(concept) in normalize_text(dish.name) for concept in concepts):
+    if any(mentions_concept(concept, dish.name) for concept in concepts):
         points.append(f"🎯 Khớp chính xác với yêu cầu: món '{dish.name}' bạn đang tìm")
     elif dish.spicy and task.get("hard_constraints", {}).get("spicy") is True:
-        points.append("🌶️ Đúng vị cay nồng bạn yêu cầu")
+        points.append("🌶️ Món được quán đánh dấu là cay, đúng yêu cầu của bạn")
 
-    # 2. Cuisine preference match
-    if user_pref and normalize_text(dish.cuisine) in [normalize_text(c) for c in user_pref.preferred_cuisines]:
-        points.append(f"🍜 Chuẩn gu ẩm thực {dish.cuisine} — đúng sở thích của bạn")
+    # 2. Cuisine preference match (profile) or plain cuisine fact — only if the cuisine is source data
+    if "cuisine" in restaurant.estimated_fields:
+        pass
+    elif user_pref and normalize_text(dish.cuisine) in [normalize_text(c) for c in user_pref.preferred_cuisines]:
+        points.append(f"🍜 Ẩm thực {dish.cuisine} — đúng sở thích trong hồ sơ của bạn")
     elif dish.cuisine:
-        points.append(f"🍽️ Phong cách ẩm thực {dish.cuisine} — đa dạng và phổ biến")
+        points.append(f"🍽️ Ẩm thực: {dish.cuisine}")
 
     # 3. Distance & Radius (always included)
-    if restaurant.distance_km <= 5.0:
-        points.append(
-            f"📍 Cách bạn chỉ {restaurant.distance_km}km (trong bán kính 5km) "
-            f"— giao hàng ước tính ~{restaurant.delivery_time_mins} phút"
-        )
-    else:
-        points.append(
-            f"📍 Cách bạn {restaurant.distance_km}km "
-            f"(mở rộng bán kính 10km do khu vực 5km chưa có lựa chọn tối ưu)"
-        )
+    distance = f"📍 Cách bạn chỉ {restaurant.distance_km}km"
+    if is_radius_expanded:
+        distance = f"📍 Cách bạn {restaurant.distance_km}km (kết quả sau khi mở rộng bán kính lên {search_radius_km:g}km)"
+    if "delivery_time_mins" not in restaurant.estimated_fields:
+        distance += f" — giao hàng ước tính ~{restaurant.delivery_time_mins} phút"
+    points.append(distance)
 
-    # 4. Budget & Pricing (always included)
-    budget = user_pref.budget if (user_pref and user_pref.budget > 0) else 80000
+    # 4. Budget & Pricing (always included).
+    # Compare against the budget the user stated in this request; otherwise the profile budget,
+    # and say which one it is.
+    price_max = task.get("hard_constraints", {}).get("price_max")
+    if price_max:
+        budget, budget_label = price_max, "ngân sách bạn đặt"
+    elif user_pref and user_pref.budget > 0:
+        budget, budget_label = user_pref.budget, "ngân sách trong hồ sơ"
+    else:
+        budget, budget_label = None, ""
+
+    portions = f" cho {quantity} phần" if quantity > 1 else ""
+    ship = "ship ước tính" if "delivery_fee" in restaurant.estimated_fields else "ship"
+    price_line = f"💵 Giá thực tế {pricing.final_price:,}đ{portions} (gồm {ship} {pricing.delivery_fee:,}đ)"
     if pricing.savings > 0:
         deal_desc = f"giảm {pricing.savings:,}đ"
         if pricing.applied_promotion_code:
-            deal_desc += f" (mã '{pricing.applied_promotion_code}')"
-        points.append(
-            f"💰 Đang có ưu đãi {deal_desc} — "
-            f"giá thực tế {pricing.final_price:,}đ (trong ngân sách {budget:,}đ)"
+            deal_desc += f" mã '{pricing.applied_promotion_code}'"
+        price_line = (
+            f"💰 Đang có ưu đãi {deal_desc} — giá thực tế {pricing.final_price:,}đ{portions} "
+            f"(gồm {ship} {pricing.delivery_fee:,}đ)"
         )
-    elif pricing.final_price <= budget:
-        points.append(
-            f"💵 Giá {pricing.final_price:,}đ — vừa vặn trong ngân sách {budget:,}đ của bạn"
-        )
-    else:
-        over_pct = round((pricing.final_price - budget) / budget * 100)
-        points.append(
-            f"💵 Giá {pricing.final_price:,}đ "
-            f"(vượt ngân sách ~{over_pct}% nhưng chất lượng quán rất xứng đáng)"
-        )
+    if budget:
+        if pricing.final_price <= budget:
+            price_line += f" — trong {budget_label} {budget:,}đ"
+        else:
+            over_pct = round((pricing.final_price - budget) / budget * 100)
+            price_line += f" — vượt {budget_label} {budget:,}đ khoảng {over_pct}%"
+    points.append(price_line)
 
-    # 5. Disliked ingredients safety check
-    if user_pref and user_pref.disliked_ingredients:
-        dislikes_str = ", ".join(user_pref.disliked_ingredients)
-        points.append(f"🛡️ Đã kiểm tra: không chứa nguyên liệu kiêng ({dislikes_str})")
+    # 5. Ingredient-exclusion check: profile dislikes + this request's excludes.
+    # Only claim "checked" when the restaurant actually provided ingredient data.
+    excludes = list(dict.fromkeys(
+        (user_pref.disliked_ingredients if user_pref else []) + task.get("ingredient_excludes", [])
+    ))
+    if excludes:
+        excludes_str = ", ".join(excludes)
+        if dish.ingredients and dish.ingredients_source == "menu":
+            points.append(f"🛡️ Thành phần món (theo dữ liệu quán) không có: {excludes_str}")
+        elif dish.ingredients:
+            points.append(
+                f"⚠️ Quán chưa cung cấp thành phần; mô tả món không nhắc tới: {excludes_str}"
+            )
+        else:
+            points.append(f"⚠️ Quán chưa cung cấp thành phần món — chưa kiểm tra được: {excludes_str}")
 
     # 6. Rating & Platform
-    if restaurant.rating >= 4.7:
+    if restaurant.rating is None:
+        pass
+    elif restaurant.rating >= 4.7:
         points.append(
             f"⭐ Quán được đánh giá rất cao {restaurant.rating}⭐ trên {restaurant.platform}"
         )
@@ -245,10 +275,15 @@ def rank_candidates(
     user_address: Optional[str] = None,
     search_radius_km: float = 5.0,
     is_radius_expanded: bool = False,
-    top_k: int = 4,
+    top_k: Optional[int] = 4,
     restaurants: Optional[List[Restaurant]] = None,
     precomputed_candidates: Optional[List[RecommendationCandidate]] = None,
+    quantity: int = 1,
 ) -> List[RecommendationCandidate]:
+    """Score and order candidates. top_k=None returns the full ranked list.
+
+    quantity: portions per dish (TaskModel.context.party_size); pricing covers all portions.
+    """
     candidates = []
     rest_lookup = {r.id: r for r in restaurants} if restaurants else {}
 
@@ -265,7 +300,8 @@ def rank_candidates(
                     user_pref=user_pref,
                     task_model=task_model,
                     search_radius_km=search_radius_km,
-                    is_radius_expanded=is_radius_expanded
+                    is_radius_expanded=is_radius_expanded,
+                    quantity=c.quantity,
                 )
                 c.explanation = c.reasoning
             candidates.append(c)
@@ -281,10 +317,11 @@ def rank_candidates(
 
             # Find best promo
             available_promos = get_promotions(dish.restaurant_id)
-            best_pricing = calculate_final_price(dish.price, None, delivery_fee=rest.delivery_fee)
+            subtotal = dish.price * quantity
+            best_pricing = calculate_final_price(subtotal, None, delivery_fee=rest.delivery_fee)
 
             for p in available_promos:
-                pricing = calculate_final_price(dish.price, p, delivery_fee=rest.delivery_fee)
+                pricing = calculate_final_price(subtotal, p, delivery_fee=rest.delivery_fee)
                 if pricing.final_price < best_pricing.final_price:
                     best_pricing = pricing
 
@@ -300,7 +337,8 @@ def rank_candidates(
                 user_pref=user_pref,
                 task_model=task_model,
                 search_radius_km=search_radius_km,
-                is_radius_expanded=is_radius_expanded
+                is_radius_expanded=is_radius_expanded,
+                quantity=quantity,
             )
 
             candidate = RecommendationCandidate(
@@ -308,6 +346,7 @@ def rank_candidates(
                 restaurant=rest,
                 pricing=best_pricing,
                 items=[dish],
+                quantity=quantity,
                 scores=scores,
                 total_score=round(total_score, 2),
                 explanation=reasoning,
@@ -320,7 +359,7 @@ def rank_candidates(
     task = task_model if isinstance(task_model, dict) else (task_model.model_dump(mode="json") if task_model else {})
     priorities = task.get("soft_preferences", {}).get("priority_order", [])
     if "rating" in priorities:
-        candidates.sort(key=lambda x: (x.restaurant.rating, x.total_score), reverse=True)
+        candidates.sort(key=lambda x: (x.restaurant.rating or 0.0, x.total_score), reverse=True)
     elif "distance" in priorities:
         candidates.sort(key=lambda x: (x.restaurant.distance_km, -x.total_score))
     elif "price" in priorities:
@@ -328,6 +367,15 @@ def rank_candidates(
     else:
         candidates.sort(key=lambda x: x.total_score, reverse=True)
 
+    if top_k is None:
+        return candidates
+    return select_top_k(candidates, top_k)
+
+
+def select_top_k(
+    candidates: List[RecommendationCandidate], top_k: int
+) -> List[RecommendationCandidate]:
+    """Pick top_k from already-ranked candidates, preferring one per restaurant."""
     # Diversity: avoid showing all dishes from only 1 restaurant if multiple restaurants exist
     selected = []
     rest_dish_count = {}
@@ -351,24 +399,35 @@ def rank_candidates(
     return selected
 
 
+def _rating_text(restaurant: Restaurant) -> str:
+    return f"**{restaurant.rating}⭐**" if restaurant.rating is not None else "chưa có đánh giá"
+
+
+def _fee_text(candidate: RecommendationCandidate) -> str:
+    fee = f"{candidate.pricing.delivery_fee:,}đ"
+    return f"~{fee} (ước tính)" if "delivery_fee" in candidate.restaurant.estimated_fields else fee
+
+
 def format_recommendations_output(
     candidates: List[RecommendationCandidate],
     user_pref: Optional[UserPreference] = None,
     is_radius_expanded: bool = False,
     user_address: str = "",
     replan_action: Optional[Any] = None,
+    search_radius_km: Optional[float] = None,
 ) -> str:
+    radius = f"{search_radius_km:g}km" if search_radius_km else "khu vực tìm kiếm"
     if not candidates:
         if replan_action and getattr(replan_action, "message_to_user", None):
             return replan_action.message_to_user
         return (
-            "Tiếc quá, hiện tại chưa tìm thấy món nào vừa vặn trong bán kính 10km quanh địa chỉ của bạn. "
+            f"Tiếc quá, hiện tại chưa tìm thấy món nào phù hợp trong bán kính {radius} quanh địa chỉ của bạn. "
             "Bạn thử tăng ngân sách hoặc đổi sang món khác xem sao nhé!"
         )
 
     lines = []
     if is_radius_expanded:
-        lines.append(f"🔍 *Thông báo bán kính:* Trong phạm vi 5km quanh '{user_address}' có ít lựa chọn, hệ thống đã **tự động mở rộng bán kính lên 10km** để tìm cho bạn các quán chất lượng nhất!\n")
+        lines.append(f"🔍 *Thông báo bán kính:* Quanh '{user_address}' có ít lựa chọn ở bán kính ban đầu, hệ thống đã **tự động mở rộng bán kính lên {radius}**.\n")
 
     lines.append("### 🍜 Các món ngon dành riêng cho bạn:\n")
 
@@ -384,16 +443,18 @@ def format_recommendations_output(
             lines.append(f"**{i}. Combo: {combo_title} — {c.restaurant.name}**")
             lines.append("- 🍱 **Chi tiết combo:**")
             for it in c.items:
-                lines.append(f"  • {it.name}: {it.price:,}đ")
+                qty = f" × {c.quantity}" if c.quantity > 1 else ""
+                lines.append(f"  • {it.name}: {it.price:,}đ{qty}")
             lines.append(f"- 💵 Tổng đơn: **{price_k}**{deal_str}")
             lines.append(f"- 📍 Khoảng cách: **{c.restaurant.distance_km} km** (Nền tảng: {c.restaurant.platform})")
-            lines.append(f"- ⭐ Đánh giá: **{c.restaurant.rating}⭐** | Phí ship chung: {c.pricing.delivery_fee:,}đ")
+            lines.append(f"- ⭐ Đánh giá: {_rating_text(c.restaurant)} | Phí ship chung: {_fee_text(c)}")
             lines.append(f"- 💡 **Vì sao chọn combo này:** Tiết kiệm phí ship khi đặt cùng quán • {c.reasoning}")
         else:
             lines.append(f"**{i}. {c.dish.name} — {c.restaurant.name}**")
-            lines.append(f"- 💵 Giá: **{price_k}**{deal_str}")
+            portions = f" cho {c.quantity} phần ({c.dish.price:,}đ/phần)" if c.quantity > 1 else ""
+            lines.append(f"- 💵 Giá: **{price_k}**{portions}{deal_str}")
             lines.append(f"- 📍 Khoảng cách: **{c.restaurant.distance_km} km** (Nền tảng: {c.restaurant.platform})")
-            lines.append(f"- ⭐ Đánh giá: **{c.restaurant.rating}⭐** | Phí ship: {c.pricing.delivery_fee:,}đ")
+            lines.append(f"- ⭐ Đánh giá: {_rating_text(c.restaurant)} | Phí ship: {_fee_text(c)}")
             lines.append(f"- 💡 **Vì sao chọn món này:** {c.reasoning}")
         lines.append("")
 

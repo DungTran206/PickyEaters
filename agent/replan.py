@@ -35,13 +35,39 @@ def diagnose_and_replan(
     """
     Analyze structured validation failures and retrieval state to decide the next bounded strategy.
     """
-    # 1. Check if failure is due to BUDGET (all rejected due to price_max)
+    def all_rejected_for(*types: str) -> bool:
+        return bool(rejected_candidates) and all(
+            any(v.constraint_type in types for v in violations) for _, violations in rejected_candidates
+        )
+
+    # 0. Follow-up failures: nothing cheaper than the referenced option / nothing new to show
+    if all_rejected_for("follow_up_max_price"):
+        limit = next(
+            v.expected_value for _, vs in rejected_candidates for v in vs
+            if v.constraint_type == "follow_up_max_price"
+        )
+        cheapest = min(cand.pricing.final_price for cand, _ in rejected_candidates)
+        return ReplanAction(
+            strategy="suggest_alternatives",
+            diagnosis="no_cheaper_option",
+            message_to_user=(
+                f"Chưa tìm thấy lựa chọn nào rẻ hơn {limit + 1:,}đ cho yêu cầu này "
+                f"(rẻ nhất tìm được là {cheapest:,}đ). Bạn có muốn đổi sang món khác không?"
+            ),
+        )
+    if all_rejected_for("previously_shown"):
+        return ReplanAction(
+            strategy="suggest_alternatives",
+            diagnosis="no_new_options",
+            message_to_user=(
+                "Các lựa chọn phù hợp quanh bạn đều đã được gợi ý ở lượt trước. "
+                "Bạn có muốn đổi món, nới ngân sách hoặc bỏ bớt yêu cầu không?"
+            ),
+        )
+
+    # 1. Check if failure is due to BUDGET (every rejected candidate violates price_max)
     if rejected_candidates:
-        price_violations = [
-            v for _, violations in rejected_candidates
-            for v in violations if v.constraint_type == "price_max"
-        ]
-        if len(price_violations) == len(rejected_candidates):
+        if all_rejected_for("price_max"):
             # All available options exceeded the user's budget
             min_avail_price = min(cand.pricing.final_price for cand, _ in rejected_candidates)
             orig_budget = task.hard_constraints.price_max or 0
@@ -66,11 +92,7 @@ def diagnose_and_replan(
 
     # 2. Check if failure is due to INGREDIENT EXCLUDE (dị ứng / kiêng)
     if rejected_candidates:
-        ingredient_violations = [
-            v for _, violations in rejected_candidates
-            for v in violations if v.constraint_type in ("ingredient_exclude", "excluded_concept")
-        ]
-        if len(ingredient_violations) > 0 and len(ingredient_violations) == len(rejected_candidates):
+        if all_rejected_for("ingredient_exclude", "excluded_concept"):
             # All candidates violated ingredient exclusion
             excluded = task.ingredient_excludes or task.excluded_concepts
             ex_str = ", ".join(excluded)
