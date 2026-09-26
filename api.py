@@ -8,7 +8,8 @@ from pydantic import BaseModel
 from agent.agent import FoodAgent
 from database.db import get_user_preferences, update_user_preference, reset_database
 from database.models import UserPreference
-from services.search import load_restaurants, load_menus, load_promotions
+from agent.tools import tool_set_user_location
+from services.search import district_label, load_restaurants, load_menus, load_promotions
 
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
 
@@ -55,6 +56,8 @@ class ChatRequest(BaseModel):
     user_id: str = "user_01"
     user_name: Optional[str] = None
     user_address: Optional[str] = None
+    user_lat: Optional[float] = None   # map-picked delivery point (with user_lng)
+    user_lng: Optional[float] = None
 
 
 class ChatResponse(BaseModel):
@@ -70,6 +73,8 @@ class UserProfileRequest(BaseModel):
     name: Optional[str] = None
     address: Optional[str] = None
     district: Optional[str] = None
+    latitude: Optional[float] = None   # set together with longitude when picked on the map
+    longitude: Optional[float] = None
 
 
 class UpdatePreferenceRequest(BaseModel):
@@ -95,7 +100,9 @@ def chat_with_agent(req: ChatRequest):
     result = agent.run(
         user_input=req.message,
         user_name=req.user_name,
-        user_address=req.user_address
+        user_address=req.user_address,
+        user_lat=req.user_lat,
+        user_lng=req.user_lng,
     )
     return ChatResponse(
         response=result["response"],
@@ -116,11 +123,24 @@ def get_user_profile(user_id: str):
 def update_user_profile(user_id: str, req: UserProfileRequest):
     if req.name:
         update_user_preference(user_id, "name", req.name)
-    if req.address:
-        update_user_preference(user_id, "address", req.address)
-    if req.district:
+    has_point = req.latitude is not None and req.longitude is not None
+    if req.address or has_point:
+        saved = tool_set_user_location(user_id, req.address or "", req.latitude, req.longitude)
+        if saved["status"] != "success":
+            raise HTTPException(
+                status_code=400,
+                detail="Không xác định được quận của địa chỉ. Hãy thêm quận/huyện hoặc chọn trên bản đồ.",
+            )
+    elif req.district:
         update_user_preference(user_id, "district", req.district)
     return get_user_preferences(user_id)
+
+
+@app.get("/api/locate")
+def locate_point(lat: float, lng: float):
+    """Label a map-picked point with its nearest known district (computed locally)."""
+    district = district_label(None, (lat, lng))
+    return {"district": district, "in_coverage": bool(district)}
 
 
 @app.get("/api/preferences/{user_id}", response_model=UserPreference)

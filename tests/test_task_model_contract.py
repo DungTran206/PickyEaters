@@ -92,3 +92,12 @@ def test_task_model_rejects_invalid_relationship_indices_and_price_range():
             "intent": "request_recommendation",
             "hard_constraints": {"price_min": 90000, "price_max": 50000},
         })
+
+
+def test_conversation_ref_accepts_numeric_ordinal_from_llm():
+    # LLMs often return {"conversation_ref": 2}; it must validate as "2", not fail the whole TaskModel.
+    task = TaskModel.model_validate({"intent": "provide_info", "context": {"conversation_ref": 2}})
+    assert task.context.conversation_ref == "2"
+    assert TaskModel.model_validate(
+        {"intent": "provide_info", "context": {"conversation_ref": None}}
+    ).context.conversation_ref is None

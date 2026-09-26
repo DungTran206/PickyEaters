@@ -5,8 +5,11 @@ from pydantic import BaseModel, Field
 class UserPreference(BaseModel):
     user_id: str
     name: str = "Bạn"
-    district: str = "Cầu Giấy"
-    address: str = "Cầu Giấy, Hà Nội"
+    # Delivery location: never defaulted. The user types an address or picks a point on the map.
+    district: str = ""
+    address: str = ""
+    latitude: Optional[float] = None   # set when the location was picked on the map
+    longitude: Optional[float] = None
     preferred_cuisines: List[str] = Field(default_factory=list)
     preferred_flavors: List[str] = Field(default_factory=list)
     disliked_ingredients: List[str] = Field(default_factory=list)
@@ -26,7 +29,7 @@ class Restaurant(BaseModel):
     rating: Optional[float] = None  # None = source has no (valid) rating
     distance_km: float
     delivery_fee: int
-    district: str = "Cầu Giấy"
+    district: str = ""
     platform: str = "ShopeeFood"
     delivery_time_mins: int = 20
     address: str = ""
@@ -34,6 +37,9 @@ class Restaurant(BaseModel):
     # Fields holding a placeholder/estimate instead of source data (e.g. crawled restaurants
     # without a delivery fee). RESPOND must label or omit these; never state them as fact.
     estimated_fields: List[str] = Field(default_factory=list)
+    # How distance_km was obtained: "stored" (data file value), "district_centroid" /
+    # "same_district" (estimated from the user's and restaurant's districts), "unknown".
+    distance_basis: str = "stored"
 
 
 class Dish(BaseModel):

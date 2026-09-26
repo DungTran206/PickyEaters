@@ -127,10 +127,26 @@ def _reasoning(dish=None, rest=None, final_price=55000, pref=None, task=None, **
 
 def test_budget_line_uses_stated_price_max_not_profile_budget():
     pref = UserPreference(user_id="u", budget=80000)
-    text = _reasoning(final_price=55000, pref=pref, task={"hard_constraints": {"price_max": 40000}})
+    # dish 45k + ship 15k; stated budget 40k applies to the dish price
+    text = _reasoning(final_price=60000, pref=pref, task={"hard_constraints": {"price_max": 40000}})
     assert "40,000đ" in text and "80,000đ" not in text
     assert "vượt ngân sách bạn đặt" in text
     assert "xứng đáng" not in text  # no unsupported quality claim
+
+
+def test_price_max_applies_to_dish_price_not_total_with_ship():
+    # "dưới 60k": a 60k dish is within budget even though the total with ship is 76k.
+    from agent.task_model import TaskModel, HardConstraints
+    task = TaskModel(intent="request_recommendation", hard_constraints=HardConstraints(price_max=60000))
+    ok = _candidate("Phở bò", "")
+    ok.pricing = PricingCalculation(original_price=60000, discount=0, delivery_fee=16000, final_price=76000)
+    over = _candidate("Phở bò", "")
+    over.pricing = PricingCalculation(original_price=61000, discount=5000, delivery_fee=0, final_price=56000)
+    assert validate_candidate(ok, task).is_valid
+    assert not validate_candidate(over, task).is_valid
+    # _reasoning uses a 15k delivery fee: final 75k = dish 60k + ship 15k
+    text = _reasoning(final_price=75000, task={"hard_constraints": {"price_max": 60000}})
+    assert "giá món 60,000đ, trong ngân sách bạn đặt 60,000đ" in text
 
 
 def test_budget_line_labels_profile_budget_when_no_price_stated():

@@ -52,9 +52,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─── State ────────────────────────────────────────────────────────────────
   let currentUserId = userSelector.value;
   let isSending     = false;
+  // Delivery location: no default. Typed address (lat/lng null) or a map pin (lat/lng set).
+  let deliveryLocation = { address: '', lat: null, lng: null };
+  const NO_ADDRESS_TEXT = 'địa chỉ của bạn (chưa có — hãy nhập hoặc chọn trên bản đồ)';
   let currentPreferences = {
     name: 'Dũng',
-    address: 'Cầu Giấy, Hà Nội',
+    address: '',
     budget: 80000,
     minimum_rating: 4.3,
     preferred_cuisines: [],
@@ -74,31 +77,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Save Location Button
   saveLocationBtn.addEventListener('click', async () => {
-    const name    = userNameInput.value.trim() || 'Bạn';
-    const address = userAddressInput.value.trim() || 'Cầu Giấy, Hà Nội';
+    const name = userNameInput.value.trim() || 'Bạn';
+    if (!deliveryLocation.address && deliveryLocation.lat === null) {
+      showToast('Hãy nhập địa chỉ (có quận/huyện) hoặc chọn vị trí trên bản đồ.', 'error');
+      return;
+    }
 
     try {
       saveLocationBtn.disabled = true;
       saveLocationBtn.innerHTML = '<span>⏳ Đang lưu...</span>';
 
-      const res = await fetch(`/api/user/${currentUserId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, address })
-      });
-
-      if (res.ok) {
-        // Update welcome card safely via fresh query
-        const nameEl    = getWelcomeNameEl();
-        const addressEl = getWelcomeAddressEl();
-        if (nameEl)    nameEl.textContent = name;
-        if (addressEl) addressEl.textContent = address;
-        if (prefNameInput)    prefNameInput.value = name;
-        if (prefAddressInput) prefAddressInput.value = address;
-        syncDistrictChips(address);
+      if (await saveLocation(name)) {
+        const nameEl = getWelcomeNameEl();
+        if (nameEl) nameEl.textContent = name;
+        if (prefNameInput) prefNameInput.value = name;
         showToast('Đã lưu thông tin vị trí & tên khách hàng thành công! 📍');
-      } else {
-        showToast('Lỗi khi lưu vị trí. Vui lòng thử lại.', 'error');
       }
     } catch (err) {
       showToast(`Lỗi kết nối: ${err.message}`, 'error');
@@ -112,11 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
   districtChips.forEach(chip => {
     chip.addEventListener('click', () => {
       const dist = chip.getAttribute('data-district');
-      userAddressInput.value = dist;
-      if (prefAddressInput)       prefAddressInput.value = dist;
-      const addressEl = getWelcomeAddressEl();
-      if (addressEl) addressEl.textContent = dist;
-      syncDistrictChips(dist);
+      setDeliveryLocation(dist, null, null);
       showToast(`Đã chọn: ${dist}. Nhấn "Lưu vị trí" để ghi nhớ.`);
     });
   });
@@ -130,6 +119,143 @@ document.addEventListener('DOMContentLoaded', () => {
       chip.classList.toggle('active', isActive);
     });
   }
+
+  // Single place that updates the delivery location everywhere in the UI.
+  function setDeliveryLocation(address, lat, lng) {
+    deliveryLocation = { address: address || '', lat: lat ?? null, lng: lng ?? null };
+    userAddressInput.value = deliveryLocation.address;
+    if (prefAddressInput) prefAddressInput.value = deliveryLocation.address;
+    const addressEl = getWelcomeAddressEl();
+    if (addressEl) addressEl.textContent = deliveryLocation.address || NO_ADDRESS_TEXT;
+    syncDistrictChips(deliveryLocation.address);
+    openMapBtn.classList.toggle('active', deliveryLocation.lat !== null);
+  }
+
+  // Typing an address replaces any map pin.
+  userAddressInput.addEventListener('input', () => {
+    deliveryLocation = { address: userAddressInput.value.trim(), lat: null, lng: null };
+    openMapBtn.classList.remove('active');
+    syncDistrictChips(deliveryLocation.address);
+  });
+
+  // POST the current delivery location (+ name). Returns true on success.
+  async function saveLocation(name) {
+    const body = { name, address: deliveryLocation.address };
+    if (deliveryLocation.lat !== null) {
+      body.latitude = deliveryLocation.lat;
+      body.longitude = deliveryLocation.lng;
+    }
+    const res = await fetch(`/api/user/${currentUserId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showToast(err.detail || 'Lỗi khi lưu vị trí. Vui lòng thử lại.', 'error');
+      return false;
+    }
+    const pref = await res.json();
+    setDeliveryLocation(pref.address, pref.latitude, pref.longitude);
+    return true;
+  }
+
+  // ─── MAP PICKER (Leaflet + Esri street tiles) ──────────────────────────
+  const openMapBtn       = document.getElementById('openMapBtn');
+  const mapModal         = document.getElementById('mapModal');
+  const closeMapBtn      = document.getElementById('closeMapBtn');
+  const confirmMapBtn    = document.getElementById('confirmMapBtn');
+  const useMyLocationBtn = document.getElementById('useMyLocationBtn');
+  const mapPickInfo      = document.getElementById('mapPickInfo');
+  let map = null;
+  let pickMarker = null;
+  let pendingPick = null;   // { lat, lng, district }
+
+  openMapBtn.addEventListener('click', openMapPicker);
+  closeMapBtn.addEventListener('click', closeMapPicker);
+  mapModal.addEventListener('click', e => { if (e.target === mapModal) closeMapPicker(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !mapModal.hidden) closeMapPicker(); });
+
+  function openMapPicker() {
+    if (typeof L === 'undefined') {
+      showToast('Không tải được bản đồ (cần kết nối internet). Bạn hãy nhập địa chỉ nhé.', 'error');
+      return;
+    }
+    mapModal.hidden = false;
+    if (!map) {
+      map = L.map('mapCanvas');
+      // Esri World Street Map: readable Vietnamese street/ward labels, no API key.
+      // (tile.openstreetmap.org is not reachable on every network; CARTO now requires a key.)
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; <a href="https://www.esri.com/">Esri</a> — Source: Esri, HERE, Garmin, USGS, OpenStreetMap contributors'
+      }).addTo(map);
+      map.on('click', e => pickPoint(e.latlng.lat, e.latlng.lng));
+    }
+    // Start at the saved pin if any; otherwise show the whole country (a view, not an address).
+    if (deliveryLocation.lat !== null) {
+      map.setView([deliveryLocation.lat, deliveryLocation.lng], 15);
+      pickPoint(deliveryLocation.lat, deliveryLocation.lng);
+    } else {
+      map.setView([16.0, 106.3], 6);
+    }
+    setTimeout(() => map.invalidateSize(), 50);   // the map was hidden while initialising
+  }
+
+  function closeMapPicker() {
+    mapModal.hidden = true;
+    openMapBtn.focus();
+  }
+
+  async function pickPoint(lat, lng) {
+    if (pickMarker) pickMarker.setLatLng([lat, lng]);
+    else pickMarker = L.marker([lat, lng]).addTo(map);
+    pendingPick = { lat, lng, district: '' };
+    confirmMapBtn.disabled = false;
+    const coordText = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    mapPickInfo.textContent = `Đã chọn: ${coordText} — đang xác định khu vực...`;
+    try {
+      const res = await fetch(`/api/locate?lat=${lat}&lng=${lng}`);
+      const info = await res.json();
+      if (!pendingPick || pendingPick.lat !== lat || pendingPick.lng !== lng) return;  // a newer pick won
+      pendingPick.district = info.district;
+      mapPickInfo.textContent = info.in_coverage
+        ? `Đã chọn: gần ${info.district} (${coordText})`
+        : `Đã chọn: ${coordText} — ngoài khu vực có dữ liệu quán (một số quận Hà Nội và TP.HCM), có thể không tìm được món.`;
+    } catch {
+      mapPickInfo.textContent = `Đã chọn: ${coordText}`;
+    }
+  }
+
+  useMyLocationBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      showToast('Trình duyệt không hỗ trợ lấy vị trí hiện tại.', 'error');
+      return;
+    }
+    mapPickInfo.textContent = 'Đang lấy vị trí hiện tại...';
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const { latitude, longitude } = pos.coords;
+        map.setView([latitude, longitude], 16);
+        pickPoint(latitude, longitude);
+      },
+      () => {
+        mapPickInfo.textContent = 'Không lấy được vị trí hiện tại. Bạn hãy bấm lên bản đồ để chọn.';
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+
+  confirmMapBtn.addEventListener('click', async () => {
+    if (!pendingPick) return;
+    const label = pendingPick.district
+      ? `Vị trí trên bản đồ (gần ${pendingPick.district})`
+      : 'Vị trí trên bản đồ';
+    setDeliveryLocation(label, pendingPick.lat, pendingPick.lng);
+    closeMapPicker();
+    const saved = await saveLocation(userNameInput.value.trim() || 'Bạn');
+    if (saved) showToast('Đã lưu vị trí giao hàng từ bản đồ! 🗺️');
+  });
 
   // Reset Conversation
   resetChatBtn.addEventListener('click', () => {
@@ -178,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendBtn.disabled = true;
 
     const currentName    = userNameInput.value.trim() || 'Bạn';
-    const currentAddress = userAddressInput.value.trim() || 'Cầu Giấy, Hà Nội';
+    const currentAddress = deliveryLocation.address || 'vị trí của bạn';
 
     // Hide welcome card if still present
     const welcomeCard = document.getElementById('welcomeCard');
@@ -199,7 +325,10 @@ document.addEventListener('DOMContentLoaded', () => {
           message: text,
           user_id: currentUserId,
           user_name: currentName,
-          user_address: currentAddress
+          // Only send a location the user actually gave; the backend asks if there is none.
+          user_address: deliveryLocation.address || null,
+          user_lat: deliveryLocation.lat,
+          user_lng: deliveryLocation.lng
         })
       });
 
@@ -360,13 +489,13 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `<div class="radius-alert-banner expanded">
            <span class="radius-alert-icon">🚀</span>
            <div>
-             <strong>Khảo sát mở rộng 10.0 km:</strong> Khu vực 5km quanh <em>${escapeHtml(userAddress)}</em> chưa đủ lựa chọn, hệ thống đã tự động mở rộng lên 10km!
+             <strong>Khảo sát mở rộng ${radiusKm} km:</strong> Quanh <em>${escapeHtml(userAddress)}</em> có ít lựa chọn ở bán kính ban đầu, hệ thống đã tự động mở rộng lên ${radiusKm} km!
            </div>
          </div>`
       : `<div class="radius-alert-banner normal">
            <span class="radius-alert-icon">🎯</span>
            <div>
-             <strong>Khảo sát chuẩn 5.0 km:</strong> Đã tìm thấy các lựa chọn ngon trong bán kính 5km quanh <em>${escapeHtml(userAddress)}</em>!
+             <strong>Khảo sát ${radiusKm} km:</strong> Đã tìm thấy các lựa chọn trong bán kính ${radiusKm} km quanh <em>${escapeHtml(userAddress)}</em>!
            </div>
          </div>`;
 
@@ -390,9 +519,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const dist        = rest.distance_km || 0;
       const expanded    = cand.is_radius_expanded === true;
       const distClass   = expanded ? 'expanded-10km' : 'within-5km';
+      // Distance is labelled with how it was obtained (see Restaurant.distance_basis)
+      const basis       = rest.distance_basis || 'stored';
+      const distText    = basis === 'unknown'        ? 'chưa rõ khoảng cách'
+                        : basis === 'same_district'  ? `cùng quận, ~${dist} km (ước tính)`
+                        : basis === 'district_centroid' ? `~${dist} km (ước tính theo quận)`
+                        : `${dist} km`;
       const distLabel   = expanded
-        ? `🚀 ${dist} km (đã mở rộng bán kính lên ${cand.search_radius_km} km)`
-        : `📍 ${dist} km`;
+        ? `🚀 ${distText} — đã mở rộng bán kính lên ${cand.search_radius_km} km`
+        : `📍 ${distText}`;
 
       const isSpicy = dish.spicy || false;
 
@@ -505,7 +640,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // FIX: renderWelcomeCard updates existing DOM refs (no innerHTML wipe on messagesContainer)
   function renderWelcomeCard() {
     const currentName    = userNameInput.value.trim()    || 'Dũng';
-    const currentAddress = userAddressInput.value.trim() || 'Cầu Giấy, Hà Nội';
+    const currentAddress = deliveryLocation.address || NO_ADDRESS_TEXT;
 
     messagesContainer.innerHTML = `
       <div class="welcome-card" id="welcomeCard">
@@ -638,15 +773,18 @@ document.addEventListener('DOMContentLoaded', () => {
       savePrefBtn.disabled = true;
       savePrefBtn.innerHTML = '⏳ Đang lưu...';
 
-      if (name || address) {
+      if (address && address !== deliveryLocation.address) {
+        // A newly typed address replaces the map pin.
+        deliveryLocation = { address, lat: null, lng: null };
+        if (!(await saveLocation(name || userNameInput.value.trim() || 'Bạn'))) return;
+      } else if (name) {
         await fetch(`/api/user/${currentUserId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, address })
+          body: JSON.stringify({ name })
         });
-        if (name)    { userNameInput.value = name; const el = getWelcomeNameEl(); if (el) el.textContent = name; }
-        if (address) { userAddressInput.value = address; const el = getWelcomeAddressEl(); if (el) el.textContent = address; syncDistrictChips(address); }
       }
+      if (name) { userNameInput.value = name; const el = getWelcomeNameEl(); if (el) el.textContent = name; }
 
       await Promise.all([
         fetch(`/api/preferences/${currentUserId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ preference_type: 'budget',             value: budget }) }),
@@ -674,22 +812,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const pref = await res.json();
       currentPreferences = pref;
 
-      const name    = pref.name    || (userId === 'user_01' ? 'Dũng' : 'Khách mới');
-      const address = pref.address || 'Cầu Giấy, Hà Nội';
+      const name = pref.name || (userId === 'user_01' ? 'Dũng' : 'Khách mới');
 
-      userNameInput.value    = name;
-      userAddressInput.value = address;
-      if (prefNameInput)    prefNameInput.value    = name;
-      if (prefAddressInput) prefAddressInput.value = address;
+      userNameInput.value = name;
+      if (prefNameInput) prefNameInput.value = name;
+      const nameEl = getWelcomeNameEl();
+      if (nameEl) nameEl.textContent = name;
 
-      // FIX: Use fresh query for welcome card elements
-      const nameEl    = getWelcomeNameEl();
-      const addressEl = getWelcomeAddressEl();
-      if (nameEl)    nameEl.textContent    = name;
-      if (addressEl) addressEl.textContent = address;
-
-      // FIX: Sync district chips using data-district attribute comparison
-      syncDistrictChips(address);
+      // No default address: show exactly what the profile has (possibly nothing).
+      setDeliveryLocation(pref.address || '', pref.latitude, pref.longitude);
 
       // Preferences UI
       budgetInput.value  = pref.budget || 80000;

@@ -2,13 +2,15 @@ import json
 import logging
 import os
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from dotenv import load_dotenv
 from agent.prompts import FOOD_AGENT_SYSTEM_PROMPT
 from agent.tools import execute_tool
-from agent.understand import understand
-from agent.planner import plan_recommendation
+from agent.understand import DEFAULT_GROQ_MODEL, DEFAULT_OPENAI_MODEL, understand
+from agent.planner import location_clarification, plan_recommendation
 from agent.task_model import TaskModel
+from database.models import Restaurant
+from services.recommendation import distance_text
 
 load_dotenv()
 
@@ -49,7 +51,7 @@ class FoodAgent:
         )
 
         default_base_url = "https://api.groq.com/openai/v1" if is_groq else "https://api.openai.com/v1"
-        default_model = "llama-3.3-70b-versatile" if is_groq else "gpt-4o-mini"
+        default_model = DEFAULT_GROQ_MODEL if is_groq else DEFAULT_OPENAI_MODEL
 
         self.base_url = base_url or os.getenv("OPENAI_BASE_URL", default_base_url)
         self.model = model or os.getenv("OPENAI_MODEL_NAME", default_model)
@@ -88,7 +90,9 @@ class FoodAgent:
         self,
         user_input: str,
         user_name: Optional[str] = None,
-        user_address: Optional[str] = None
+        user_address: Optional[str] = None,
+        user_lat: Optional[float] = None,
+        user_lng: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         Execute one conversational turn.
@@ -117,11 +121,15 @@ class FoodAgent:
                 "preference_type": "name",
                 "value": user_name
             })
-        if user_address:
-            execute_tool("update_user_preference", {
+        # This turn's delivery location (typed address and/or map point). It is saved to the
+        # profile only if it can be located; otherwise PLAN asks for a better one.
+        turn_coords = (user_lat, user_lng) if user_lat is not None and user_lng is not None else None
+        if user_address or turn_coords:
+            execute_tool("set_user_location", {
                 "user_id": self.user_id,
-                "preference_type": "address",
-                "value": user_address
+                "address": user_address or "",
+                "latitude": user_lat,
+                "longitude": user_lng,
             })
 
         # ── UNDERSTAND ────────────────────────────────────────────────────────
@@ -133,7 +141,7 @@ class FoodAgent:
 
         # ── Deterministic pipeline execution ─────────────────────────────────
         final_text = self._run_deterministic_pipeline(
-            task_model, tool_call_logs, user_address, user_input, prior_candidates
+            task_model, tool_call_logs, user_address, user_input, prior_candidates, turn_coords
         )
 
         # ── Append to conversation history for LLM reply-generation context ──
@@ -160,6 +168,7 @@ class FoodAgent:
         user_address: Optional[str] = None,
         user_input: str = "",
         prior_candidates: Optional[List[Dict[str, Any]]] = None,
+        turn_coords: Optional[Tuple[float, float]] = None,
     ) -> str:
         """
         Single unified execution engine for ALL pipeline stages.
@@ -172,7 +181,14 @@ class FoodAgent:
         pref_args = {"user_id": self.user_id}
         pref = execute_tool("get_user_preferences", pref_args)
         tool_call_logs.append({"tool": "get_user_preferences", "arguments": pref_args, "result": pref})
-        effective_address = user_address or pref.get("address") or "Cầu Giấy, Hà Nội"
+        # Delivery location: what the user gave this turn, else the saved profile location.
+        # There is no default; PLAN asks when neither is usable.
+        if user_address or turn_coords:
+            effective_address, effective_coords = user_address or "", turn_coords
+        else:
+            effective_address = pref.get("address") or ""
+            lat, lng = pref.get("latitude"), pref.get("longitude")
+            effective_coords = (lat, lng) if lat is not None and lng is not None else None
 
         # ── Step 2: Non-recommendation intents ───────────────────────────────
         if task_model.intent == "state_preference":
@@ -185,10 +201,14 @@ class FoodAgent:
             return self._describe_referenced_candidate(task_model, prior_candidates or [])
 
         # ── Step 3: PLAN ──────────────────────────────────────────────────────
+        question = location_clarification(effective_address, effective_coords)
+        if question:
+            return question
         rec_args = plan_recommendation(
             task_model, self.user_id, effective_address, pref,
             previous_task=self.last_task, previous_candidates=prior_candidates,
             shown_dish_ids=self.shown_dish_ids,
+            user_coords=effective_coords,
         )
         if rec_args is None:
             return "Tôi chưa rõ bạn đang muốn tìm món nào, bạn có thể nói cụ thể hơn không?"
@@ -273,7 +293,7 @@ class FoodAgent:
         if rest.get("open_hours"):
             lines.append(f"- 🕒 Giờ mở cửa (theo dữ liệu quán): {rest['open_hours']}")
         rating = f"⭐ {rest['rating']} trên {rest['platform']}" if rest.get("rating") is not None else "chưa có đánh giá"
-        lines.append(f"- 📍 Khoảng cách: {rest['distance_km']} km | {rating}")
+        lines.append(f"- 📍 Khoảng cách: {distance_text(Restaurant.model_validate(rest))} | {rating}")
         return "\n".join(lines)
 
     def _respond_chit_chat(self, user_input: str = "") -> str:

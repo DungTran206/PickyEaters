@@ -69,7 +69,8 @@ def diagnose_and_replan(
     if rejected_candidates:
         if all_rejected_for("price_max"):
             # All available options exceeded the user's budget
-            min_avail_price = min(cand.pricing.final_price for cand, _ in rejected_candidates)
+            # price_max is compared with the dish price (excluding ship), so report that basis.
+            min_avail_price = min(cand.pricing.original_price for cand, _ in rejected_candidates)
             orig_budget = task.hard_constraints.price_max or 0
             
             # Suggest alternative cheaper food categories
@@ -77,7 +78,7 @@ def diagnose_and_replan(
             concept_name = task.objects[0].concept if task.objects and task.objects[0].concept else "món bạn tìm"
 
             msg = (
-                f"Quanh khu vực của bạn, các quán bán '{concept_name}' hiện có giá thực tế từ {min_avail_price:,}đ "
+                f"Quanh khu vực của bạn, các quán bán '{concept_name}' hiện có giá món từ {min_avail_price:,}đ (chưa gồm ship) "
                 f"(vượt ngân sách {orig_budget:,}đ của bạn). "
                 f"Bạn có muốn nới ngân sách lên khoảng {min_avail_price:,}đ, "
                 f"hay muốn thử các món vừa túi tiền hơn như {', '.join(cheaper_alternatives[:3])}?"

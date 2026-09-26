@@ -1,6 +1,6 @@
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class TaskObject(BaseModel):
@@ -53,6 +53,12 @@ class TaskContext(BaseModel):
 
     party_size: int = 1
     conversation_ref: Optional[str] = None
+
+    @field_validator("conversation_ref", mode="before")
+    @classmethod
+    def ordinal_as_string(cls, value):
+        # LLMs often emit the ordinal as a number (2) instead of a string ("2").
+        return str(value) if isinstance(value, int) and not isinstance(value, bool) else value
 
 
 class TaskModel(BaseModel):

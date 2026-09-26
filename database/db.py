@@ -23,8 +23,10 @@ def init_db(db_path: str = DB_PATH):
         CREATE TABLE IF NOT EXISTS user_preferences (
             user_id TEXT PRIMARY KEY,
             name TEXT DEFAULT 'Bạn',
-            district TEXT DEFAULT 'Cầu Giấy',
-            address TEXT DEFAULT 'Cầu Giấy, Hà Nội',
+            district TEXT DEFAULT '',
+            address TEXT DEFAULT '',
+            latitude REAL,
+            longitude REAL,
             preferred_cuisines TEXT,
             preferred_flavors TEXT,
             disliked_ingredients TEXT,
@@ -42,8 +44,10 @@ def init_db(db_path: str = DB_PATH):
     # Migration for existing DBs if columns are missing
     for col, col_type, default_val in [
         ("name", "TEXT", "'Bạn'"),
-        ("district", "TEXT", "'Cầu Giấy'"),
-        ("address", "TEXT", "'Cầu Giấy, Hà Nội'")
+        ("district", "TEXT", "''"),
+        ("address", "TEXT", "''"),
+        ("latitude", "REAL", "NULL"),
+        ("longitude", "REAL", "NULL"),
     ]:
         try:
             cursor.execute(f"ALTER TABLE user_preferences ADD COLUMN {col} {col_type} DEFAULT {default_val}")
@@ -70,8 +74,10 @@ def row_to_preference(row: sqlite3.Row) -> UserPreference:
     return UserPreference(
         user_id=row["user_id"],
         name=row["name"] if "name" in keys and row["name"] else "Bạn",
-        district=row["district"] if "district" in keys and row["district"] else "Cầu Giấy",
-        address=row["address"] if "address" in keys and row["address"] else "Cầu Giấy, Hà Nội",
+        district=row["district"] if "district" in keys and row["district"] else "",
+        address=row["address"] if "address" in keys and row["address"] else "",
+        latitude=row["latitude"] if "latitude" in keys else None,
+        longitude=row["longitude"] if "longitude" in keys else None,
         preferred_cuisines=json.loads(row["preferred_cuisines"] or "[]"),
         preferred_flavors=json.loads(row["preferred_flavors"] or "[]"),
         disliked_ingredients=json.loads(row["disliked_ingredients"] or "[]"),
@@ -99,8 +105,9 @@ def get_user_preferences(user_id: str, db_path: str = DB_PATH) -> UserPreference
     default_pref = UserPreference(
         user_id=user_id,
         name="Bạn",
-        district="Cầu Giấy",
-        address="Cầu Giấy, Hà Nội",
+        # No delivery location until the user provides one (typed address or map point).
+        district="",
+        address="",
         preferred_cuisines=["Vietnamese"],
         preferred_flavors=[],
         disliked_ingredients=[],
@@ -125,14 +132,17 @@ def save_user_preference(pref: UserPreference, conn: Optional[sqlite3.Connection
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO user_preferences (
-            user_id, name, district, address, preferred_cuisines, preferred_flavors, disliked_ingredients,
+            user_id, name, district, address, latitude, longitude,
+            preferred_cuisines, preferred_flavors, disliked_ingredients,
             budget, minimum_rating, preferred_distance, dietary_restrictions,
             liked_dishes, disliked_dishes, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(user_id) DO UPDATE SET
             name=excluded.name,
             district=excluded.district,
             address=excluded.address,
+            latitude=excluded.latitude,
+            longitude=excluded.longitude,
             preferred_cuisines=excluded.preferred_cuisines,
             preferred_flavors=excluded.preferred_flavors,
             disliked_ingredients=excluded.disliked_ingredients,
@@ -148,6 +158,8 @@ def save_user_preference(pref: UserPreference, conn: Optional[sqlite3.Connection
         pref.name,
         pref.district,
         pref.address,
+        pref.latitude,
+        pref.longitude,
         json.dumps(pref.preferred_cuisines, ensure_ascii=False),
         json.dumps(pref.preferred_flavors, ensure_ascii=False),
         json.dumps(pref.disliked_ingredients, ensure_ascii=False),
@@ -160,8 +172,6 @@ def save_user_preference(pref: UserPreference, conn: Optional[sqlite3.Connection
         datetime.now().isoformat()
     ))
     conn.commit()
-    if should_close:
-        conn.close()
     if should_close:
         conn.close()
 
@@ -212,6 +222,9 @@ def update_user_preference(
 
     if target_field in ["name", "address", "district"]:
         setattr(pref, target_field, str(value).strip())
+        if target_field == "address":
+            # A typed address replaces any earlier map pin.
+            pref.latitude = pref.longitude = None
     elif target_field in ["disliked_ingredients", "preferred_cuisines", "preferred_flavors", "dietary_restrictions", "liked_dishes", "disliked_dishes"]:
         current_list: list = getattr(pref, target_field, [])
         if isinstance(value, list):
@@ -246,6 +259,27 @@ def update_user_preference(
         except (ValueError, TypeError):
             pass
 
+    pref.updated_at = datetime.now().isoformat()
+    save_user_preference(pref, db_path=db_path)
+    return pref
+
+
+def set_user_location(
+    user_id: str,
+    address: str,
+    district: str = "",
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None,
+    db_path: str = DB_PATH,
+) -> UserPreference:
+    """Store the delivery location as one unit: label/address, district and optional map point.
+
+    Without coordinates (typed address) any previous map pin is cleared.
+    """
+    pref = get_user_preferences(user_id, db_path=db_path)
+    pref.address = address.strip()
+    pref.district = district
+    pref.latitude, pref.longitude = latitude, longitude
     pref.updated_at = datetime.now().isoformat()
     save_user_preference(pref, db_path=db_path)
     return pref

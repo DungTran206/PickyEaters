@@ -136,16 +136,23 @@ def score_candidate(
         sem_score, _ = evaluate_semantic_match(dish, restaurant, sem_attrs)
         scores["semantic_score"] = sem_score
 
-    # 3. Price / Budget Match
-    budget = user_pref.budget if (user_pref and user_pref.budget > 0) else 80000
-    if pricing.final_price <= budget:
-        scores["price_match"] = 2.5 + max(0.0, (budget - pricing.final_price) / float(budget))
+    # 3. Price / Budget Match — budget applies to the dish price (excluding ship), like price_max.
+    # The budget stated in this request wins over the profile's soft baseline.
+    stated_max = task.get("hard_constraints", {}).get("price_max") if task_model else None
+    if stated_max:
+        budget = stated_max
     else:
-        over = pricing.final_price - budget
+        budget = user_pref.budget if (user_pref and user_pref.budget > 0) else 80000
+    dish_total = pricing.original_price
+    if dish_total <= budget:
+        scores["price_match"] = 2.5 + max(0.0, (budget - dish_total) / float(budget))
+    else:
+        over = dish_total - budget
         scores["price_match"] = max(-5.0, -(over / 15000.0))
 
     # 4. Distance Score (closer is better, scaled up to 10km)
-    scores["distance_score"] = round(max(0.0, (10.0 - restaurant.distance_km) / 10.0) * 2.5, 2)
+    if restaurant.distance_basis != "unknown":  # unknown distance scores neutral (0)
+        scores["distance_score"] = round(max(0.0, (10.0 - restaurant.distance_km) / 10.0) * 2.5, 2)
 
     # 5. Rating Score (4.0 - 5.0 scaled, high priority)
     # Unknown rating scores neutral (0), not a guessed value.
@@ -199,10 +206,13 @@ def generate_detailed_reasoning(
     elif dish.cuisine:
         points.append(f"🍽️ Ẩm thực: {dish.cuisine}")
 
-    # 3. Distance & Radius (always included)
-    distance = f"📍 Cách bạn chỉ {restaurant.distance_km}km"
+    # 3. Distance & Radius (always included), stating how the distance was obtained
+    if restaurant.distance_basis == "stored":
+        distance = f"📍 Cách bạn chỉ {restaurant.distance_km}km"
+    else:
+        distance = f"📍 Khoảng cách: {distance_text(restaurant)}"
     if is_radius_expanded:
-        distance = f"📍 Cách bạn {restaurant.distance_km}km (kết quả sau khi mở rộng bán kính lên {search_radius_km:g}km)"
+        distance += f" (kết quả sau khi mở rộng bán kính lên {search_radius_km:g}km)"
     if "delivery_time_mins" not in restaurant.estimated_fields:
         distance += f" — giao hàng ước tính ~{restaurant.delivery_time_mins} phút"
     points.append(distance)
@@ -230,11 +240,13 @@ def generate_detailed_reasoning(
             f"(gồm {ship} {pricing.delivery_fee:,}đ)"
         )
     if budget:
-        if pricing.final_price <= budget:
-            price_line += f" — trong {budget_label} {budget:,}đ"
+        # Budgets apply to the dish price (menu price x portions, excluding ship).
+        dish_total = pricing.original_price
+        if dish_total <= budget:
+            price_line += f" — giá món {dish_total:,}đ, trong {budget_label} {budget:,}đ"
         else:
-            over_pct = round((pricing.final_price - budget) / budget * 100)
-            price_line += f" — vượt {budget_label} {budget:,}đ khoảng {over_pct}%"
+            over_pct = round((dish_total - budget) / budget * 100)
+            price_line += f" — giá món {dish_total:,}đ, vượt {budget_label} {budget:,}đ khoảng {over_pct}%"
     points.append(price_line)
 
     # 5. Ingredient-exclusion check: profile dislikes + this request's excludes.
@@ -358,18 +370,35 @@ def rank_candidates(
 
     task = task_model if isinstance(task_model, dict) else (task_model.model_dump(mode="json") if task_model else {})
     priorities = task.get("soft_preferences", {}).get("priority_order", [])
-    if "rating" in priorities:
-        candidates.sort(key=lambda x: (x.restaurant.rating or 0.0, x.total_score), reverse=True)
-    elif "distance" in priorities:
-        candidates.sort(key=lambda x: (x.restaurant.distance_km, -x.total_score))
-    elif "price" in priorities:
-        candidates.sort(key=lambda x: (x.pricing.final_price, -x.total_score))
-    else:
-        candidates.sort(key=lambda x: x.total_score, reverse=True)
+    candidates.sort(key=priority_sort_key(priorities))
 
     if top_k is None:
         return candidates
     return select_top_k(candidates, top_k)
+
+
+# Sort keys for TaskModel.soft_preferences.priority_order (lower = better).
+# Values are bucketed so a later priority still decides between options that are
+# practically equal on an earlier one (e.g. 52,000đ vs 55,000đ when "rẻ, gần" is asked).
+PRICE_BUCKET_VND = 10000
+DISTANCE_BUCKET_KM = 1.0
+SAVINGS_BUCKET_VND = 5000
+
+PRIORITY_KEYS = {
+    "price": lambda c: c.pricing.final_price // PRICE_BUCKET_VND,
+    "distance": lambda c: (
+        float("inf") if c.restaurant.distance_basis == "unknown"
+        else c.restaurant.distance_km // DISTANCE_BUCKET_KM
+    ),
+    "rating": lambda c: -(c.restaurant.rating if c.restaurant.rating is not None else 0.0),
+    "promotion": lambda c: -(c.pricing.savings // SAVINGS_BUCKET_VND),
+}
+
+
+def priority_sort_key(priorities: List[str]):
+    """Order by the user's priorities in the order they stated them, then by total_score."""
+    keys = [PRIORITY_KEYS[p] for p in dict.fromkeys(priorities) if p in PRIORITY_KEYS]
+    return lambda c: tuple(key(c) for key in keys) + (-c.total_score,)
 
 
 def select_top_k(
@@ -397,6 +426,18 @@ def select_top_k(
                     break
 
     return selected
+
+
+def distance_text(restaurant: Restaurant) -> str:
+    """Distance with its basis, so an estimate is never presented as a measurement."""
+    basis = restaurant.distance_basis
+    if basis == "unknown":
+        return "chưa rõ khoảng cách"
+    if basis == "same_district":
+        return f"cùng quận với bạn, ~{restaurant.distance_km:g}km (ước tính)"
+    if basis == "district_centroid":
+        return f"~{restaurant.distance_km:g}km (ước tính theo quận)"
+    return f"{restaurant.distance_km} km"
 
 
 def _rating_text(restaurant: Restaurant) -> str:
@@ -446,14 +487,14 @@ def format_recommendations_output(
                 qty = f" × {c.quantity}" if c.quantity > 1 else ""
                 lines.append(f"  • {it.name}: {it.price:,}đ{qty}")
             lines.append(f"- 💵 Tổng đơn: **{price_k}**{deal_str}")
-            lines.append(f"- 📍 Khoảng cách: **{c.restaurant.distance_km} km** (Nền tảng: {c.restaurant.platform})")
+            lines.append(f"- 📍 Khoảng cách: **{distance_text(c.restaurant)}** (Nền tảng: {c.restaurant.platform})")
             lines.append(f"- ⭐ Đánh giá: {_rating_text(c.restaurant)} | Phí ship chung: {_fee_text(c)}")
             lines.append(f"- 💡 **Vì sao chọn combo này:** Tiết kiệm phí ship khi đặt cùng quán • {c.reasoning}")
         else:
             lines.append(f"**{i}. {c.dish.name} — {c.restaurant.name}**")
             portions = f" cho {c.quantity} phần ({c.dish.price:,}đ/phần)" if c.quantity > 1 else ""
             lines.append(f"- 💵 Giá: **{price_k}**{portions}{deal_str}")
-            lines.append(f"- 📍 Khoảng cách: **{c.restaurant.distance_km} km** (Nền tảng: {c.restaurant.platform})")
+            lines.append(f"- 📍 Khoảng cách: **{distance_text(c.restaurant)}** (Nền tảng: {c.restaurant.platform})")
             lines.append(f"- ⭐ Đánh giá: {_rating_text(c.restaurant)} | Phí ship: {_fee_text(c)}")
             lines.append(f"- 💡 **Vì sao chọn món này:** {c.reasoning}")
         lines.append("")

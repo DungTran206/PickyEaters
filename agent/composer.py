@@ -166,10 +166,9 @@ def compose_candidates(
                 best_calc = calc
 
         # POST-COMPOSITION BUDGET VALIDATION (Rule 8)
-        # Check hard_constraints.price_max on combo total
-        if task.hard_constraints.price_max is not None:
-            if subtotal > task.hard_constraints.price_max and best_calc.final_price > task.hard_constraints.price_max:
-                continue
+        # price_max applies to the combo's dish subtotal (excluding delivery fee), as in VALIDATE.
+        if task.hard_constraints.price_max is not None and subtotal > task.hard_constraints.price_max:
+            continue
 
         if task.hard_constraints.price_min is not None:
             if subtotal < task.hard_constraints.price_min:

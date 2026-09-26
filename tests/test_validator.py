@@ -83,7 +83,8 @@ class TestValidateCandidate:
         assert res.is_valid is False
         assert len(res.violations) == 1
         assert res.violations[0].constraint_type == "price_max"
-        assert res.violations[0].actual_value == 135000
+        # price_max is checked against the dish price, excluding the delivery fee
+        assert res.violations[0].actual_value == 120000
 
     def test_detects_spicy_conflict_when_user_requested_non_spicy(self):
         c = _make_candidate("Mì cay cấp độ 3", price=50000, spicy=True)

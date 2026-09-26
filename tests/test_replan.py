@@ -75,9 +75,9 @@ class TestReplanDiagnostics:
 
         assert action.strategy == "suggest_budget_adjustment"
         assert action.diagnosis == "budget_too_tight"
-        # Minimum available price should be 55k
-        assert action.suggested_budget == 55000
-        assert "55,000đ" in action.message_to_user
+        # price_max applies to the dish price (excluding ship): cheapest dish is 40k
+        assert action.suggested_budget == 40000
+        assert "40,000đ" in action.message_to_user
         assert len(action.suggested_alternatives) > 0
 
     def test_replan_suggests_alternatives_when_all_rejected_by_ingredient_excludes(self):

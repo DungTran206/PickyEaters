@@ -84,77 +84,126 @@ def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return round(R * c, 1)
 
 
-def get_address_coordinates(address: str) -> Optional[Tuple[float, float]]:
+HANOI_DISTRICTS = [
+    "thanh xuan", "cau giay", "ba dinh", "dong da", "hai ba trung", "hoan kiem", "tay ho",
+    "nam tu liem", "bac tu liem", "ha dong", "long bien", "hoang mai",
+]
+HCM_DISTRICTS = [
+    "quan 1", "quan 3", "quan 4", "quan 5", "quan 7", "quan 8", "quan 10",
+    "binh thanh", "phu nhuan", "tan binh", "thu duc",
+]
+
+# District-level geocoding cannot measure distance inside one district; this labelled
+# estimate is used for same-district pairs (distance_basis="same_district").
+SAME_DISTRICT_KM = 1.5
+
+
+def resolve_district(address: str) -> Optional[str]:
+    """District key named in `address`, or None if it names no known district.
+
+    Whole-word matching ("quan 1" never matches "quan 10"); when the city is stated only
+    that city's districts are considered; with several matches the LAST one wins,
+    since Vietnamese addresses read street → ward → district → city
+    ("Hai Bà Trưng, Quận 1" is Quận 1). Never guesses a district from the city alone.
     """
-    Determine coordinates from address with strict city scoping
-    to prevent TP.HCM street names matching Hà Nội districts.
-    """
-    if not address:
-        return None
     norm = normalize_text(address)
-
-    is_hcm = any(c in norm for c in ["hcm", "ho chi minh", "sai gon", "tp.hcm", "tphcm"])
+    if not norm:
+        return None
+    is_hcm = any(c in norm for c in ["hcm", "ho chi minh", "sai gon"])
     is_hanoi = any(c in norm for c in ["ha noi", "hanoi"])
-
-    hanoi_districts = [
-        "thanh xuan", "cau giay", "ba dinh", "dong da", "hai ba trung",
-        "hoan kiem", "tay ho", "nam tu liem", "bac tu liem", "ha dong",
-        "long bien", "hoang mai"
-    ]
-    hcm_districts = [
-        "quan 1", "quan 3", "quan 4", "quan 5", "quan 7", "quan 8",
-        "quan 10", "binh thanh", "phu nhuan", "tan binh", "thu duc"
-    ]
-
-    # If address is explicitly in TP.HCM, only check TP.HCM districts
     if is_hcm and not is_hanoi:
-        for d in hcm_districts:
-            if d in norm and d in DISTRICT_COORDINATES:
-                return DISTRICT_COORDINATES[d]
-        return DISTRICT_COORDINATES["quan 1"]
+        pool = HCM_DISTRICTS
+    elif is_hanoi and not is_hcm:
+        pool = HANOI_DISTRICTS
+    else:
+        pool = HANOI_DISTRICTS + HCM_DISTRICTS
 
-    # If address is explicitly in Hà Nội, only check Hà Nội districts
-    if is_hanoi and not is_hcm:
-        for d in hanoi_districts:
-            if d in norm and d in DISTRICT_COORDINATES:
-                return DISTRICT_COORDINATES[d]
-        return DISTRICT_COORDINATES["cau giay"]
-
-    # General check: require district indicator or word boundary to avoid matching street names
-    for d_name, coords in DISTRICT_COORDINATES.items():
-        if f"quan {d_name}" in norm or f"huyen {d_name}" in norm or f", {d_name}" in norm:
-            return coords
-        # Exact match or starts with district
-        if norm.startswith(d_name):
-            return coords
-
-    # Fallback to general substring
-    for d_name, coords in DISTRICT_COORDINATES.items():
-        if d_name in norm:
-            return coords
-
-    # City-level fallbacks
-    if is_hanoi:
-        return DISTRICT_COORDINATES["cau giay"]
-    if is_hcm:
-        return DISTRICT_COORDINATES["quan 1"]
-
-    return None
+    best: Optional[Tuple[Tuple[int, int], str]] = None
+    for district in pool:
+        for match in re.finditer(r"\b" + re.escape(district) + r"\b", norm):
+            key = (match.start(), len(district))
+            if best is None or key > best[0]:
+                best = (key, district)
+    return best[1] if best else None
 
 
-def calculate_distance_km(user_address: str, restaurant_address: str, default_km: float = 2.5) -> float:
-    """Calculate realistic distance between user address and restaurant address."""
-    c1 = get_address_coordinates(user_address)
-    c2 = get_address_coordinates(restaurant_address)
-    if c1 and c2:
-        dist = haversine_km(c1[0], c1[1], c2[0], c2[1])
-        # If in the same district, give a realistic short localized distance
-        if dist < 0.5:
-            if default_km and 0.5 <= default_km <= 3.5:
-                return default_km
-            return 1.2
-        return dist
-    return default_km
+def get_address_coordinates(address: str) -> Optional[Tuple[float, float]]:
+    """Centroid of the district named in `address`, or None if it can't be located."""
+    district = resolve_district(address)
+    return DISTRICT_COORDINATES.get(district) if district else None
+
+
+DISTRICT_NAMES: Dict[str, str] = {
+    "thanh xuan": "Thanh Xuân, Hà Nội", "cau giay": "Cầu Giấy, Hà Nội", "ba dinh": "Ba Đình, Hà Nội",
+    "dong da": "Đống Đa, Hà Nội", "hai ba trung": "Hai Bà Trưng, Hà Nội", "hoan kiem": "Hoàn Kiếm, Hà Nội",
+    "tay ho": "Tây Hồ, Hà Nội", "nam tu liem": "Nam Từ Liêm, Hà Nội", "bac tu liem": "Bắc Từ Liêm, Hà Nội",
+    "ha dong": "Hà Đông, Hà Nội", "long bien": "Long Biên, Hà Nội", "hoang mai": "Hoàng Mai, Hà Nội",
+    "quan 1": "Quận 1, TP.HCM", "quan 3": "Quận 3, TP.HCM", "quan 4": "Quận 4, TP.HCM",
+    "quan 5": "Quận 5, TP.HCM", "quan 7": "Quận 7, TP.HCM", "quan 8": "Quận 8, TP.HCM",
+    "quan 10": "Quận 10, TP.HCM", "binh thanh": "Bình Thạnh, TP.HCM", "phu nhuan": "Phú Nhuận, TP.HCM",
+    "tan binh": "Tân Bình, TP.HCM", "thu duc": "Thủ Đức, TP.HCM",
+}
+
+# A map point farther than this from every known district centre is outside the covered area.
+NEAREST_DISTRICT_MAX_KM = 6.0
+# Floor for point-to-centre estimates, so a pin next to a centre isn't shown as "~0 km".
+MIN_ESTIMATED_KM = 0.5
+
+Coords = Tuple[float, float]
+
+
+def nearest_district(latitude: float, longitude: float) -> Optional[str]:
+    """District whose centre is closest to a map point, or None if none is within range.
+
+    Approximation (no district boundaries): used to label a map pick, not to measure distance.
+    """
+    key, km = min(
+        ((d, haversine_km(latitude, longitude, *c)) for d, c in DISTRICT_COORDINATES.items()),
+        key=lambda pair: pair[1],
+    )
+    return key if km <= NEAREST_DISTRICT_MAX_KM else None
+
+
+def district_label(address: Optional[str], coords: Optional[Coords] = None) -> str:
+    """Display name of the user's district ("Thanh Xuân, Hà Nội"), or "" if unknown."""
+    key = nearest_district(*coords) if coords is not None else resolve_district(address or "")
+    return DISTRICT_NAMES.get(key, "") if key else ""
+
+
+def is_locatable(address: Optional[str], coords: Optional[Coords] = None) -> bool:
+    """True if we can estimate distances from this delivery location."""
+    return coords is not None or bool(address and resolve_district(address))
+
+
+def estimate_distance(
+    user_address: str, restaurant_address: str, user_coords: Optional[Coords] = None
+) -> Tuple[Optional[float], str]:
+    """(km, basis) from the user to a restaurant.
+
+    With user_coords (map pick) the distance runs from that exact point to the centre of the
+    restaurant's district; otherwise both sides are district-level.
+    basis: "district_centroid" (estimate using district centres), "same_district"
+    (SAME_DISTRICT_KM estimate) or "unknown" (km is None — a side can't be located).
+    """
+    rest_district = resolve_district(restaurant_address)
+    if not rest_district:
+        return None, "unknown"
+    if user_coords is not None:
+        km = haversine_km(*user_coords, *DISTRICT_COORDINATES[rest_district])
+        return max(km, MIN_ESTIMATED_KM), "district_centroid"
+    user_district = resolve_district(user_address)
+    if not user_district:
+        return None, "unknown"
+    if user_district == rest_district:
+        return SAME_DISTRICT_KM, "same_district"
+    return haversine_km(*DISTRICT_COORDINATES[user_district], *DISTRICT_COORDINATES[rest_district]), "district_centroid"
+
+
+def _with_distance(restaurant: Restaurant, user_address: str, user_coords: Optional[Coords] = None) -> Restaurant:
+    km, basis = estimate_distance(user_address, restaurant.address, user_coords)
+    if km is None:
+        return restaurant.model_copy(update={"distance_basis": "unknown"})
+    return restaurant.model_copy(update={"distance_km": km, "distance_basis": basis})
 
 
 # ---------------------------------------------------------------------------
@@ -504,22 +553,19 @@ def search_restaurants(
     radius_km: Optional[float] = None,
     minimum_rating: Optional[float] = None,
     cuisine: Optional[str] = None,
-    data_dir: str = DATA_DIR
+    data_dir: str = DATA_DIR,
+    user_coords: Optional[Coords] = None,
 ) -> List[Restaurant]:
     restaurants = load_restaurants(data_dir)
     results = []
-    effective_address = user_address or location
+    effective_address = user_address or location or ""
+    has_location = bool(effective_address) or user_coords is not None
 
     for r in restaurants:
-        distance = r.distance_km
-        if effective_address and r.address:
-            distance = calculate_distance_km(effective_address, r.address, default_km=r.distance_km)
-            r_copy = r.model_copy(update={"distance_km": distance})
-        else:
-            r_copy = r
+        r_copy = _with_distance(r, effective_address, user_coords) if has_location else r
 
-        if radius_km is not None and r_copy.distance_km > radius_km:
-            continue
+        if radius_km is not None and (r_copy.distance_basis == "unknown" or r_copy.distance_km > radius_km):
+            continue  # an unknown distance can't be shown to be within the radius
         if minimum_rating is not None and (r_copy.rating is None or r_copy.rating < minimum_rating):
             continue
         if cuisine and not _match_cuisine(cuisine, r_copy.cuisine, r_copy.name):
@@ -577,7 +623,7 @@ def search_dishes(
 
 
 def search_with_radius_expansion(
-    user_address: str = "Cầu Giấy, Hà Nội",
+    user_address: str = "",
     keyword: Optional[str] = None,
     cuisine: Optional[str] = None,
     max_price: Optional[int] = None,
@@ -590,6 +636,7 @@ def search_with_radius_expansion(
     max_radius: float = 10.0,
     semantic_keywords: Optional[List[str]] = None,
     secondary_keywords: Optional[List[str]] = None,
+    user_coords: Optional[Coords] = None,
 ) -> Dict[str, Any]:
     """
     Search dishes and restaurants in two stages:
@@ -606,6 +653,7 @@ def search_with_radius_expansion(
         radius_km=initial_radius,
         minimum_rating=minimum_rating,
         cuisine=rest_cuisine_filter,
+        user_coords=user_coords,
     )
     rest_ids_5km = {r.id: r for r in rests_5km}
 
@@ -649,6 +697,7 @@ def search_with_radius_expansion(
         radius_km=max_radius,
         minimum_rating=minimum_rating,
         cuisine=rest_cuisine_filter,
+        user_coords=user_coords,
     )
     rest_ids_10km = {r.id: r for r in rests_10km}
 
@@ -735,13 +784,17 @@ def get_promotions(restaurant_id: Optional[str] = None, data_dir: str = DATA_DIR
     return [p for p in promotions if p.restaurant_id == restaurant_id]
 
 
-def get_restaurant_by_id(restaurant_id: str, data_dir: str = DATA_DIR, user_address: Optional[str] = None) -> Optional[Restaurant]:
+def get_restaurant_by_id(
+    restaurant_id: str,
+    data_dir: str = DATA_DIR,
+    user_address: Optional[str] = None,
+    user_coords: Optional[Coords] = None,
+) -> Optional[Restaurant]:
     restaurants = load_restaurants(data_dir)
     for r in restaurants:
         if r.id == restaurant_id:
-            if user_address and r.address:
-                dist = calculate_distance_km(user_address, r.address, default_km=r.distance_km)
-                return r.model_copy(update={"distance_km": dist})
+            if user_address or user_coords is not None:
+                return _with_distance(r, user_address or "", user_coords)
             return r
     return None
 

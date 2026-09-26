@@ -170,7 +170,7 @@ Mở file `.env` và cấu hình API Key:
 # Lấy key miễn phí tại: https://console.groq.com/keys
 GROQ_API_KEY=gsk_your_groq_api_key_here
 OPENAI_BASE_URL=https://api.groq.com/openai/v1
-OPENAI_MODEL_NAME=llama-3.3-70b-versatile
+OPENAI_MODEL_NAME=qwen/qwen3.8-27b
 
 # Hoặc dùng OpenAI:
 # OPENAI_API_KEY=sk-proj-your_openai_key_here

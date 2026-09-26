@@ -8,10 +8,10 @@ Responsibilities:
 3. Retrieval parameter preparation for ACT tools.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from agent.task_model import TaskModel
-from services.search import normalize_text
+from services.search import is_locatable, normalize_text
 
 SEMANTIC_CATEGORY_MAP: Dict[str, List[str]] = {
     # Món nước / súp
@@ -56,6 +56,28 @@ def resolve_semantic_keywords(task: TaskModel) -> List[str]:
 
 
 PRICE_FOLLOW_UP_REASONS = {"lower_price", "too_expensive"}
+
+
+def location_clarification(
+    user_address: Optional[str], user_coords: Optional[Tuple[float, float]] = None
+) -> Optional[str]:
+    """Question to ask when there is no usable delivery location, else None.
+
+    There is no default location: distances and the search radius need either a map point
+    or an address naming a district. Guessing one would make every distance claim wrong.
+    """
+    if is_locatable(user_address, user_coords):
+        return None
+    if not user_address:
+        return (
+            "Bạn chưa có địa chỉ giao hàng. Hãy nhập địa chỉ (có quận/huyện, ví dụ "
+            "'Thanh Xuân, Hà Nội') hoặc bấm 🗺️ để chọn vị trí trên bản đồ nhé."
+        )
+    return (
+        f"Mình chưa xác định được quận của địa chỉ giao hàng '{user_address}'. "
+        "Bạn thêm quận/huyện (ví dụ 'Thanh Xuân, Hà Nội' hoặc 'Quận 3, TP.HCM') "
+        "hoặc bấm 🗺️ để chọn vị trí trên bản đồ nhé."
+    )
 
 
 def merge_follow_up(task: TaskModel, previous: Optional[TaskModel]) -> TaskModel:
@@ -138,6 +160,7 @@ def plan_recommendation(
     previous_task: Optional[TaskModel] = None,
     previous_candidates: Optional[List[Dict[str, Any]]] = None,
     shown_dish_ids: Optional[List[str]] = None,
+    user_coords: Optional[Tuple[float, float]] = None,
 ) -> Optional[Dict[str, Any]]:
     """Translate a validated TaskModel, session state and profile into action arguments.
 
@@ -175,6 +198,8 @@ def plan_recommendation(
     return {
         "user_id": user_id,
         "user_address": user_address or profile.get("address"),
+        "user_lat": user_coords[0] if user_coords else None,
+        "user_lng": user_coords[1] if user_coords else None,
         "keyword": primary_concept,
         "semantic_keywords": semantic_kws,
         "secondary_keywords": secondary_concepts,

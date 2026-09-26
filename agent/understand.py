@@ -29,6 +29,12 @@ except ImportError:  # pragma: no cover
     OpenAI = None  # type: ignore[assignment,misc]
 logger = logging.getLogger(__name__)
 
+# Default models when OPENAI_MODEL_NAME is unset. Shared with agent.py (RESPOND).
+# qwen3.8-27b: best Understand accuracy on Groq with the fewest tokens (no reasoning
+# tokens that can truncate the JSON at max_tokens).
+DEFAULT_GROQ_MODEL = "qwen/qwen3.8-27b"
+DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+
 
 # ---------------------------------------------------------------------------
 # Public entry point
@@ -76,7 +82,7 @@ def _try_llm_understand(
 
     is_groq = bool(groq_key) or api_key.startswith("gsk_")
     default_base = "https://api.groq.com/openai/v1" if is_groq else "https://api.openai.com/v1"
-    default_model = "qwen/qwen3.8-27b" if is_groq else "gpt-4o-mini"
+    default_model = DEFAULT_GROQ_MODEL if is_groq else DEFAULT_OPENAI_MODEL
 
     base_url = os.getenv("OPENAI_BASE_URL", default_base)
     model = os.getenv("OPENAI_MODEL_NAME", default_model)

@@ -51,16 +51,16 @@ def validate_candidate(
     eff_price = candidate.pricing.final_price
     eff_subtotal = candidate.pricing.original_price
 
-    # 1. Hard constraint: price_max
+    # 1. Hard constraint: price_max applies to the DISH price (menu price x portions,
+    #    before promotions and excluding delivery fee) — "dưới 60k" means the food costs ≤ 60k.
     if task.hard_constraints.price_max is not None:
         max_p = task.hard_constraints.price_max
-        # For food delivery orders, check if both subtotal and final price exceed budget
-        if eff_subtotal > max_p and eff_price > max_p:
+        if eff_subtotal > max_p:
             violations.append(ConstraintViolation(
                 constraint_type="price_max",
                 field="price",
-                message=f"Giá thực tế {eff_price:,}đ vượt quá ngân sách tối đa {max_p:,}đ",
-                actual_value=eff_price,
+                message=f"Giá món {eff_subtotal:,}đ vượt quá ngân sách tối đa {max_p:,}đ",
+                actual_value=eff_subtotal,
                 expected_value=max_p
             ))
 

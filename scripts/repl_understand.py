@@ -24,7 +24,7 @@ if sys.platform == "win32":
 from dotenv import load_dotenv
 load_dotenv()
 
-from agent.understand import understand, _try_llm_understand
+from agent.understand import DEFAULT_GROQ_MODEL, DEFAULT_OPENAI_MODEL, understand, _try_llm_understand
 from agent.task_model import TaskModel
 
 
@@ -33,10 +33,10 @@ def get_active_engine_info() -> tuple[str, bool]:
     groq_key = os.getenv("GROQ_API_KEY", "").strip()
     openai_key = os.getenv("OPENAI_API_KEY", "").strip()
     if groq_key:
-        model = os.getenv("OPENAI_MODEL_NAME", "qwen/qwen3.8-27b")
+        model = os.getenv("OPENAI_MODEL_NAME", DEFAULT_GROQ_MODEL)
         return f"LLM [Groq API / {model}]", True
     elif openai_key:
-        model = os.getenv("OPENAI_MODEL_NAME", "gpt-4o-mini")
+        model = os.getenv("OPENAI_MODEL_NAME", DEFAULT_OPENAI_MODEL)
         return f"LLM [OpenAI API / {model}]", True
     else:
         return "Regex Fallback (Chua cau hinh API key trong .env)", False

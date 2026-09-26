@@ -12,6 +12,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+  <!-- Leaflet (map picker for the delivery location; Esri street tiles) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
   <!-- Stylesheet -->
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
@@ -37,7 +40,7 @@
         <div class="user-select-container">
           <span class="user-icon" aria-hidden="true">👤</span>
           <select id="userSelector" class="user-dropdown" aria-label="Chọn hồ sơ người dùng">
-            <option value="user_01" selected>Dũng (Cầu Giấy)</option>
+            <option value="user_01" selected>Dũng</option>
             <option value="user_new">Khách mới</option>
           </select>
         </div>
@@ -82,12 +85,15 @@
               type="text"
               id="userAddressInput"
               class="location-input address-input"
-              placeholder="Địa chỉ giao hàng (vd: Duy Tân, Cầu Giấy, Hà Nội)..."
-              value="Cầu Giấy, Hà Nội"
+              placeholder="Nhập địa chỉ giao hàng (có quận/huyện) hoặc chọn trên bản đồ..."
               aria-label="Địa chỉ giao hàng"
               autocomplete="street-address"
             />
           </div>
+
+          <button id="openMapBtn" type="button" class="btn btn-sm btn-secondary map-open-btn" aria-label="Chọn vị trí giao hàng trên bản đồ">
+            <span>🗺️ Chọn trên bản đồ</span>
+          </button>
 
           <button id="saveLocationBtn" class="btn btn-sm btn-primary save-loc-btn" aria-label="Lưu thông tin vị trí">
             <span>💾 Lưu vị trí</span>
@@ -99,7 +105,7 @@
           <div class="quick-districts-group" role="group" aria-label="Chọn nhanh quận">
             <span class="quick-label" aria-hidden="true">⚡ Chọn nhanh:</span>
             <div class="district-chips">
-              <button type="button" class="district-chip active" data-district="Cầu Giấy, Hà Nội" aria-label="Cầu Giấy, Hà Nội">Cầu Giấy</button>
+              <button type="button" class="district-chip" data-district="Cầu Giấy, Hà Nội" aria-label="Cầu Giấy, Hà Nội">Cầu Giấy</button>
               <button type="button" class="district-chip" data-district="Ba Đình, Hà Nội" aria-label="Ba Đình, Hà Nội">Ba Đình</button>
               <button type="button" class="district-chip" data-district="Đống Đa, Hà Nội" aria-label="Đống Đa, Hà Nội">Đống Đa</button>
               <button type="button" class="district-chip" data-district="Hai Bà Trưng, Hà Nội" aria-label="Hai Bà Trưng">Hai Bà Trưng</button>
@@ -133,7 +139,7 @@
           <h1 class="welcome-title">Chào <span id="welcomeUserName">Dũng</span>!<br>Bạn muốn ăn gì hôm nay?</h1>
           <p class="welcome-desc">
             FoodAgent phân tích nhu cầu của bạn và tự động quét trong bán kính <strong>5.0 km</strong> quanh
-            <strong id="welcomeUserAddress">Cầu Giấy, Hà Nội</strong>.
+            <strong id="welcomeUserAddress">địa chỉ của bạn (chưa có — hãy nhập hoặc chọn trên bản đồ)</strong>.
             Nếu chưa đủ lựa chọn, hệ thống sẽ <strong>mở rộng lên 10.0 km</strong> và
             giải thích lý do (AI Reasoning) vì sao món đó được chọn!
           </p>
@@ -280,6 +286,24 @@
   <div id="toastContainer" class="toast-container" role="status" aria-live="polite"></div>
 
   <!-- Scripts -->
+  <!-- Map picker modal -->
+  <div id="mapModal" class="map-modal" role="dialog" aria-modal="true" aria-labelledby="mapModalTitle" hidden>
+    <div class="map-modal-content">
+      <div class="map-modal-header">
+        <h2 id="mapModalTitle">📍 Chọn vị trí giao hàng</h2>
+        <button id="closeMapBtn" type="button" class="btn btn-sm btn-ghost" aria-label="Đóng bản đồ">✕</button>
+      </div>
+      <p class="map-modal-hint">Bấm lên bản đồ để đặt ghim, hoặc dùng vị trí hiện tại của bạn.</p>
+      <div id="mapCanvas" class="map-canvas" aria-label="Bản đồ chọn vị trí"></div>
+      <div id="mapPickInfo" class="map-pick-info" aria-live="polite">Chưa chọn vị trí.</div>
+      <div class="map-modal-actions">
+        <button id="useMyLocationBtn" type="button" class="btn btn-sm btn-secondary">🎯 Vị trí hiện tại</button>
+        <button id="confirmMapBtn" type="button" class="btn btn-sm btn-primary" disabled>✅ Dùng vị trí này</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>

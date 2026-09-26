@@ -1,12 +1,18 @@
 import json
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 from database.models import RecommendationCandidate
-from database.db import get_user_preferences as db_get_preferences, update_user_preference as db_update_preference
+from database.db import (
+    get_user_preferences as db_get_preferences,
+    set_user_location as db_set_user_location,
+    update_user_preference as db_update_preference,
+)
 from services.search import (
     search_restaurants as svc_search_restaurants,
     search_dishes as svc_search_dishes,
     get_promotions as svc_get_promotions,
     search_with_radius_expansion,
+    district_label,
+    is_locatable,
     get_restaurant_by_id,
     get_dish_by_id
 )
@@ -91,13 +97,17 @@ def tool_recommend_dishes_with_radius(
     composition_strategy: Optional[str] = None,
     max_final_price: Optional[int] = None,
     exclude_dish_ids: Optional[List[str]] = None,
+    user_lat: Optional[float] = None,
+    user_lng: Optional[float] = None,
     **kwargs: Any,
 ) -> Dict[str, Any]:
     """
     Search dishes around user's address with automatic 5km -> 10km radius expansion and reasoning.
     """
     pref = db_get_preferences(user_id)
-    eff_address = user_address or pref.address or "Cầu Giấy, Hà Nội"
+    # No default location: PLAN only calls this tool with a locatable address or map point.
+    eff_address = user_address or pref.address or ""
+    user_coords = (user_lat, user_lng) if user_lat is not None and user_lng is not None else None
     # Profile budget is a soft preference/baseline, NOT a hard filter unless user stated it.
     # When max_price is None, search broadly without ceiling; VALIDATE will enforce TaskModel constraints.
     eff_budget = max_price if max_price is not None else None
@@ -105,6 +115,7 @@ def tool_recommend_dishes_with_radius(
 
     search_res = search_with_radius_expansion(
         user_address=eff_address,
+        user_coords=user_coords,
         keyword=keyword,
         cuisine=cuisine,
         max_price=eff_budget,
@@ -152,6 +163,7 @@ def tool_recommend_dishes_with_radius(
             new_radius = replan_action.suggested_radius_km or 10.0
             retry_res = search_with_radius_expansion(
                 user_address=eff_address,
+                user_coords=user_coords,
                 keyword=keyword,
                 cuisine=cuisine,
                 max_price=eff_budget,
@@ -195,6 +207,23 @@ def tool_recommend_dishes_with_radius(
         "replan_action": replan_action.model_dump() if replan_action else None,
     }
 
+def tool_set_user_location(
+    user_id: str,
+    address: str = "",
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None,
+) -> Dict[str, Any]:
+    """Save the delivery location (typed address or map point). Refuses unlocatable input."""
+    coords = (latitude, longitude) if latitude is not None and longitude is not None else None
+    if not is_locatable(address, coords):
+        return {"status": "rejected", "reason": "location_not_locatable"}
+    district = district_label(address, coords)
+    label = address.strip() or (f"Vị trí trên bản đồ (gần {district})" if district else "Vị trí trên bản đồ")
+    pref = db_set_user_location(user_id, label, district, *(coords or (None, None)))
+    return {"status": "success", "address": pref.address, "district": pref.district,
+            "latitude": pref.latitude, "longitude": pref.longitude}
+
+
 def tool_get_user_preferences(user_id: str) -> Dict[str, Any]:
     """Retrieve user food preferences from SQLite database."""
     pref = db_get_preferences(user_id)
@@ -203,6 +232,8 @@ def tool_get_user_preferences(user_id: str) -> Dict[str, Any]:
         "name": pref.name,
         "address": pref.address,
         "district": pref.district,
+        "latitude": pref.latitude,
+        "longitude": pref.longitude,
         "preferred_cuisines": pref.preferred_cuisines,
         "preferred_flavors": pref.preferred_flavors,
         "disliked_ingredients": pref.disliked_ingredients,
@@ -492,10 +523,18 @@ OPENAI_TOOLS = [
 
 
 TOOL_DISPATCHER = {
+    "set_user_location": lambda args: tool_set_user_location(
+        user_id=args["user_id"],
+        address=args.get("address") or "",
+        latitude=args.get("latitude"),
+        longitude=args.get("longitude"),
+    ),
     "get_user_preferences": lambda args: tool_get_user_preferences(args["user_id"]),
     "recommend_dishes_with_radius": lambda args: tool_recommend_dishes_with_radius(
         user_id=args["user_id"],
         user_address=args.get("user_address"),
+        user_lat=args.get("user_lat"),
+        user_lng=args.get("user_lng"),
         keyword=args.get("keyword"),
         cuisine=args.get("cuisine"),
         min_price=args.get("min_price"),
