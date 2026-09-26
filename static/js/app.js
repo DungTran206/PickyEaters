@@ -54,9 +54,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let isSending     = false;
   // Delivery location: no default. Typed address (lat/lng null) or a map pin (lat/lng set).
   let deliveryLocation = { address: '', lat: null, lng: null };
-  const NO_ADDRESS_TEXT = 'địa chỉ của bạn (chưa có — hãy nhập hoặc chọn trên bản đồ)';
+  const NO_ADDRESS_TEXT = 'chưa có, nhập địa chỉ ở trên hoặc chọn trên bản đồ';
   let currentPreferences = {
-    name: 'Dũng',
+    name: '',
     address: '',
     budget: 80000,
     minimum_rating: 4.3,
@@ -66,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // ─── INIT ─────────────────────────────────────────────────────────────────
+  renderWelcomeCard();
   loadUserProfile(currentUserId);
 
   // User Switcher
@@ -79,25 +80,25 @@ document.addEventListener('DOMContentLoaded', () => {
   saveLocationBtn.addEventListener('click', async () => {
     const name = userNameInput.value.trim() || 'Bạn';
     if (!deliveryLocation.address && deliveryLocation.lat === null) {
-      showToast('Hãy nhập địa chỉ (có quận/huyện) hoặc chọn vị trí trên bản đồ.', 'error');
+      showToast('Nhập địa chỉ có quận/huyện, hoặc chọn trên bản đồ.', 'error');
       return;
     }
 
     try {
       saveLocationBtn.disabled = true;
-      saveLocationBtn.innerHTML = '<span>⏳ Đang lưu...</span>';
+      saveLocationBtn.textContent = 'Đang lưu…';
 
       if (await saveLocation(name)) {
         const nameEl = getWelcomeNameEl();
         if (nameEl) nameEl.textContent = name;
         if (prefNameInput) prefNameInput.value = name;
-        showToast('Đã lưu thông tin vị trí & tên khách hàng thành công! 📍');
+        showToast('Đã lưu địa chỉ.');
       }
     } catch (err) {
       showToast(`Lỗi kết nối: ${err.message}`, 'error');
     } finally {
       saveLocationBtn.disabled = false;
-      saveLocationBtn.innerHTML = '<span>💾 Lưu vị trí</span>';
+      saveLocationBtn.textContent = 'Lưu địa chỉ';
     }
   });
 
@@ -106,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chip.addEventListener('click', () => {
       const dist = chip.getAttribute('data-district');
       setDeliveryLocation(dist, null, null);
-      showToast(`Đã chọn: ${dist}. Nhấn "Lưu vị trí" để ghi nhớ.`);
+      showToast(`Giao đến ${dist}. Bấm "Lưu địa chỉ" để giữ cho lần sau.`);
     });
   });
 
@@ -254,15 +255,15 @@ document.addEventListener('DOMContentLoaded', () => {
     setDeliveryLocation(label, pendingPick.lat, pendingPick.lng);
     closeMapPicker();
     const saved = await saveLocation(userNameInput.value.trim() || 'Bạn');
-    if (saved) showToast('Đã lưu vị trí giao hàng từ bản đồ! 🗺️');
+    if (saved) showToast('Đã lưu chỗ giao hàng.');
   });
 
   // Reset Conversation
   resetChatBtn.addEventListener('click', () => {
     if (confirm('Bạn có muốn đặt lại cuộc trò chuyện về ban đầu không?')) {
       renderWelcomeCard();
-      updateRadiusBadge(5.0, false);
-      showToast('Đã làm mới cuộc trò chuyện.');
+      updateRadiusBadge(currentPreferences.preferred_distance || 5, false);
+      showToast('Đã bắt đầu cuộc trò chuyện mới.');
     }
   });
 
@@ -285,7 +286,8 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const restaurant = btn.getAttribute('data-restaurant');
       const platform   = btn.getAttribute('data-platform');
-      showToast(`🛒 Mở đơn hàng tại ${restaurant} qua ${platform}!`);
+      // The app cannot place orders itself; say so and tell the user where to go.
+      showToast(`Chưa đặt trực tiếp được: mở ${platform} và tìm "${restaurant}".`);
     }
   });
 
@@ -360,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       skeletonRow.remove();
       appendAgentResponse({
-        responseText: `⚠️ Có lỗi khi kết nối tới Agent: **${err.message}**. Hãy kiểm tra lại backend nhé!`,
+        responseText: `Không kết nối được máy chủ (${err.message}). Kiểm tra server đang chạy rồi gửi lại.`,
         toolCalls: [],
         candidates: [],
         radiusKm: 5.0,
@@ -377,14 +379,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ─── UI RENDERING HELPERS ─────────────────────────────────────────────────
 
+  const fmtKm  = km => Number(km).toLocaleString('vi-VN');
+  const fmtVnd = n => `${Math.round(n || 0).toLocaleString('vi-VN')}đ`;
+  const platformClass = pf => (pf || '').toLowerCase().includes('grab') ? 'grabfood' : 'shopeefood';
+
   function updateRadiusBadge(radiusKm, isExpanded) {
-    if (isExpanded || radiusKm > 5.0) {
-      radiusBadge.className = 'radius-status-badge expanded';
-      radiusBadgeText.innerHTML = `Bán kính: <strong>${radiusKm} km</strong> <span style="opacity:0.7;font-weight:400;">(Mở rộng)</span>`;
-    } else {
-      radiusBadge.className = 'radius-status-badge radius-5km';
-      radiusBadgeText.innerHTML = `Bán kính: <strong>${radiusKm} km</strong> <span style="opacity:0.7;font-weight:400;">(Chuẩn)</span>`;
-    }
+    radiusBadge.className = isExpanded ? 'radius-status expanded' : 'radius-status';
+    radiusBadgeText.textContent = isExpanded
+      ? `Đã mở rộng tới ${fmtKm(radiusKm)} km`
+      : `Tìm trong ${fmtKm(radiusKm)} km`;
   }
 
   function appendUserMessage(text) {
@@ -394,31 +397,14 @@ document.addEventListener('DOMContentLoaded', () => {
     messagesContainer.appendChild(row);
   }
 
-  // Skeleton loading replaces old typing indicator
   function showSkeletonLoading() {
     const row = document.createElement('div');
     row.className = 'message-row agent';
+    row.setAttribute('aria-busy', 'true');
     row.innerHTML = `
-      <div class="message-avatar">🍜</div>
-      <div class="message-bubble">
-        <div class="skeleton-cards-container">
-          ${[1,2].map(() => `
-            <div class="skeleton-card">
-              <div class="skeleton-line title"></div>
-              <div class="skeleton-line sub"></div>
-              <div style="margin-top:10px;">
-                <div class="skeleton-line tag"></div>
-                <div class="skeleton-line tag"></div>
-                <div class="skeleton-line tag"></div>
-              </div>
-              <div style="margin-top:8px;">
-                <div class="skeleton-line body"></div>
-                <div class="skeleton-line body-short"></div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
+      <p class="loading-text">Đang tìm quán quanh ${escapeHtml(deliveryLocation.address || 'bạn')}…</p>
+      <div class="receipt-skeleton"></div>
+      <div class="receipt-skeleton"></div>
     `;
     messagesContainer.appendChild(row);
     return row;
@@ -428,221 +414,154 @@ document.addEventListener('DOMContentLoaded', () => {
     const row = document.createElement('div');
     row.className = 'message-row agent';
 
-    // 1. Tool Call Trace Accordion
-    let toolHtml = '';
-    if (toolCalls && toolCalls.length > 0) {
-      toolHtml = `
-        <div class="tool-trace-card">
-          <div class="tool-trace-header" id="traceToggle_${Date.now()}"
-               onclick="this.closest('.tool-trace-card').classList.toggle('open')">
-            <div class="tool-trace-title">
-              <span>🔧</span>
-              <span>Đã thực thi ${toolCalls.length} công cụ AI</span>
-            </div>
-            <span class="tool-trace-icon-toggle">▼</span>
-          </div>
-          <div class="tool-trace-body">
-            ${toolCalls.map(tc => `
-              <div class="tool-call-item">
-                <div class="tool-call-name">↳ ${escapeHtml(tc.tool)}()</div>
-                <div class="tool-call-args">args = ${escapeHtml(JSON.stringify(tc.arguments))}</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    // 2. Main body
-    let bodyHtml = '';
+    let body;
     if (candidates && candidates.length > 0) {
-      bodyHtml = renderStructuredCandidates(candidates, radiusKm, isExpanded, userAddress, responseText);
+      body = renderStructuredCandidates(candidates, radiusKm, isExpanded, userAddress);
     } else if (!responseText || responseText.trim() === '') {
-      bodyHtml = renderEmptyState('Không tìm thấy món phù hợp trong bán kính 10km. Thử đổi khẩu vị hoặc tăng ngân sách nhé!');
+      body = renderEmptyState('Thử nới ngân sách, đổi món, hoặc chọn địa chỉ khác.');
     } else {
-      bodyHtml = formatAgentMarkdown(responseText);
+      body = `<div class="agent-note">${formatAgentMarkdown(responseText)}</div>`;
     }
 
-    row.innerHTML = `
-      <div class="message-avatar">🍜</div>
-      <div class="message-bubble">
-        ${toolHtml}
-        <div class="response-content">${bodyHtml}</div>
-      </div>
-    `;
+    const trace = toolCalls && toolCalls.length ? `
+      <details class="trace">
+        <summary>Các bước đã chạy (${toolCalls.length})</summary>
+        <ol>
+          ${toolCalls.map(tc => `
+            <li><code>${escapeHtml(tc.tool)}</code>
+              <span class="trace-args">${escapeHtml(JSON.stringify(tc.arguments))}</span></li>`).join('')}
+        </ol>
+      </details>` : '';
+
+    row.innerHTML = body + trace;
     messagesContainer.appendChild(row);
   }
 
   function renderEmptyState(message) {
     return `
       <div class="empty-state">
-        <div class="empty-state-icon">🍽️</div>
-        <div class="empty-state-title">Chưa tìm thấy món phù hợp</div>
-        <div class="empty-state-desc">${escapeHtml(message)}</div>
+        <p class="empty-state-title">Chưa có món nào hợp</p>
+        <p class="empty-state-desc">${escapeHtml(message)}</p>
       </div>
     `;
   }
 
-  function renderStructuredCandidates(candidates, radiusKm, isExpanded, userAddress, rawText) {
-    // Radius Banner
-    const radiusBannerHtml = isExpanded
-      ? `<div class="radius-alert-banner expanded">
-           <span class="radius-alert-icon">🚀</span>
-           <div>
-             <strong>Khảo sát mở rộng ${radiusKm} km:</strong> Quanh <em>${escapeHtml(userAddress)}</em> có ít lựa chọn ở bán kính ban đầu, hệ thống đã tự động mở rộng lên ${radiusKm} km!
-           </div>
-         </div>`
-      : `<div class="radius-alert-banner normal">
-           <span class="radius-alert-icon">🎯</span>
-           <div>
-             <strong>Khảo sát ${radiusKm} km:</strong> Đã tìm thấy các lựa chọn trong bán kính ${radiusKm} km quanh <em>${escapeHtml(userAddress)}</em>!
-           </div>
-         </div>`;
+  // One recommendation = one order receipt. The lines must add up to the total:
+  //   dishes (price × portions) + ship − discount = total
+  function renderReceipt(cand, idx) {
+    const dish    = cand.dish || {};
+    const rest    = cand.restaurant || {};
+    const pricing = cand.pricing || {};
+    const items   = (cand.items && cand.items.length) ? cand.items : [dish];
+    const qty     = cand.quantity || 1;
+    const rests   = (cand.restaurants && cand.restaurants.length) ? cand.restaurants : [rest];
+    const isSplit = rests.length > 1;
 
-    const cardsHtml = candidates.map((cand, idx) => {
-      const dish    = cand.dish     || {};
-      const rest    = cand.restaurant || {};
-      const pricing = cand.pricing  || {};
-      const rank    = idx + 1;
+    const platformTag = pf => pf ? `<span class="platform ${platformClass(pf)}">${escapeHtml(pf)}</span>` : '';
+    const line = (label, amount, cls = '') => `
+      <div class="line ${cls}">
+        <span class="line-name">${label}</span>
+        <span class="line-dots" aria-hidden="true"></span>
+        <span class="line-amount">${amount}</span>
+      </div>`;
+    const itemLine = it => line(
+      `${escapeHtml(it.name)}${qty > 1 ? `<small>${qty} phần × ${fmtVnd(it.price)}</small>` : ''}`,
+      fmtVnd((it.price || 0) * qty)
+    );
 
-      // Platform
-      const platformName  = rest.platform || 'ShopeeFood';
-      const platformClass = platformName.toLowerCase().includes('grab') ? 'grabfood' : 'shopeefood';
-
-      // Pricing
-      const finalPrice    = pricing.final_price    || dish.price || 0;
-      const savings       = pricing.savings        || 0;
-      // Price before the discount, on the same basis as finalPrice (dishes + ship)
-      const originalPrice = finalPrice + savings;
-
-      // Distance
-      const dist        = rest.distance_km || 0;
-      const expanded    = cand.is_radius_expanded === true;
-      const distClass   = expanded ? 'expanded-10km' : 'within-5km';
-      // Distance is labelled with how it was obtained (see Restaurant.distance_basis)
-      const basis       = rest.distance_basis || 'stored';
-      const distText    = basis === 'unknown'        ? 'chưa rõ khoảng cách'
-                        : basis === 'same_district'  ? `cùng quận, ~${dist} km (ước tính)`
-                        : basis === 'district_centroid' ? `~${dist} km (ước tính theo quận)`
-                        : `${dist} km`;
-      const distLabel   = expanded
-        ? `🚀 ${distText} — đã mở rộng bán kính lên ${cand.search_radius_km} km`
-        : `📍 ${distText}`;
-
-      // Order contents: one dish, a same-restaurant combo, or a split order across restaurants
-      const items     = (cand.items && cand.items.length) ? cand.items : [dish];
-      const quantity  = cand.quantity || 1;
-      const orderRests = (cand.restaurants && cand.restaurants.length) ? cand.restaurants : [rest];
-      const isSplit   = orderRests.length > 1;
-      const restName  = id => (orderRests.find(r => r.id === id) || {}).name || '';
-      const qtyText   = quantity > 1 ? ` × ${quantity}` : '';
-      const title     = items.length > 1
-        ? `${isSplit ? '🧾 Tách đơn' : '🍱 Combo'}: ${items.map(i => i.name).join(' + ')}`
-        : `${dish.name || 'Món ăn'}${qtyText}`;
-      const restLine  = isSplit ? orderRests.map(r => r.name).join(' · ') : (rest.name || '');
-      const address   = isSplit ? '' : (rest.address || rest.district || '');
-      const itemsHtml = items.length > 1 ? `
-          <ul class="rec-items">
-            ${items.map(i => `<li><span>${escapeHtml(i.name)}${qtyText}</span><span>${(i.price || 0).toLocaleString('vi-VN')}đ${isSplit ? ' · ' + escapeHtml(restName(i.restaurant_id)) : ''}</span></li>`).join('')}
-            ${isSplit ? `<li class="rec-items-note">${orderRests.length} quán giao riêng · ${orderRests.length} lần phí ship (đã tính trong tổng)</li>` : ''}
-          </ul>` : '';
-
-      const isSpicy = items.some(i => i.spicy);
-
-      // FIX: Reasoning split — handle both ' • ' and '\n' separators, fallback gracefully
-      const reasoningRaw = cand.reasoning || cand.explanation || '';
-      let reasoningPoints = [];
-      if (reasoningRaw) {
-        if (reasoningRaw.includes(' • ')) {
-          reasoningPoints = reasoningRaw.split(' • ').filter(p => p.trim());
-        } else if (reasoningRaw.includes('\n')) {
-          reasoningPoints = reasoningRaw.split('\n').filter(p => p.trim());
-        } else {
-          reasoningPoints = [reasoningRaw];
-        }
-      }
-      if (reasoningPoints.length === 0) {
-        reasoningPoints = [
-          `🎯 Khớp gu: ${dish.name}`,
-          `📍 Khoảng cách: ${dist} km từ vị trí của bạn`,
-          `💵 Giá: ${finalPrice.toLocaleString('vi-VN')}đ`
-        ];
-      }
-
-      const estimated = rest.estimated_fields || [];
-      const rankClass = rank === 1 ? 'rank-1' : '';
-      const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
-
-      return `
-        <div class="rec-card ${rankClass}">
-          <div class="rec-card-header">
-            <div class="rec-rank-title">
-              <span class="rec-rank-badge" title="Xếp hạng ${rank}">${rankEmoji || '#' + rank}</span>
-              <div style="min-width:0;flex:1;">
-                <div class="rec-dish-name">${escapeHtml(title)}</div>
-                <div class="rec-restaurant-info">
-                  <span class="rec-restaurant-name">${escapeHtml(restLine)}</span>
-                  ${[...new Set(orderRests.map(r => r.platform || platformName))].map(pf => `<span class="platform-tag ${pf.toLowerCase().includes('grab') ? 'grabfood' : 'shopeefood'}">${escapeHtml(pf)}</span>`).join('')}
-                </div>
-                ${address ? `<div class="rec-restaurant-address"><span>📍 ${escapeHtml(address)}</span></div>` : ''}
-              </div>
-            </div>
-
-            <div class="rec-price-section">
-              <div class="rec-final-price">${finalPrice.toLocaleString('vi-VN')}đ</div>
-              ${savings > 0 ? `
-                <div class="rec-original-price">${originalPrice.toLocaleString('vi-VN')}đ</div>
-                <div class="rec-savings-pill">Giảm ${savings.toLocaleString('vi-VN')}đ</div>
-              ` : ''}
-            </div>
-          </div>
-          ${itemsHtml}
-
-          <div class="rec-meta-tags">
-            <span class="meta-pill dist ${distClass}">${distLabel}</span>
-            ${isSplit ? '' : `<span class="meta-pill rating">${rest.rating != null ? '⭐ ' + rest.rating : 'Chưa có đánh giá'}</span>`}
-            <span class="meta-pill ${isSpicy ? 'spicy' : 'non-spicy'}">${isSpicy ? '🌶️ Có món cay' : '🌱 Không cay'}</span>
-            ${pricing.applied_promotion_code ? `<span class="meta-pill deal">🔥 Mã: ${escapeHtml(pricing.applied_promotion_code)}</span>` : ''}
-            ${!isSplit && rest.delivery_time_mins && !estimated.includes('delivery_time_mins') ? `<span class="meta-pill dist">⏱️ ~${rest.delivery_time_mins} phút</span>` : ''}
-          </div>
-
-          <!-- AI Reasoning Box -->
-          <div class="rec-reasoning-box">
-            <div class="reasoning-header">
-              <span>💡</span>
-              <span>Lập luận AI (Reasoning)</span>
-            </div>
-            <div class="reasoning-list">
-              ${reasoningPoints.map(point => `
-                <div class="reasoning-item">
-                  <span class="reasoning-bullet">↳</span>
-                  <span class="reasoning-text">${escapeHtml(point.trim())}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-
-          <div class="rec-card-footer">
-            ${orderRests.map(r => `
-            <button
-              class="order-btn"
-              data-restaurant="${escapeHtml(r.name || '')}"
-              data-platform="${escapeHtml(r.platform || platformName)}"
-            >
-              <span>🛒 Đặt ${isSplit ? escapeHtml(r.name || '') + ' qua ' : 'qua '}${escapeHtml(r.platform || platformName)}</span>
-            </button>`).join('')}
-          </div>
+    // Header: the shop prints its name at the top of the receipt
+    const head = `
+      <header class="receipt-head">
+        <div class="receipt-no">Số<b>${idx + 1}</b></div>
+        <div class="receipt-shop-line">
+          <h3 class="receipt-shop">${escapeHtml(isSplit ? `Tách đơn ${rests.length} quán` : (rest.name || 'Quán'))}</h3>
+          ${isSplit ? '' : platformTag(rest.platform)}
         </div>
-      `;
+        ${!isSplit && rest.address ? `<p class="receipt-address">${escapeHtml(rest.address)}</p>` : ''}
+      </header>
+      ${isSplit ? `<p class="receipt-split-note">Chưa quán nào có đủ các món bạn gọi, nên đơn chia cho ${rests.length} quán, mỗi quán giao riêng.</p>` : ''}`;
+
+    // Lines
+    let lines = isSplit
+      ? rests.map(r => `
+          <p class="receipt-group-title">${escapeHtml(r.name)} ${platformTag(r.platform)}</p>
+          ${items.filter(i => i.restaurant_id === r.id).map(itemLine).join('')}`).join('')
+      : items.map(itemLine).join('');
+
+    const subtotal = pricing.original_price ?? items.reduce((sum, i) => sum + (i.price || 0) * qty, 0);
+    const fee      = pricing.delivery_fee || 0;
+    const total    = pricing.final_price ?? subtotal + fee;
+    const discount = Math.max(0, subtotal + fee - total);                 // taken off the total
+    const shipOff  = Math.max(0, (pricing.savings || 0) - discount);      // freeship, already inside `fee`
+    const code     = pricing.applied_promotion_code;
+    const sticker  = code ? `<span class="promo-code">${escapeHtml(code)}</span>` : '';
+    const feeEstimated = rests.some(r => (r.estimated_fields || []).includes('delivery_fee'));
+
+    const shipNotes = [
+      isSplit ? `${rests.length} lần giao` : '',
+      feeEstimated ? 'ước tính' : '',
+      shipOff ? `đã giảm ${fmtVnd(shipOff)}` : '',
+    ].filter(Boolean).join(', ');
+    lines += line(
+      `Phí ship${shipOff && !discount ? sticker : ''}${shipNotes ? `<small>${shipNotes}</small>` : ''}`,
+      fmtVnd(fee), 'line-muted'
+    );
+    if (discount > 0) lines += line(`Giảm giá${sticker}`, `−${fmtVnd(discount)}`, 'line-discount');
+
+    // Facts, each labelled with how reliable it is
+    const dist  = rest.distance_km || 0;
+    const basis = rest.distance_basis || 'stored';
+    const distText = basis === 'unknown'           ? 'Chưa rõ khoảng cách'
+                   : basis === 'same_district'     ? `Cùng quận, khoảng ${fmtKm(dist)} km (ước tính)`
+                   : basis === 'district_centroid' ? `Khoảng ${fmtKm(dist)} km (ước tính theo quận)`
+                   : `${fmtKm(dist)} km`;
+    const facts = [
+      isSplit ? `Quán xa nhất: ${distText.charAt(0).toLowerCase()}${distText.slice(1)}` : distText,
+      !isSplit ? (rest.rating != null ? `★ ${fmtKm(rest.rating)}` : 'Chưa có đánh giá') : '',
+      !isSplit && rest.delivery_time_mins && !(rest.estimated_fields || []).includes('delivery_time_mins')
+        ? `Giao khoảng ${rest.delivery_time_mins} phút` : '',
+    ].filter(Boolean).map(f => `<li>${escapeHtml(f)}</li>`).join('');
+    const spicy = items.some(i => i.spicy) ? '<li class="fact-spicy">Có món cay</li>' : '';
+
+    // Why this pick (from the backend's traceable reasoning)
+    const raw = cand.reasoning || cand.explanation || '';
+    const reasons = raw.includes(' • ') ? raw.split(' • ') : raw.split('\n');
+    const why = reasons.filter(r => r.trim()).length ? `
+      <details class="receipt-why"${idx === 0 ? ' open' : ''}>
+        <summary>Vì sao gợi ý</summary>
+        <ul>${reasons.filter(r => r.trim()).map(r => `<li>${escapeHtml(r.trim())}</li>`).join('')}</ul>
+      </details>` : '';
+
+    const actions = rests.map(r => {
+      const pf = r.platform || 'ShopeeFood';
+      return `
+        <button type="button" class="btn order-btn" data-restaurant="${escapeHtml(r.name || '')}" data-platform="${escapeHtml(pf)}">
+          ${isSplit ? `Đặt ${escapeHtml(r.name || '')} trên ${escapeHtml(pf)}` : `Đặt trên ${escapeHtml(pf)}`}
+        </button>`;
     }).join('');
 
     return `
-      ${radiusBannerHtml}
-      <div class="rec-section-title">🍜 Gợi ý món ngon phù hợp nhất:</div>
-      <div class="rec-cards-grid">${cardsHtml}</div>
-      <div class="rec-section-footer">
-        💬 Bạn ưng món nào? Muốn điều chỉnh ngân sách, đổi khẩu vị hoặc tìm quán gần hơn không?
-      </div>
+      <article class="receipt" aria-label="Gợi ý số ${idx + 1}">
+        ${head}
+        <div class="receipt-lines">
+          ${lines}
+          <div class="receipt-total"><span>Tổng</span><strong>${fmtVnd(total)}</strong></div>
+        </div>
+        <ul class="receipt-facts">${facts}${spicy}</ul>
+        ${why}
+        <div class="receipt-actions">${actions}</div>
+      </article>`;
+  }
+
+  function renderStructuredCandidates(candidates, radiusKm, isExpanded, userAddress) {
+    const where = `<strong>${escapeHtml(userAddress)}</strong>`;
+    const context = isExpanded
+      ? `Quanh ${where} ít lựa chọn nên đã tìm rộng ra ${fmtKm(radiusKm)} km.`
+      : `Tìm trong ${fmtKm(radiusKm)} km quanh ${where}.`;
+    return `
+      <p class="results-context">${context}</p>
+      <div class="receipts">${candidates.map(renderReceipt).join('')}</div>
+      <p class="results-followup">Muốn rẻ hơn, gần hơn hay đổi món? Cứ nói tiếp, ví dụ "món số 2 rẻ hơn".</p>
     `;
   }
 
@@ -655,32 +574,27 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/\n/g,  '<br>');
   }
 
-  // FIX: renderWelcomeCard updates existing DOM refs (no innerHTML wipe on messagesContainer)
   function renderWelcomeCard() {
-    const currentName    = userNameInput.value.trim()    || 'Dũng';
+    const currentName    = userNameInput.value.trim() || 'bạn';
     const currentAddress = deliveryLocation.address || NO_ADDRESS_TEXT;
+    const prompts = [
+      'Trưa nay ăn gì dưới 60k?',
+      'Phở và bún chả cho 2 người',
+      'Món nước gì đó thanh thanh, không cay',
+      'Có món nào đang giảm giá không?',
+      'Tìm đồ Hàn, ưu tiên gần',
+    ];
 
     messagesContainer.innerHTML = `
-      <div class="welcome-card" id="welcomeCard">
-        <div class="welcome-badge">🚀 Trợ lý AI · Bán kính 5km ➔ 10km tự động</div>
-        <h1 class="welcome-title">Chào <span id="welcomeUserName">${escapeHtml(currentName)}</span>!<br>Bạn muốn ăn gì hôm nay?</h1>
-        <p class="welcome-desc">
-          FoodAgent phân tích nhu cầu của bạn và tự động quét trong bán kính <strong>5.0 km</strong> quanh
-          <strong id="welcomeUserAddress">${escapeHtml(currentAddress)}</strong>.
-          Nếu chưa đủ lựa chọn, hệ thống sẽ tự động <strong>mở rộng lên 10.0 km</strong> và
-          giải thích rõ lý do (AI Reasoning) vì sao món đó được chọn!
-        </p>
-        <div class="quick-chips-title">Thử ngay một trong các gợi ý:</div>
-        <div class="quick-chips-container">
-          <button class="chip" data-prompt="Tối nay ăn gì quanh 5km?">🍜 Tối nay ăn gì quanh 5km?</button>
-          <button class="chip" data-prompt="Tìm gà rán giòn rụm dưới 90k gần đây">🍗 Gà rán giòn rụm &lt;90k</button>
-          <button class="chip" data-prompt="Thèm mì cay Hàn Quốc hoặc tokbokki chuẩn vị">🌶️ Mì cay Hàn Quốc / Tokbokki</button>
-          <button class="chip" data-prompt="Tìm món chay hoặc bò bít tết thử scale 10km">🚀 Thử món xa (Scale 10km)</button>
-          <button class="chip" data-prompt="Tìm cơm suất văn phòng ngon rẻ dưới 60k">🍱 Cơm suất ngon rẻ &lt;60k</button>
-          <button class="chip" data-prompt="Tìm món nào không có hành tây">🚫 Món không có hành tây</button>
-          <button class="chip" data-prompt="Có món nào đang có mã giảm giá khủng không?">🏷️ Mã giảm giá khủng</button>
-        </div>
-      </div>
+      <section class="welcome" id="welcomeCard">
+        <p class="welcome-greeting">Chào <span id="welcomeUserName">${escapeHtml(currentName)}</span>,</p>
+        <h1 class="welcome-title">Hôm nay ăn gì?</h1>
+        <p class="welcome-lede">Nói món bạn thèm, ngân sách, hay thứ muốn tránh. PickyEaters chỉ gợi ý quán có thật quanh chỗ bạn, giá đã tính cả ship.</p>
+        <p class="welcome-where">Giao đến: <strong id="welcomeUserAddress">${escapeHtml(currentAddress)}</strong></p>
+        <ul class="try-list">
+          ${prompts.map(pr => `<li><button type="button" class="chip" data-prompt="${escapeHtml(pr)}">${escapeHtml(pr)}</button></li>`).join('')}
+        </ul>
+      </section>
     `;
   }
 
@@ -729,19 +643,24 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   ratingInput.addEventListener('input', () => {
-    ratingValue.textContent = `${parseFloat(ratingInput.value).toFixed(1)}⭐`;
+    ratingValue.textContent = `${parseFloat(ratingInput.value).toLocaleString('vi-VN', { minimumFractionDigits: 1 })} sao`;
   });
 
   // Cuisine & flavor toggles
   cuisinesContainer.addEventListener('click', (e) => {
     const chip = e.target.closest('.toggle-chip');
-    if (chip) chip.classList.toggle('active');
+    if (chip) setChip(chip, !chip.classList.contains('active'));
   });
 
   flavorsContainer.addEventListener('click', (e) => {
     const chip = e.target.closest('.toggle-chip');
-    if (chip) chip.classList.toggle('active');
+    if (chip) setChip(chip, !chip.classList.contains('active'));
   });
+
+  function setChip(chip, on) {
+    chip.classList.toggle('active', on);
+    chip.setAttribute('aria-pressed', String(on));
+  }
 
   // Disliked ingredient tags
   addIngredientBtn.addEventListener('click', addDislikedTagFromInput);
@@ -763,9 +682,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const badge = document.createElement('span');
     badge.className = 'tag-badge';
+    badge.setAttribute('role', 'listitem');
     badge.innerHTML = `
       <span class="tag-name">${escapeHtml(name)}</span>
-      <span class="tag-remove" title="Xóa">&times;</span>
+      <button type="button" class="tag-remove" aria-label="Bỏ ${escapeHtml(name)}">&times;</button>
     `;
     badge.querySelector('.tag-remove').addEventListener('click', () => badge.remove());
     dislikedTags.appendChild(badge);
@@ -789,7 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       savePrefBtn.disabled = true;
-      savePrefBtn.innerHTML = '⏳ Đang lưu...';
+      savePrefBtn.textContent = 'Đang lưu…';
 
       if (address && address !== deliveryLocation.address) {
         // A newly typed address replaces the map pin.
@@ -812,13 +732,13 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(`/api/preferences/${currentUserId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ preference_type: 'disliked_ingredients', value: disliked }) }),
       ]);
 
-      showToast('✨ Đã lưu khẩu vị vào hệ thống thành công!');
+      showToast('Đã lưu khẩu vị.');
       prefDrawerOverlay.classList.remove('active');
     } catch (err) {
       showToast(`Lỗi khi lưu: ${err.message}`, 'error');
     } finally {
       savePrefBtn.disabled = false;
-      savePrefBtn.innerHTML = '💾 Lưu thay đổi vào Database';
+      savePrefBtn.textContent = 'Lưu khẩu vị';
     }
   });
 
@@ -830,7 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const pref = await res.json();
       currentPreferences = pref;
 
-      const name = pref.name || (userId === 'user_01' ? 'Dũng' : 'Khách mới');
+      const name = pref.name || '';
 
       userNameInput.value = name;
       if (prefNameInput) prefNameInput.value = name;
@@ -845,14 +765,15 @@ document.addEventListener('DOMContentLoaded', () => {
       budgetValue.textContent = `${(pref.budget || 80000).toLocaleString('vi-VN')}đ`;
 
       ratingInput.value  = pref.minimum_rating || 4.3;
-      ratingValue.textContent = `${(pref.minimum_rating || 4.3).toFixed(1)}⭐`;
+      ratingValue.textContent = `${(pref.minimum_rating || 4.3).toLocaleString('vi-VN', { minimumFractionDigits: 1 })} sao`;
+      updateRadiusBadge(pref.preferred_distance || 5, false);
 
       cuisinesContainer.querySelectorAll('.toggle-chip').forEach(chip => {
-        chip.classList.toggle('active', (pref.preferred_cuisines || []).includes(chip.getAttribute('data-val')));
+        setChip(chip, (pref.preferred_cuisines || []).includes(chip.getAttribute('data-val')));
       });
 
       flavorsContainer.querySelectorAll('.toggle-chip').forEach(chip => {
-        chip.classList.toggle('active', (pref.preferred_flavors || []).includes(chip.getAttribute('data-val')));
+        setChip(chip, (pref.preferred_flavors || []).includes(chip.getAttribute('data-val')));
       });
 
       dislikedTags.innerHTML = '';

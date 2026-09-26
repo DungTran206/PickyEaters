@@ -13,7 +13,7 @@ if __name__ == '__main__':
     chat_res = client.post('/api/chat', json={
         'message': 'tìm xôi ngon',
         'user_id': 'user_01',
-        'user_name': 'Dũng',
+        'user_name': 'Minh',
         'user_address': 'Thanh Xuân, Hà Nội'
     })
     print('Chat status code:', chat_res.status_code)

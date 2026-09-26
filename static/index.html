@@ -3,305 +3,198 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FoodAgent AI 🍜 - Gợi Ý Món Ăn Cá Nhân Hóa</title>
-  <meta name="description" content="AI Agent thông minh giúp bạn quyết định hôm nay ăn gì, tự động khảo sát bán kính 5km-10km, giải thích lý do bằng AI Reasoning.">
-  <meta name="theme-color" content="#0a0d12">
+  <title>PickyEaters — Hôm nay ăn gì?</title>
+  <meta name="description" content="Nói món bạn thèm, nhận vài quán có thật quanh địa chỉ của bạn, giá đã tính ship.">
+  <meta name="theme-color" content="#E6ECF0">
 
-  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap&subset=vietnamese" rel="stylesheet">
 
   <!-- Leaflet (map picker for the delivery location; Esri street tiles) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
-  <!-- Stylesheet -->
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
-  <div class="app-container">
+  <div class="app">
 
-    <!-- ═══════════════════════════════════════════════════════════
-         TOP HEADER
-    ═══════════════════════════════════════════════════════════ -->
-    <header class="app-header" role="banner">
-      <div class="header-left">
-        <div class="logo-badge">
-          <span class="logo-icon" aria-hidden="true">🍜</span>
-          <div class="logo-text">
-            <div class="logo-title">FoodAgent <span class="ai-pill">AI</span></div>
-            <div class="logo-subtitle">Trợ Lý Ăn Uống Cá Nhân Hóa</div>
-          </div>
-        </div>
-      </div>
+    <!-- Top bar -->
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="PickyEaters — trang chủ">
+        <span class="brand-sign">PickyEaters</span>
+      </a>
 
-      <div class="header-right">
-        <!-- User Profile Selector -->
-        <div class="user-select-container">
-          <span class="user-icon" aria-hidden="true">👤</span>
-          <select id="userSelector" class="user-dropdown" aria-label="Chọn hồ sơ người dùng">
-            <option value="user_01" selected>Dũng</option>
+      <div class="topbar-actions">
+        <label class="profile-select">
+          <span class="visually-hidden">Hồ sơ</span>
+          <select id="userSelector" aria-label="Chọn hồ sơ">
+            <option value="user_01" selected>Hồ sơ mẫu</option>
             <option value="user_new">Khách mới</option>
           </select>
-        </div>
-
-        <!-- Preferences Drawer Button -->
-        <button id="openPrefBtn" class="btn btn-secondary" aria-label="Mở cài đặt khẩu vị cá nhân" title="Xem & Chỉnh sửa khẩu vị">
-          <span class="btn-icon" aria-hidden="true">⚙️</span>
-          <span class="btn-text">Khẩu vị của bạn</span>
-        </button>
-
-        <!-- Reset Conversation Button -->
-        <button id="resetChatBtn" class="btn btn-ghost" aria-label="Làm mới cuộc trò chuyện" title="Làm mới cuộc trò chuyện">
-          <span aria-hidden="true">🔄</span>
+        </label>
+        <button id="openPrefBtn" type="button" class="btn btn-outline">Khẩu vị</button>
+        <button id="resetChatBtn" type="button" class="btn btn-icon" aria-label="Bắt đầu cuộc trò chuyện mới" title="Bắt đầu cuộc trò chuyện mới">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>
         </button>
       </div>
     </header>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         USER IDENTITY & LOCATION BANNER
-    ═══════════════════════════════════════════════════════════ -->
-    <section class="location-banner" aria-label="Thông tin vị trí và người dùng">
-      <div class="location-banner-inner">
-
-        <!-- Name & Address Inputs -->
-        <div class="location-inputs-row">
-          <div class="input-badge-group name-badge-group">
-            <span class="input-badge-icon" aria-hidden="true">👤</span>
-            <input
-              type="text"
-              id="userNameInput"
-              class="location-input name-input"
-              placeholder="Tên của bạn..."
-              value="Dũng"
-              aria-label="Tên người dùng"
-              autocomplete="given-name"
-            />
-          </div>
-
-          <div class="input-badge-group address-badge-group">
-            <span class="input-badge-icon" aria-hidden="true">📍</span>
-            <input
-              type="text"
-              id="userAddressInput"
-              class="location-input address-input"
-              placeholder="Nhập địa chỉ giao hàng (có quận/huyện) hoặc chọn trên bản đồ..."
-              aria-label="Địa chỉ giao hàng"
-              autocomplete="street-address"
-            />
-          </div>
-
-          <button id="openMapBtn" type="button" class="btn btn-sm btn-secondary map-open-btn" aria-label="Chọn vị trí giao hàng trên bản đồ">
-            <span>🗺️ Chọn trên bản đồ</span>
+    <!-- Delivery location -->
+    <section class="delivery" aria-label="Thông tin giao hàng">
+      <div class="delivery-form">
+        <label class="field field-name">
+          <span class="field-label">Người nhận</span>
+          <input type="text" id="userNameInput" placeholder="Tên" autocomplete="given-name">
+        </label>
+        <label class="field field-address">
+          <span class="field-label">Giao đến</span>
+          <input type="text" id="userAddressInput"
+                 placeholder="Địa chỉ có quận/huyện, vd: 12 Nguyễn Trãi, Thanh Xuân, Hà Nội"
+                 autocomplete="street-address">
+        </label>
+        <div class="delivery-buttons">
+          <button id="openMapBtn" type="button" class="btn btn-outline map-open-btn" aria-label="Chọn vị trí giao hàng trên bản đồ">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+            <span>Bản đồ</span>
           </button>
-
-          <button id="saveLocationBtn" class="btn btn-sm btn-primary save-loc-btn" aria-label="Lưu thông tin vị trí">
-            <span>💾 Lưu vị trí</span>
-          </button>
+          <button id="saveLocationBtn" type="button" class="btn btn-primary save-loc-btn">Lưu địa chỉ</button>
         </div>
+      </div>
 
-        <!-- District Quick-Select & Radius Badge -->
-        <div class="location-chips-row">
-          <div class="quick-districts-group" role="group" aria-label="Chọn nhanh quận">
-            <span class="quick-label" aria-hidden="true">⚡ Chọn nhanh:</span>
-            <div class="district-chips">
-              <button type="button" class="district-chip" data-district="Cầu Giấy, Hà Nội" aria-label="Cầu Giấy, Hà Nội">Cầu Giấy</button>
-              <button type="button" class="district-chip" data-district="Ba Đình, Hà Nội" aria-label="Ba Đình, Hà Nội">Ba Đình</button>
-              <button type="button" class="district-chip" data-district="Đống Đa, Hà Nội" aria-label="Đống Đa, Hà Nội">Đống Đa</button>
-              <button type="button" class="district-chip" data-district="Hai Bà Trưng, Hà Nội" aria-label="Hai Bà Trưng">Hai Bà Trưng</button>
-              <button type="button" class="district-chip" data-district="Hoàn Kiếm, Hà Nội" aria-label="Hoàn Kiếm, Hà Nội">Hoàn Kiếm</button>
-              <button type="button" class="district-chip" data-district="Tây Hồ, Hà Nội" aria-label="Tây Hồ, Hà Nội">Tây Hồ</button>
-              <button type="button" class="district-chip" data-district="Thanh Xuân, Hà Nội" aria-label="Thanh Xuân, Hà Nội">Thanh Xuân</button>
-              <button type="button" class="district-chip" data-district="Quận 1, TP.HCM" aria-label="Quận 1, TP.HCM">Q.1 HCM</button>
-            </div>
-          </div>
-
-          <!-- Radius Badge -->
-          <div id="radiusBadge" class="radius-status-badge radius-5km" role="status" aria-live="polite" title="Bán kính khảo sát hiện tại">
-            <span class="radius-pulse-dot" aria-hidden="true"></span>
-            <span aria-hidden="true">🎯</span>
-            <span id="radiusBadgeText">Bán kính: <strong>5.0 km</strong> <span style="opacity:0.7;font-weight:400;">(Chuẩn)</span></span>
-          </div>
+      <div class="delivery-meta">
+        <div class="district-chips" role="group" aria-label="Chọn nhanh quận">
+          <button type="button" class="district-chip" data-district="Cầu Giấy, Hà Nội">Cầu Giấy</button>
+          <button type="button" class="district-chip" data-district="Ba Đình, Hà Nội">Ba Đình</button>
+          <button type="button" class="district-chip" data-district="Đống Đa, Hà Nội">Đống Đa</button>
+          <button type="button" class="district-chip" data-district="Hai Bà Trưng, Hà Nội">Hai Bà Trưng</button>
+          <button type="button" class="district-chip" data-district="Hoàn Kiếm, Hà Nội">Hoàn Kiếm</button>
+          <button type="button" class="district-chip" data-district="Tây Hồ, Hà Nội">Tây Hồ</button>
+          <button type="button" class="district-chip" data-district="Thanh Xuân, Hà Nội">Thanh Xuân</button>
+          <button type="button" class="district-chip" data-district="Quận 1, TP.HCM">Quận 1, TP.HCM</button>
         </div>
-
+        <div id="radiusBadge" class="radius-status" role="status" aria-live="polite">
+          <span id="radiusBadgeText">Tìm trong 5 km</span>
+        </div>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         MAIN CHAT WORKSPACE
-    ═══════════════════════════════════════════════════════════ -->
-    <main class="chat-workspace" role="main" aria-label="Cuộc trò chuyện với FoodAgent">
-      <div id="messagesContainer" class="messages-container" aria-live="polite">
-
-        <!-- Welcome Hero Card (rendered by JS on load / reset) -->
-        <div class="welcome-card" id="welcomeCard">
-          <div class="welcome-badge">🚀 Trợ lý AI · Bán kính 5km ➔ 10km tự động</div>
-          <h1 class="welcome-title">Chào <span id="welcomeUserName">Dũng</span>!<br>Bạn muốn ăn gì hôm nay?</h1>
-          <p class="welcome-desc">
-            FoodAgent phân tích nhu cầu của bạn và tự động quét trong bán kính <strong>5.0 km</strong> quanh
-            <strong id="welcomeUserAddress">địa chỉ của bạn (chưa có — hãy nhập hoặc chọn trên bản đồ)</strong>.
-            Nếu chưa đủ lựa chọn, hệ thống sẽ <strong>mở rộng lên 10.0 km</strong> và
-            giải thích lý do (AI Reasoning) vì sao món đó được chọn!
-          </p>
-
-          <div class="quick-chips-title">Thử ngay một trong các gợi ý:</div>
-          <div class="quick-chips-container">
-            <button class="chip" data-prompt="Tối nay ăn gì quanh 5km?" aria-label="Hỏi về bữa tối">🍜 Tối nay ăn gì quanh 5km?</button>
-            <button class="chip" data-prompt="Tìm gà rán giòn rụm dưới 90k gần đây" aria-label="Tìm gà rán">🍗 Gà rán giòn rụm &lt;90k</button>
-            <button class="chip" data-prompt="Thèm mì cay Hàn Quốc hoặc tokbokki chuẩn vị" aria-label="Tìm đồ Hàn">🌶️ Mì cay Hàn / Tokbokki</button>
-            <button class="chip" data-prompt="Tìm món chay hoặc bò bít tết thử scale 10km" aria-label="Thử mở rộng bán kính">🚀 Thử món xa (Scale 10km)</button>
-            <button class="chip" data-prompt="Tìm cơm suất văn phòng ngon rẻ dưới 60k" aria-label="Tìm cơm văn phòng">🍱 Cơm suất ngon rẻ &lt;60k</button>
-            <button class="chip" data-prompt="Tìm món nào không có hành tây" aria-label="Lọc không hành tây">🚫 Không có hành tây</button>
-            <button class="chip" data-prompt="Có món nào đang có mã giảm giá khủng không?" aria-label="Tìm deal">🏷️ Mã giảm giá khủng</button>
-          </div>
-        </div>
-
+    <!-- Conversation -->
+    <main class="chat-workspace" aria-label="Cuộc trò chuyện">
+      <div id="messagesContainer" class="messages" aria-live="polite">
+        <!-- Welcome is rendered by app.js -->
       </div>
     </main>
 
-    <!-- ═══════════════════════════════════════════════════════════
-         CHAT INPUT BAR
-    ═══════════════════════════════════════════════════════════ -->
-    <footer class="input-bar-container" role="contentinfo">
-      <form id="chatForm" class="chat-form" novalidate>
-        <div class="input-wrapper">
-          <input
-            type="text"
-            id="chatInput"
-            class="chat-input"
-            placeholder="Nói cho tao biết m thèm món gì, budget bao nhiêu (vd: Tìm món cay dưới 80k)..."
-            autocomplete="off"
-            aria-label="Nhập yêu cầu tìm món ăn"
-            required
-          />
-          <button type="submit" id="sendBtn" class="send-btn" aria-label="Gửi yêu cầu">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-          </button>
-        </div>
+    <!-- Composer -->
+    <footer class="composer">
+      <form id="chatForm" class="composer-form" novalidate>
+        <label for="chatInput" class="visually-hidden">Bạn muốn ăn gì</label>
+        <input type="text" id="chatInput"
+               placeholder="Nói món m thèm, budget bao nhiêu… (vd: bún chả dưới 60k, không hành)"
+               autocomplete="off" required>
+        <button type="submit" id="sendBtn" class="send-btn" aria-label="Gửi">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
+        </button>
       </form>
     </footer>
-
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       PREFERENCES DRAWER MODAL
-  ═══════════════════════════════════════════════════════════ -->
-  <div id="prefDrawerOverlay" class="drawer-overlay" role="dialog" aria-modal="true" aria-label="Hồ sơ khẩu vị cá nhân">
-    <div class="drawer-content">
+  <!-- Taste preferences drawer -->
+  <div id="prefDrawerOverlay" class="drawer-overlay" role="dialog" aria-modal="true" aria-labelledby="prefDrawerTitle">
+    <div class="drawer">
       <div class="drawer-header">
-        <div class="drawer-title-group">
-          <span class="drawer-icon" aria-hidden="true">⚙️</span>
-          <div>
-            <h2 class="drawer-title">Hồ sơ khẩu vị cá nhân</h2>
-            <div class="drawer-subtitle">Lưu trữ bền vững trong SQLite Database</div>
-          </div>
-        </div>
-        <button id="closePrefBtn" class="btn-close" aria-label="Đóng cài đặt">&times;</button>
+        <h2 id="prefDrawerTitle">Khẩu vị của bạn</h2>
+        <button id="closePrefBtn" type="button" class="btn btn-icon" aria-label="Đóng">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
       </div>
 
       <div class="drawer-body">
-
-        <!-- Name -->
-        <div class="pref-section">
-          <label class="pref-label" for="prefNameInput">Họ & Tên:</label>
-          <input type="text" id="prefNameInput" class="tag-input" placeholder="Tên của bạn (vd: Dũng)..." aria-label="Tên người dùng">
+        <div class="pref-row">
+          <label class="pref-label" for="prefNameInput">Tên</label>
+          <input type="text" id="prefNameInput" class="text-input" placeholder="Tên của bạn">
         </div>
 
-        <!-- Address -->
-        <div class="pref-section">
-          <label class="pref-label" for="prefAddressInput">Địa chỉ nhận hàng (Bán kính 5–10km):</label>
-          <input type="text" id="prefAddressInput" class="tag-input" placeholder="Địa chỉ chi tiết (vd: Duy Tân, Cầu Giấy, HN)..." aria-label="Địa chỉ giao hàng">
+        <div class="pref-row">
+          <label class="pref-label" for="prefAddressInput">Địa chỉ giao hàng</label>
+          <input type="text" id="prefAddressInput" class="text-input" placeholder="Có quận/huyện, vd: Duy Tân, Cầu Giấy, Hà Nội">
         </div>
 
-        <!-- Budget Slider -->
-        <div class="pref-section">
-          <label class="pref-label" for="budgetInput">
-            <span>Ngân sách mỗi bữa:</span>
-            <span id="budgetValue" class="pref-highlight">80,000đ</span>
+        <div class="pref-row">
+          <label class="pref-label pref-label-split" for="budgetInput">
+            <span>Ngân sách mỗi bữa (giá món, chưa ship)</span>
+            <output id="budgetValue" class="pref-value" for="budgetInput">80.000đ</output>
           </label>
-          <input type="range" id="budgetInput" min="30000" max="250000" step="5000" value="80000" class="pref-slider" aria-label="Ngân sách mỗi bữa">
-          <div class="slider-ticks" aria-hidden="true">
-            <span>30k</span>
-            <span>80k</span>
-            <span>150k</span>
-            <span>250k</span>
+          <input type="range" id="budgetInput" min="30000" max="250000" step="5000" value="80000">
+          <div class="range-ends" aria-hidden="true"><span>30k</span><span>250k</span></div>
+        </div>
+
+        <div class="pref-row">
+          <span class="pref-label" id="cuisineLabel">Ẩm thực hay ăn</span>
+          <div id="cuisinesContainer" class="toggle-group" role="group" aria-labelledby="cuisineLabel">
+            <button type="button" class="toggle-chip" data-val="Vietnamese" aria-pressed="false">Món Việt</button>
+            <button type="button" class="toggle-chip" data-val="Korean" aria-pressed="false">Hàn</button>
+            <button type="button" class="toggle-chip" data-val="Japanese" aria-pressed="false">Nhật</button>
+            <button type="button" class="toggle-chip" data-val="Thai" aria-pressed="false">Thái</button>
+            <button type="button" class="toggle-chip" data-val="Western" aria-pressed="false">Âu / fastfood</button>
+            <button type="button" class="toggle-chip" data-val="Vegetarian" aria-pressed="false">Chay</button>
           </div>
         </div>
 
-        <!-- Preferred Cuisines -->
-        <div class="pref-section">
-          <label class="pref-label">Ẩm thực yêu thích:</label>
-          <div id="cuisinesContainer" class="toggle-chips-group" role="group" aria-label="Chọn ẩm thực yêu thích">
-            <button type="button" class="toggle-chip" data-val="Vietnamese" aria-pressed="false">🇻🇳 Món Việt</button>
-            <button type="button" class="toggle-chip" data-val="Korean"     aria-pressed="false">🇰🇷 Đồ Hàn</button>
-            <button type="button" class="toggle-chip" data-val="Japanese"   aria-pressed="false">🇯🇵 Đồ Nhật</button>
-            <button type="button" class="toggle-chip" data-val="Thai"       aria-pressed="false">🇹🇭 Đồ Thái</button>
-            <button type="button" class="toggle-chip" data-val="Western"    aria-pressed="false">🍔 Đồ Tây / Fastfood</button>
-            <button type="button" class="toggle-chip" data-val="Vegetarian" aria-pressed="false">🥗 Món Chay</button>
+        <div class="pref-row">
+          <span class="pref-label" id="flavorLabel">Ăn cay</span>
+          <div id="flavorsContainer" class="toggle-group" role="group" aria-labelledby="flavorLabel">
+            <button type="button" class="toggle-chip" data-val="spicy" aria-pressed="false">Thích cay</button>
+            <button type="button" class="toggle-chip" data-val="non-spicy" aria-pressed="false">Không ăn cay</button>
           </div>
         </div>
 
-        <!-- Preferred Flavors -->
-        <div class="pref-section">
-          <label class="pref-label">Sở thích cay:</label>
-          <div id="flavorsContainer" class="toggle-chips-group" role="group" aria-label="Sở thích ăn cay">
-            <button type="button" class="toggle-chip" data-val="spicy"     aria-pressed="false">🌶️ Thích ăn cay</button>
-            <button type="button" class="toggle-chip" data-val="non-spicy" aria-pressed="false">🌱 Không ăn cay</button>
+        <div class="pref-row">
+          <label class="pref-label" for="newIngredientInput">Không ăn / dị ứng</label>
+          <p class="pref-hint">Món chứa các nguyên liệu này sẽ bị loại.</p>
+          <div id="dislikedTags" class="tag-list" role="list"></div>
+          <div class="add-tag">
+            <input type="text" id="newIngredientInput" class="text-input" placeholder="vd: hành, đậu phộng">
+            <button type="button" id="addIngredientBtn" class="btn btn-outline">Thêm</button>
           </div>
         </div>
 
-        <!-- Disliked Ingredients -->
-        <div class="pref-section">
-          <label class="pref-label">Nguyên liệu kiêng / Dị ứng (sẽ bị lọc bỏ):</label>
-          <div id="dislikedTags" class="tags-container" role="list" aria-label="Danh sách nguyên liệu kiêng">
-            <!-- Dynamic tags injected by JS -->
-          </div>
-          <div class="add-tag-group">
-            <input type="text" id="newIngredientInput" placeholder="Vd: hành tây, tỏi, đậu phộng..." class="tag-input" aria-label="Thêm nguyên liệu kiêng">
-            <button type="button" id="addIngredientBtn" class="btn btn-sm btn-secondary" aria-label="Thêm nguyên liệu kiêng">+ Thêm</button>
-          </div>
-        </div>
-
-        <!-- Min Rating -->
-        <div class="pref-section">
-          <label class="pref-label" for="ratingInput">
-            <span>Đánh giá quán tối thiểu:</span>
-            <span id="ratingValue" class="pref-highlight">4.3⭐</span>
+        <div class="pref-row">
+          <label class="pref-label pref-label-split" for="ratingInput">
+            <span>Chỉ gợi ý quán từ</span>
+            <output id="ratingValue" class="pref-value" for="ratingInput">4,3 sao</output>
           </label>
-          <input type="range" id="ratingInput" min="4.0" max="4.9" step="0.1" value="4.3" class="pref-slider" aria-label="Đánh giá quán tối thiểu">
+          <input type="range" id="ratingInput" min="4.0" max="4.9" step="0.1" value="4.3">
         </div>
-
-      </div><!-- /drawer-body -->
+      </div>
 
       <div class="drawer-footer">
-        <button id="savePrefBtn" class="btn btn-primary btn-block">💾 Lưu thay đổi vào Database</button>
+        <button id="savePrefBtn" type="button" class="btn btn-primary btn-block">Lưu khẩu vị</button>
       </div>
     </div>
   </div>
 
-  <!-- Toast Notification Container -->
-  <div id="toastContainer" class="toast-container" role="status" aria-live="polite"></div>
-
-  <!-- Scripts -->
-  <!-- Map picker modal -->
+  <!-- Map picker -->
   <div id="mapModal" class="map-modal" role="dialog" aria-modal="true" aria-labelledby="mapModalTitle" hidden>
     <div class="map-modal-content">
       <div class="map-modal-header">
-        <h2 id="mapModalTitle">📍 Chọn vị trí giao hàng</h2>
-        <button id="closeMapBtn" type="button" class="btn btn-sm btn-ghost" aria-label="Đóng bản đồ">✕</button>
+        <h2 id="mapModalTitle">Chọn chỗ giao hàng</h2>
+        <button id="closeMapBtn" type="button" class="btn btn-icon" aria-label="Đóng bản đồ">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
       </div>
-      <p class="map-modal-hint">Bấm lên bản đồ để đặt ghim, hoặc dùng vị trí hiện tại của bạn.</p>
+      <p class="map-modal-hint">Bấm lên bản đồ để đặt ghim, hoặc dùng vị trí hiện tại.</p>
       <div id="mapCanvas" class="map-canvas" aria-label="Bản đồ chọn vị trí"></div>
       <div id="mapPickInfo" class="map-pick-info" aria-live="polite">Chưa chọn vị trí.</div>
       <div class="map-modal-actions">
-        <button id="useMyLocationBtn" type="button" class="btn btn-sm btn-secondary">🎯 Vị trí hiện tại</button>
-        <button id="confirmMapBtn" type="button" class="btn btn-sm btn-primary" disabled>✅ Dùng vị trí này</button>
+        <button id="useMyLocationBtn" type="button" class="btn btn-outline">Vị trí hiện tại</button>
+        <button id="confirmMapBtn" type="button" class="btn btn-primary" disabled>Giao đến đây</button>
       </div>
     </div>
   </div>
+
+  <div id="toastContainer" class="toasts" role="status" aria-live="polite"></div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/static/js/app.js"></script>

@@ -125,8 +125,8 @@ Pipeline: `UNDERSTAND → TaskModel → PLAN → ACT → OBSERVE → VALIDATE �
 #### Thay đổi thực hiện:
 1. **Năng lực Ánh xạ Ngữ nghĩa (Semantic Category Mapping)**:
    - Khi người dùng không nêu tên món cụ thể (`concept = None`) mà chỉ nói cảm tính (ví dụ: *"muốn ăn đồ nước"*, *"thanh đạm"*, *"ăn nhẹ"*, *"chắc bụng"*, *"ăn no"*):
-   - [agent/planner.py](file:///d:/dung/PickyEaters/agent/planner.py) tự động phân giải `semantic_attributes` thành danh mục các từ khóa món ăn (`semantic_keywords`: phở, bún, miến, cháo, súp...).
-   - [services/search.py](file:///d:/dung/PickyEaters/services/search.py) và [agent/tools.py](file:///d:/dung/PickyEaters/agent/tools.py) tiếp nhận `semantic_keywords` để lọc chuẩn xác món dạng nước, không còn bị trả về món khô hay cơm xôi ngẫu nhiên.
+   - [agent/planner.py](agent/planner.py) tự động phân giải `semantic_attributes` thành danh mục các từ khóa món ăn (`semantic_keywords`: phở, bún, miến, cháo, súp...).
+   - [services/search.py](services/search.py) và [agent/tools.py](agent/tools.py) tiếp nhận `semantic_keywords` để lọc chuẩn xác món dạng nước, không còn bị trả về món khô hay cơm xôi ngẫu nhiên.
 2. **Khắc phục lỗi nhầm lẫn ngữ nghĩa ẩm thực (Vietnamese Food Disambiguation)**:
    - `phở`: Không bị nhầm sang `phô mai` (cheese) hoặc `phố cổ` (street name).
    - `miến`: Không bị nhầm sang `miền nam / miền bắc / miền tây` (địa lý).
@@ -136,7 +136,7 @@ Pipeline: `UNDERSTAND → TaskModel → PLAN → ACT → OBSERVE → VALIDATE �
    - Tách món chính (`keyword`) và món phụ/nước uống (`secondary_keywords`).
    - Tự động nhận diện chiến lược giao hàng cùng quán (`composition_strategy: "same_restaurant"`).
 4. **Kiểm thử**:
-   - Tạo file unit test chuyên biệt [tests/test_planner.py](file:///d:/dung/PickyEaters/tests/test_planner.py) (7 tests).
+   - Tạo file unit test chuyên biệt [tests/test_planner.py](tests/test_planner.py) (7 tests).
    - Toàn bộ suite **58/58 tests passed 100%**.
 
 | File | Thay đổi |
@@ -153,7 +153,7 @@ Pipeline: `UNDERSTAND → TaskModel → PLAN → ACT → OBSERVE → VALIDATE �
 
 #### Thay đổi thực hiện:
 1. **Chấm điểm ngữ nghĩa cảm tính (`semantic_score`)**:
-   - [services/recommendation.py](file:///d:/dung/PickyEaters/services/recommendation.py) bổ sung hàm `evaluate_semantic_match`:
+   - [services/recommendation.py](services/recommendation.py) bổ sung hàm `evaluate_semantic_match`:
      - *"đồ nước / nước dùng"*: Thưởng +3.0 điểm cho phở/bún/miến/cháo có nước, phạt -2.0 nếu là món khô (cơm, xôi, bánh mì).
      - *"thanh thanh / thanh đạm / nhẹ bụng"*: Thưởng +2.5 điểm cho món luộc, hấp, cháo, cuốn, canh; phạt -2.0 cho món mỡ ngấy (thịt kho, chiên giòn, xôi mỡ).
      - *"ăn no / chắc bụng"*: Thưởng +2.5 điểm cho cơm, xôi, bún đậu, mì xào.
@@ -164,7 +164,7 @@ Pipeline: `UNDERSTAND → TaskModel → PLAN → ACT → OBSERVE → VALIDATE �
      `🍃 Chuẩn vị thanh đạm: thanh nhẹ dễ nuốt, êm bụng không gây ngấy`
      hoặc `🍜 Chuẩn điệu món nước: nước dùng nóng hổi, xì xụp đậm đà giải ngấy`.
 3. **Kiểm thử tự động**:
-   - Tạo bộ unit test [tests/test_recommendation.py](file:///d:/dung/PickyEaters/tests/test_recommendation.py) (5 tests) kiểm tra toàn diện điểm ngữ nghĩa, đẩy món khớp cảm tính lên Top 1 và hiển thị giải thích.
+   - Tạo bộ unit test [tests/test_recommendation.py](tests/test_recommendation.py) (5 tests) kiểm tra toàn diện điểm ngữ nghĩa, đẩy món khớp cảm tính lên Top 1 và hiển thị giải thích.
    - Toàn bộ test suite **63/63 tests passed 100%**.
 
 | File | Thay đổi |
@@ -201,7 +201,7 @@ Pipeline: `UNDERSTAND → TaskModel → PLAN → ACT → OBSERVE → VALIDATE �
    - Khắc phục lỗi trong `services/search.py`: Khi user tìm món cụ thể (như `phở bò`), synonym không còn bị mở rộng ngược về gốc `phở` làm khớp nhầm sang `quẩy giòn phở` hay `phở gà`.
    - Xóa `nem cua bể` khỏi synonym của `bún chả`.
 4. **Kiểm thử tự động**:
-   - Tạo file unit test chuyên biệt [tests/test_composer.py](file:///d:/dung/PickyEaters/tests/test_composer.py) (6 tests).
+   - Tạo file unit test chuyên biệt [tests/test_composer.py](tests/test_composer.py) (6 tests).
    - Toàn bộ test suite **69/69 tests passed 100%**.
 
 | File | Thay đổi |
@@ -241,7 +241,7 @@ Pipeline: `UNDERSTAND → TaskModel → PLAN → ACT → OBSERVE → VALIDATE �
      - `PLAN` chặn hoàn toàn việc gọi search tools, tiết kiệm tài nguyên.
      - `agent/agent.py`: Bổ sung `max_tokens=400` cho `chat.completions.create` để không bị vượt ngưỡng OTPM 1000 của Groq on-demand free tier.
 4. **Kiểm thử tự động**:
-   - Tạo file unit test chuyên biệt [tests/test_validator.py](file:///d:/dung/PickyEaters/tests/test_validator.py) (7 tests).
+   - Tạo file unit test chuyên biệt [tests/test_validator.py](tests/test_validator.py) (7 tests).
    - Toàn bộ test suite **76/76 tests passed 100%**.
 
 | File | Thay đổi |
@@ -267,7 +267,7 @@ Pipeline: `UNDERSTAND → TaskModel → PLAN → ACT → OBSERVE → VALIDATE �
    - `tool_recommend_dishes_with_radius`: Khi `len(candidates) == 0`, tự động kích hoạt `diagnose_and_replan(...)` dựa trên `rejected_candidates` từ tầng VALIDATE.
    - `format_recommendations_output`: Định dạng banner chiến lược RE-PLAN (⚠️ **HỆ THỐNG ĐANG ĐIỀU CHỈNH KẾ HOẠCH (RE-PLAN)**) cực kỳ rõ ràng, trung thực, giải thích cặn kẽ nguyên nhân và đưa ra lời khuyên hành động.
 3. **Kiểm thử tự động**:
-   - Tạo bộ test độc lập [tests/test_replan.py](file:///d:/dung/PickyEaters/tests/test_replan.py) (4 tests).
+   - Tạo bộ test độc lập [tests/test_replan.py](tests/test_replan.py) (4 tests).
    - Toàn bộ test suite **80/80 tests passed 100%**.
 
 | File | Thay đổi |
@@ -334,8 +334,101 @@ Thực hiện 6 fix ưu tiên cao từ Code Review chuyên sâu:
 
 ---
 
+### Session 11 (2026-09-24 → 2026-09-26) — Đánh giá pipeline & sửa 10 vấn đề hợp đồng
+**Nhánh:** `fix/pipeline-contracts` — commit `f3cbd5d`, `4a2301e`, `212c233` (chưa push)
+
+#### Vấn đề phát hiện (đánh giá toàn pipeline)
+- Loại trừ món bằng substring: loại "gà" làm mất 52/204 món ("ngậy" → "ngay" chứa "ga"); "cơm" khớp "Combo".
+- VALIDATE chạy **sau** khi cắt top-4 → mất món hợp lệ xếp hạng thấp.
+- RESPOND nói điều không có trong dữ liệu ("chất lượng quán rất xứng đáng", ngân sách hồ sơ thay vì ngân sách user nói, "đã kiểm tra nguyên liệu" khi không có dữ liệu thành phần, nhãn "mở rộng 10km" sai).
+- `follow_up`, `conversation_ref`, `party_size`, `strength` được trích xuất nhưng không tầng nào dùng.
+- Dữ liệu crawl bị điền giá trị bịa (rating 4.7, khuyến mãi 15k từ chữ "Flash Sale", địa chỉ GrabFood gán theo thứ tự, giờ mở cửa 08–22).
+- Geocoding: "Quận 10" bị tính là Quận 1; địa chỉ Hà Nội không rõ quận bị gán Cầu Giấy; địa chỉ mặc định "Cầu Giấy, Hà Nội" cài cứng ở 12 chỗ.
+- RE-PLAN thực chất chỉ là 5km → 10km viết cứng (2 lần); tool `recommend_dishes_with_radius` ôm toàn bộ pipeline.
+- Đơn nhiều món: 2 món chính chỉ ra 1 món; "có đồ uống ⇒ cùng quán" là suy luận không có căn cứ; ô không tên món (vd "đồ uống") không tìm được; frontend không hiển thị combo.
+- Test suite xóa database thật `data/food_agent.db` mỗi lần chạy.
+- `llama-3.3-70b-versatile` không còn trên Groq (mặc định của RESPOND).
+
+#### Quyết định (đã chốt với user)
+- `price_max` ("dưới 60k") tính theo **giá món** (giá menu × số phần, chưa ship, trước khuyến mãi).
+- Model Groq mặc định: `qwen/qwen3.8-27b` (so sánh 14 câu UNDERSTAND: qwen 14/14 sau sửa schema, ~140 token; gpt-oss-120b 13/14, ~520 token, bị cắt JSON; gpt-oss-20b 9/14).
+- **Không có địa chỉ mặc định**: user gõ địa chỉ (có quận) hoặc chọn trên bản đồ; thiếu thì PLAN hỏi lại.
+- `same_order` ưu tiên một quán, không có quán nào đủ món thì **tách đơn** (mỗi quán 1 phí ship); `same_restaurant` chỉ khi user nói "cùng quán".
+
+#### Thay đổi thực hiện
+| File | Thay đổi |
+|------|----------|
+| `services/search.py` | `mentions_concept` (so khớp nguyên từ); `resolve_district` (nguyên từ, lấy quận xuất hiện cuối, không đoán từ tên thành phố); `estimate_distance` + `distance_basis`; tọa độ bản đồ; `search_within_radius` (1 lượt, không tự mở rộng, không lọc giá) thay `search_with_radius_expansion`; loader crawl không bịa dữ liệu |
+| `agent/executor.py` | **Mới** — điều phối ACT → COMPOSE → RANK → VALIDATE → RE-PLAN, ghi `replan_trace` |
+| `agent/replan.py` | Vòng `next_step` có giới hạn: mở rộng theo `radius_schedule` từ hồ sơ, rồi nới ẩm thực (chỉ khi còn gợi ý món); chẩn đoán follow-up, món không có ở đâu; đếm vi phạm theo ứng viên |
+| `agent/planner.py` | `merge_follow_up`, `follow_up_constraints`, `location_clarification`, `composition_mode` |
+| `agent/composer.py` | Viết lại: mỗi object là một ô, nhiều combo có giới hạn, tách đơn nhiều quán, `unavailable_objects`; bỏ kiểm tra ràng buộc cứng (VALIDATE lo) |
+| `agent/validator.py` | Nguyên từ cho excluded concepts; `price_max` theo giá món; `follow_up_max_price`, `previously_shown` |
+| `agent/agent.py` | Session state (task trước, món đã hiện) tách khỏi TaskModel; `provide_info` trả lời từ dữ liệu món được tham chiếu; lưu vị trí chỉ khi định vị được; chặn LLM đổi số liệu; sửa chit-chat trả lời nhầm tin trước |
+| `agent/tools.py` | `recommend_dishes_with_radius` thành adapter mỏng; `set_user_location` |
+| `agent/task_model.py` | `conversation_ref` nhận số thứ tự dạng số |
+| `agent/understand.py` | `DEFAULT_GROQ_MODEL` dùng chung |
+| `services/recommendation.py` | Validate trước top-k (`select_top_k`); ranking theo đúng thứ tự `priority_order` (gom nấc); lý do chỉ nêu dữ kiện truy vết được; nhãn ước tính; hiển thị tách đơn; `quantity` |
+| `services/pricing.py` | `best_order_pricing` dùng chung |
+| `database/models.py`, `database/db.py` | Bỏ địa chỉ mặc định; `latitude/longitude`; `estimated_fields`, `distance_basis`, `ingredients_source`, `restaurants`, `quantity` |
+| `api.py` | Tọa độ trong chat/profile; `GET /api/locate`; 400 khi địa chỉ không định vị được |
+| `static/*` | Chọn vị trí trên bản đồ (Leaflet + Esri tiles); bỏ mọi fallback bịa (rating 4.5, 20 phút, "Hà Nội", Cầu Giấy); thẻ combo/tách đơn, nút đặt theo từng quán |
+| `tests/conftest.py` | Test dùng database tạm + địa chỉ test khai báo rõ |
+| `tests/*` | Mới: `test_pipeline_regressions`, `test_follow_up`, `test_crawled_data`, `test_distance_and_ranking`, `test_location`, `test_replan_loop`, `test_composition` |
+
+#### Kết quả
+- **95 → 200 tests passed.** Đã chạy thử trên trình duyệt (Playwright): địa chỉ trống khi mở, chọn bản đồ, kết quả có nhãn "ước tính theo quận", thẻ tách đơn 2 quán.
+
+#### Vấn đề tồn đọng
+- Khoảng cách vẫn ở mức tâm quận; chính xác hơn cần geocoding thật (dịch vụ ngoài — chưa quyết).
+- `semantic_attributes[].strength == "hard"` chưa được VALIDATE kiểm tra.
+- Dữ liệu chỉ có 2 đồ uống → đơn "món + đồ uống" thường báo không có quán bán.
+- Nguồn gốc `data/restaurants.json` và 20 quán Thanh Xuân (nhập tay trong `scripts/populate_thanhxuan_data.py`) chưa kiểm chứng.
+- Esri tiles: ổn cho dự án cá nhân; thương mại cần xem điều khoản. `tile.openstreetmap.org` không phân giải DNS trên mạng hiện tại; CARTO đòi API key.
+- Code chết: `OPENAI_TOOLS` + 5 tool cũ (~300 dòng).
+
+#### Bổ sung (2026-09-26) — Thiết kế lại giao diện web
+**Ý tưởng:** mỗi gợi ý là một **tờ hóa đơn quán** (tên quán in đầu, dòng món có chấm dẫn tới giá, phí ship, giảm giá, **Tổng** màu đỏ, mép giấy răng cưa, đánh "Số 1, Số 2…" — khớp với follow-up "món số 2 rẻ hơn"). Hóa đơn luôn **cộng đúng**: giảm giá = giá món + ship − tổng; freeship ghi ở dòng ship (không trừ 2 lần).
+
+| Hạng mục | Chọn |
+|------|----------|
+| Màu | Gạch men `#E6ECF0` (nền), giấy `#FFFFFF`, mực `#1B2733`, xanh ghế nhựa `#1F5BD8` (hành động), đỏ biển hiệu `#D7261E` (tiêu đề, tổng), vàng tem `#FFD23F` (chỉ mã giảm giá) |
+| Chữ | Be Vietnam Pro (chữ thường, số tabular) + Barlow Condensed (tiêu đề kiểu biển hiệu) |
+| Bỏ | Nền tối + gradient, emoji dày đặc, chữ kỹ thuật ("SQLite Database", "Scale 10km"), welcome bị lặp giữa HTML và JS |
+
+| File | Thay đổi |
+|------|----------|
+| `static/index.html` | Viết lại cấu trúc (giữ nguyên toàn bộ ID); thanh "Người nhận / Giao đến"; drawer & modal bản đồ gọn lại |
+| `static/css/style.css` | Viết lại từ đầu (~600 dòng thay ~1650): hóa đơn, responsive tới 320px, focus rõ, `prefers-reduced-motion` |
+| `static/js/app.js` | Render hóa đơn (`renderReceipt`), welcome 1 template, trace "Các bước đã chạy" dạng `<details>`, `aria-pressed` cho chip, nút xóa tag là `<button>`; nút đặt nói thật "chưa đặt trực tiếp được" |
+
+**Trước khi đưa lên `main`:** đổi 27 link `file:///d:/...` (đường dẫn máy cá nhân, hỏng trên GitHub) thành link tương đối trong `README.md`, `PIPELINE_ARCHITECTURE.md`, `PROJECT_LOG.md`; bỏ tên cá nhân khỏi hồ sơ mẫu/giao diện/test (hồ sơ mẫu tên "Minh", ô tên không điền sẵn). `.env`, `*.db`, cache vẫn bị `.gitignore` chặn.
+
+**Kiểm tra (Playwright):** không lỗi console; mọi hóa đơn cộng đúng tổng; không tràn ngang ở 390px và 320px (đã sửa 2 lỗi tràn: hàng chip quận, drawer ẩn); Tab đi đúng thứ tự. 200 tests vẫn pass.
+
+---
+
+## 📋 Component Status (sau Session 11)
+
+| Component | Layer | Status | Notes |
+|-----------|-------|--------|-------|
+| `understand.py` | UNDERSTAND | ✅ Stable | Mặc định `qwen/qwen3.8-27b`; regex fallback |
+| `task_model.py` | Contract | ✅ Stable | `conversation_ref` nhận số |
+| `agent.py` | Orchestrator | 🚀 Upgraded | Session state, follow-up, hỏi vị trí, chặn LLM đổi số |
+| `planner.py` | PLAN | 🚀 Upgraded | Follow-up merge/constraints, `composition_mode`, hỏi vị trí |
+| `executor.py` | Orchestration | 🆕 New | Vòng ACT→COMPOSE→RANK→VALIDATE→RE-PLAN + trace |
+| `tools.py` | ACT | 🚀 Refactored | Adapter mỏng; `set_user_location` |
+| `services/search.py` | ACT | 🚀 Refactored | Tìm 1 bán kính; geocoding quận; không bịa dữ liệu crawl |
+| `validator.py` | VALIDATE | 🚀 Upgraded | Nguyên từ, giá món, ràng buộc follow-up |
+| `replan.py` | RE-PLAN | 🚀 Refactored | Vòng có giới hạn theo quan sát; không nới ràng buộc cứng |
+| `composer.py` | COMPOSE | 🚀 Rewritten | Theo ô, nhiều combo, tách đơn nhiều quán |
+| `services/recommendation.py` | RANK & RESPOND | 🚀 Upgraded | Ưu tiên theo thứ tự user; chỉ nêu dữ kiện có nguồn |
+
+---
+
 ## 🔮 Next Priorities (Backlog)
 
+0. **(Session 11)** Kiểm tra `strength: "hard"` cho semantic attributes; dọn `OPENAI_TOOLS` + tool cũ; bổ sung dữ liệu đồ uống; kiểm chứng nguồn dữ liệu seed.
 1. **Giao diện người dùng (Rich Web UI / Streamlit / Chat Prototype)**: Demo trực quan luồng pipeline đầy đủ.
 2. **Provenance & Freshness**: Bổ sung `data_source`, `crawled_at`, `confidence` vào `RecommendationCandidate`.
 3. **Session Store**: Tách session state ra khỏi biến global trong `api.py`, hỗ trợ multi-worker.

@@ -19,7 +19,7 @@ for d in res1['dishes'][:8]:
 
 print('\n=== 3. Running FoodAgent with query "tìm quán xôi" at Thanh Xuân ===')
 agent = FoodAgent(user_id='user_01', force_mock=True)
-agent_res = agent.run(user_input='tìm quán xôi ngon gần đây', user_name='Dũng', user_address='Thanh Xuân, Hà Nội')
+agent_res = agent.run(user_input='tìm quán xôi ngon gần đây', user_name='Minh', user_address='Thanh Xuân, Hà Nội')
 
 print('\n--- AGENT RESPONSE ---')
 print(agent_res['response'])
@@ -31,12 +31,12 @@ for idx, c in enumerate(agent_res['candidates'], 1):
     print(f'{idx}. {dish["name"]} | {rest["name"]} | Rating: {rest["rating"]}* | Dist: {rest["distance_km"]}km | Final Price: {c["pricing"]["final_price"]:,}d')
 
 print('\n=== 4. Running FoodAgent for Pho Bo ===')
-res_pho = agent.run(user_input='tìm phở bò', user_name='Dũng', user_address='Thanh Xuân, Hà Nội')
+res_pho = agent.run(user_input='tìm phở bò', user_name='Minh', user_address='Thanh Xuân, Hà Nội')
 for idx, c in enumerate(res_pho['candidates'][:2], 1):
     print(f'  Pho {idx}: {c["dish"]["name"]} - {c["restaurant"]["name"]} ({c["restaurant"]["rating"]}*, {c["restaurant"]["distance_km"]}km)')
 
 print('\n=== 5. Running FoodAgent for Bun Cha ===')
-res_bc = agent.run(user_input='tìm bún chả', user_name='Dũng', user_address='Thanh Xuân, Hà Nội')
+res_bc = agent.run(user_input='tìm bún chả', user_name='Minh', user_address='Thanh Xuân, Hà Nội')
 for idx, c in enumerate(res_bc['candidates'][:2], 1):
     print(f'  Bun Cha {idx}: {c["dish"]["name"]} - {c["restaurant"]["name"]} ({c["restaurant"]["rating"]}*, {c["restaurant"]["distance_km"]}km)')
 

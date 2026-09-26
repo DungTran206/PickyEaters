@@ -69,8 +69,8 @@ flowchart LR
 ```
 
 > 📖 **Xem chi tiết tài liệu kiến trúc:**  
-> * [**`PIPELINE_ARCHITECTURE.md`**](file:///d:/dung/PickyEaters/PIPELINE_ARCHITECTURE.md) — Đặc tả toàn bộ 8 giai đoạn pipeline, sơ đồ tuần tự và công thức tính điểm.  
-> * [**`AGENTS.md`**](file:///d:/dung/PickyEaters/AGENTS.md) — Bộ quy tắc kỹ thuật cốt lõi và tiêu chuẩn TaskModel.
+> * [**`PIPELINE_ARCHITECTURE.md`**](PIPELINE_ARCHITECTURE.md) — Đặc tả toàn bộ 8 giai đoạn pipeline, sơ đồ tuần tự và công thức tính điểm.  
+> * [**`AGENTS.md`**](AGENTS.md) — Bộ quy tắc kỹ thuật cốt lõi và tiêu chuẩn TaskModel.
 
 ---
 

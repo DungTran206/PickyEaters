@@ -1,7 +1,7 @@
 [
   {
     "user_id": "user_01",
-    "name": "Dũng",
+    "name": "Minh",
     "preferred_cuisines": ["Vietnamese", "Korean"],
     "preferred_flavors": ["spicy"],
     "disliked_ingredients": [],

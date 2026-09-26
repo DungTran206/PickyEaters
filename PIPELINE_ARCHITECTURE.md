@@ -76,7 +76,7 @@ flowchart TD
 
 ### Giai đoạn 1: Tiếp nhận yêu cầu & Bổ sung ngữ cảnh (Context Ingestion)
 * **Đầu vào:** Câu thoại người dùng (ví dụ: *"tìm quán xôi ngon gần đây"*), kèm tọa độ/địa chỉ gửi từ client (`user_address: "Thanh Xuân, Hà Nội"`), định danh người dùng (`user_id: "user_01"`).
-* **Nạp Profile Cá nhân:** Hệ thống tự động truy vấn SQLite [`database/picky_eaters.db`](file:///d:/dung/PickyEaters/database/picky_eaters.db) để lấy:
+* **Nạp Profile Cá nhân:** Hệ thống tự động truy vấn SQLite [`database/picky_eaters.db`](database/picky_eaters.db) để lấy:
   * Khẩu vị: `preferred_cuisines` (món Việt, Hàn, Nhật...), `preferred_flavors` (cay, ngọt...).
   * Dị ứng / Kiêng khem: `disliked_ingredients` (hành lá, ớt, bò, tôm...).
   * Ngân sách: `budget` (mặc định 80.000đ nếu chưa đặt).
@@ -86,7 +86,7 @@ flowchart TD
 
 ### Giai đoạn 2: Phân tích Ý định & Điều phối Công cụ (Intent Routing & Tool Dispatcher)
 Hệ thống sử dụng cơ chế lai (Hybrid Orchestration):
-1. **Chế độ LLM (khi có OpenAI/Groq API Key):** Mô hình ngôn ngữ tự động chọn gọi các function định nghĩa trong [`agent/tools.py`](file:///d:/dung/PickyEaters/agent/tools.py):
+1. **Chế độ LLM (khi có OpenAI/Groq API Key):** Mô hình ngôn ngữ tự động chọn gọi các function định nghĩa trong [`agent/tools.py`](agent/tools.py):
    * `get_user_preferences`
    * `update_user_preference`
    * `recommend_dishes_with_radius`
@@ -118,10 +118,10 @@ sequenceDiagram
 ```
 
 #### Các cơ chế an toàn toạ độ:
-* **City-Scoped Geocoding ([`get_address_coordinates`](file:///d:/dung/PickyEaters/services/search.py#L75)):**
+* **City-Scoped Geocoding ([`get_address_coordinates`](services/search.py#L75)):**
   * Tách biệt rõ 2 tập quận: Hà Nội (Cầu Giấy, Thanh Xuân, Ba Đình...) và TP.HCM (Quận 1, Quận 8, Bình Thạnh...).
   * **Giải quyết dứt điểm lỗi nhầm lẫn địa lý:** Nếu địa chỉ quán có chữ *"142 Ba Đình, Quận 8, TP.HCM"*, hệ thống nhận diện từ khóa `TP.HCM` và `Quận 8` trước, không bao giờ nhầm thành `Quận Ba Đình, Hà Nội` nữa.
-* **Haversine Distance ([`haversine_km`](file:///d:/dung/PickyEaters/services/search.py#L60)):**
+* **Haversine Distance ([`haversine_km`](services/search.py#L60)):**
   * Tính khoảng cách đường chim bay chính xác giữa GPS người dùng và GPS quán ăn.
   * Đối với các quán cùng quận, hệ thống nội suy khoảng cách thực tế từ 0.7km đến 2.2km dựa trên vị trí phố.
 
@@ -129,7 +129,7 @@ sequenceDiagram
 
 ### Giai đoạn 4: Bộ Lọc Ngữ Nghĩa & An Toàn Ẩm Thực (Semantic Food Guard)
 
-* **Từ điển đồng nghĩa đa cấp ([`KEYWORD_SYNONYMS`](file:///d:/dung/PickyEaters/services/search.py#L343)):**
+* **Từ điển đồng nghĩa đa cấp ([`KEYWORD_SYNONYMS`](services/search.py#L343)):**
   * Khi tìm `"xoi"`, hệ thống mở rộng tìm kiếm: `xoi xeo`, `xoi chim`, `xoi ga`, `xoi suon`, `xoi thit`, `xoi bap`, `xoi ngo`, `xoi man`, `xoi pate`...
 * **Ranh giới từ khóa (Word Boundary Regex `\b`):**
   * Tránh việc từ khóa ngắn bị khớp lộn xộn vào giữa các từ không liên quan.
@@ -140,14 +140,14 @@ sequenceDiagram
       if not any(x in text for x in ["xoi xeo", "xoi ga", "xoi chim", "xoi suon", ...]):
           return False
   ```
-* **Lọc dị ứng & nguyên liệu ghét ([`is_ingredient_disliked`](file:///d:/dung/PickyEaters/services/search.py#L256)):**
+* **Lọc dị ứng & nguyên liệu ghét ([`is_ingredient_disliked`](services/search.py#L256)):**
   * Đối chiếu từng thành phần món với danh sách nguyên liệu cấm của người dùng. Nếu vi phạm (ví dụ: món chứa `hành lá`, `hành phi` mà người dùng ghét hành), món ăn lập tức bị loại trừ khỏi danh sách đề xuất.
 
 ---
 
 ### Giai đoạn 5: Bộ Tính Giá & Tối Ưu Ưu Đãi (Pricing & Promotion Engine)
 
-Hàm [`calculate_final_price`](file:///d:/dung/PickyEaters/services/pricing.py#L5) kiểm tra toàn bộ mã giảm giá đang kích hoạt của quán:
+Hàm [`calculate_final_price`](services/pricing.py#L5) kiểm tra toàn bộ mã giảm giá đang kích hoạt của quán:
 1. **Mã giảm tiền mặt (`discount`):** Trừ trực tiếp vào giá món nếu đạt `minimum_order`.
 2. **Mã miễn phí vận chuyển (`freeship`):** Trừ vào phí vận chuyển của quán.
 3. **Mã giảm phần trăm (`percent`):** Tính % chiết khấu có áp trần (`max_discount`).
@@ -170,7 +170,7 @@ Trong đó:
 * $S_{\text{promotion}}$: Khuyến mãi tiết kiệm càng nhiều điểm thưởng càng cao.
 
 #### Quy tắc sắp xếp đặc biệt theo yêu cầu người dùng:
-* **Rating-First Sorting ([`rank_candidates`](file:///d:/dung/PickyEaters/services/recommendation.py#L214)):**  
+* **Rating-First Sorting ([`rank_candidates`](services/recommendation.py#L214)):**  
   Khi người dùng tìm kiếm món cụ thể (như xôi, phở, bún), danh sách ưu tiên xếp theo **Rating của quán từ cao xuống thấp** ($4.9★ \to 4.8★ \to 4.7★ \to 4.6★$).
 * **Đa dạng hóa quán ăn (Brand Diversity):**  
   Mỗi quán chỉ lấy 1 món tiêu biểu nhất đưa vào top 4, giúp người dùng so sánh được nhiều thương hiệu khác nhau tại khu vực thay vì bị áp đảo bởi 1 quán duy nhất.
@@ -179,7 +179,7 @@ Trong đó:
 
 ### Giai đoạn 7: Sinh Lý Do Đề Xuất Minh Bạch (Explainable Reasoning Engine)
 
-Hàm [`generate_detailed_reasoning`](file:///d:/dung/PickyEaters/services/recommendation.py#L79) tự động tạo tối thiểu **3 đến 5 luận điểm thuyết phục** cho từng món:
+Hàm [`generate_detailed_reasoning`](services/recommendation.py#L79) tự động tạo tối thiểu **3 đến 5 luận điểm thuyết phục** cho từng món:
 1. **Lý do hương vị / nhu cầu:** Khớp đúng món đang thèm (*"🎯 Khớp chính xác với yêu cầu món xôi bạn đang tìm"* / *"🌶️ Đúng vị cay nồng"*).
 2. **Lý do sở thích ẩm thực:** Đúng gu ẩm thực Việt Nam hoặc sở thích đã lưu.
 3. **Lý do vị trí & thời gian:** Nêu rõ khoảng cách và thời gian giao hàng (*"📍 Cách bạn chỉ 1.2km — giao hàng ước tính ~20 phút"*).
