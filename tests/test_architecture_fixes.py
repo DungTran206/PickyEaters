@@ -196,40 +196,21 @@ class TestReplanExpandRadiusExecution:
             assert "restaurant" in c
             assert "pricing" in c
 
-    def test_expand_radius_auto_executed_when_strategy_is_returned(self):
+    def test_expand_radius_auto_executed_when_nothing_found(self):
         """
-        When diagnose_and_replan returns expand_radius AND is_radius_expanded=False,
-        the tool must call search_with_radius_expansion a SECOND time automatically.
-        Uses monkey-patching to avoid Pydantic model complexity.
+        When the first radius yields nothing, RE-PLAN must execute a wider search itself
+        (bounded loop), not just diagnose.
         """
-        import agent.tools as tools_module
-        original_search = tools_module.search_with_radius_expansion
-        original_diagnose = tools_module.diagnose_and_replan
+        import agent.executor as executor_module
+        original_search = executor_module.search_within_radius
+        radii = []
 
-        call_count = {"n": 0}
+        def recording_search(radius_km, **kwargs):
+            radii.append(radius_km)
+            if len(radii) == 1:
+                return {"dishes": [], "restaurants": [], "search_radius_km": radius_km}
+            return original_search(radius_km=radius_km, **kwargs)
 
-        def counting_search(**kwargs):
-            call_count["n"] += 1
-            if call_count["n"] == 1:
-                # First call: return empty — triggers RE-PLAN
-                return {
-                    "dishes": [], "restaurants": [], "message": "No results",
-                    "search_radius_km": 5.0, "is_radius_expanded": False,
-                }
-            # Second call (retry): delegate to real search
-            return original_search(**kwargs)
-
-        from agent.replan import ReplanAction
-
-        def mock_diagnose(**kwargs):
-            return ReplanAction(
-                strategy="expand_radius",
-                diagnosis="no_restaurants_in_initial_radius",
-                suggested_radius_km=10.0,
-                message_to_user="Expanding radius to 10km"
-            )
-
-        # Minimal valid TaskModel dict so task_obj is not None and RE-PLAN path is entered
         valid_task_model = {
             "intent": "request_recommendation",
             "objects": [{"role": "Main", "concept": "phở", "required": True}],
@@ -244,21 +225,18 @@ class TestReplanExpandRadiusExecution:
         }
 
         try:
-            tools_module.search_with_radius_expansion = counting_search
-            tools_module.diagnose_and_replan = mock_diagnose
-
+            executor_module.search_within_radius = recording_search
             result = tool_recommend_dishes_with_radius(
                 user_id="user_01",
                 keyword="phở",
                 task_model=valid_task_model,
+                initial_radius=5.0,
+                max_radius=10.0,
             )
-
-            assert call_count["n"] == 2, (
-                f"expand_radius must auto-trigger a second search call, got {call_count['n']}"
-            )
-            assert "candidates" in result
         finally:
-            tools_module.search_with_radius_expansion = original_search
-            tools_module.diagnose_and_replan = original_diagnose
+            executor_module.search_within_radius = original_search
 
-
+        assert radii[:2] == [5.0, 10.0], f"expected an automatic wider search, got radii {radii}"
+        assert result["is_radius_expanded"] is True
+        assert result["replan_trace"][0]["next_step"]["action"] == "expand_radius"
+        assert result["candidates"]

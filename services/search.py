@@ -622,158 +622,52 @@ def search_dishes(
     return results
 
 
-def search_with_radius_expansion(
+def search_within_radius(
+    radius_km: float,
     user_address: str = "",
+    user_coords: Optional[Coords] = None,
     keyword: Optional[str] = None,
     cuisine: Optional[str] = None,
-    max_price: Optional[int] = None,
-    min_price: Optional[int] = None,
     spicy: Optional[bool] = None,
     disliked_ingredients: Optional[List[str]] = None,
     excluded_concepts: Optional[List[str]] = None,
-    minimum_rating: Optional[float] = None,
-    initial_radius: float = 5.0,
-    max_radius: float = 10.0,
     semantic_keywords: Optional[List[str]] = None,
-    secondary_keywords: Optional[List[str]] = None,
-    user_coords: Optional[Coords] = None,
+    all_dishes: bool = False,
+    minimum_rating: Optional[float] = None,
 ) -> Dict[str, Any]:
-    """
-    Search dishes and restaurants in two stages:
-    1. First stage: scan within initial_radius (default 5.0 km)
-    2. If fewer than 2 distinct recommendations are found, scale up to max_radius (10.0 km).
-    """
-    # When keyword or semantic_keywords is specified, don't over-restrict restaurant list by cuisine initially
-    has_dish_hint = bool(keyword or semantic_keywords)
-    rest_cuisine_filter = None if has_dish_hint else cuisine
+    """ACT: one retrieval pass inside a fixed radius.
 
-    # Stage 1: Initial 5.0 km radius
-    rests_5km = search_restaurants(
+    No radius expansion and no relaxation here — RE-PLAN decides those. Price is not
+    pre-filtered: VALIDATE rejects over-budget options and keeps them as evidence.
+    all_dishes=True returns every (non-excluded) dish of the restaurants in range, for
+    COMPOSE to match against each requested order slot (including slots with no concept).
+    """
+    has_dish_hint = bool(keyword or semantic_keywords or all_dishes)
+    restaurants = search_restaurants(
         user_address=user_address,
-        radius_km=initial_radius,
-        minimum_rating=minimum_rating,
-        cuisine=rest_cuisine_filter,
         user_coords=user_coords,
+        radius_km=radius_km,
+        minimum_rating=minimum_rating,
+        # With a dish hint, cuisine filters dishes rather than restaurants.
+        cuisine=None if has_dish_hint else cuisine,
     )
-    rest_ids_5km = {r.id: r for r in rests_5km}
 
-    dishes_5km = []
-    for r_id in rest_ids_5km:
-        matched = search_dishes(
-            keyword=keyword,
-            cuisine=cuisine,
-            max_price=max_price,
-            min_price=min_price,
-            spicy=spicy,
-            restaurant_id=r_id,
+    dishes: List[Dish] = []
+    for r in restaurants:
+        dishes.extend(search_dishes(
+            restaurant_id=r.id,
+            keyword=None if all_dishes else keyword,
+            semantic_keywords=None if all_dishes else semantic_keywords,
+            cuisine=None if all_dishes else cuisine,
+            spicy=None if all_dishes else spicy,
             disliked_ingredients=disliked_ingredients,
             excluded_concepts=excluded_concepts,
-            semantic_keywords=semantic_keywords,
-        )
-        dishes_5km.extend(matched)
-        if matched and secondary_keywords:
-            for sk in secondary_keywords:
-                sec_matched = search_dishes(
-                    keyword=sk,
-                    restaurant_id=r_id,
-                    disliked_ingredients=disliked_ingredients,
-                    excluded_concepts=excluded_concepts,
-                )
-                dishes_5km.extend(sec_matched)
-
-    # Check if we have enough options in 5km (at least 2)
-    if len(dishes_5km) >= 2:
-        return {
-            "dishes": dishes_5km,
-            "restaurants": rests_5km,
-            "search_radius_km": initial_radius,
-            "is_radius_expanded": False,
-            "message": f"Tìm thấy {len(dishes_5km)} món phù hợp ngay trong bán kính {initial_radius}km quanh {user_address}."
-        }
-
-    # Stage 2: Scale up to 10.0 km radius
-    rests_10km = search_restaurants(
-        user_address=user_address,
-        radius_km=max_radius,
-        minimum_rating=minimum_rating,
-        cuisine=rest_cuisine_filter,
-        user_coords=user_coords,
-    )
-    rest_ids_10km = {r.id: r for r in rests_10km}
-
-    dishes_10km = []
-    for r_id in rest_ids_10km:
-        matched = search_dishes(
-            keyword=keyword,
-            cuisine=cuisine,
-            max_price=max_price,
-            min_price=min_price,
-            spicy=spicy,
-            restaurant_id=r_id,
-            disliked_ingredients=disliked_ingredients,
-            excluded_concepts=excluded_concepts,
-            semantic_keywords=semantic_keywords,
-        )
-        dishes_10km.extend(matched)
-        if matched and secondary_keywords:
-            for sk in secondary_keywords:
-                sec_matched = search_dishes(
-                    keyword=sk,
-                    restaurant_id=r_id,
-                    disliked_ingredients=disliked_ingredients,
-                    excluded_concepts=excluded_concepts,
-                )
-                dishes_10km.extend(sec_matched)
-
-    # If still fewer than 2 dishes, relax cuisine filter if dish hint was given
-    if len(dishes_10km) < 2 and cuisine and (keyword or semantic_keywords):
-        for r_id in rest_ids_10km:
-            matched = search_dishes(
-                keyword=keyword,
-                cuisine=None,
-                max_price=max_price,
-                min_price=min_price,
-                spicy=spicy,
-                restaurant_id=r_id,
-                disliked_ingredients=disliked_ingredients,
-                excluded_concepts=excluded_concepts,
-                semantic_keywords=semantic_keywords,
-            )
-            dishes_10km.extend(matched)
-            if matched and secondary_keywords:
-                for sk in secondary_keywords:
-                    sec_matched = search_dishes(
-                        keyword=sk,
-                        restaurant_id=r_id,
-                        disliked_ingredients=disliked_ingredients,
-                        excluded_concepts=excluded_concepts,
-                    )
-                    dishes_10km.extend(sec_matched)
-            for m in matched:
-                if m.id not in {d.id for d in dishes_10km}:
-                    dishes_10km.append(m)
-
-    # If 0 dishes found in 10km and max_price was set, check if dishes exist without max_price
-    # so VALIDATE and RE-PLAN layers can detect budget_too_tight with structured evidence.
-    if len(dishes_10km) == 0 and max_price is not None and (keyword or semantic_keywords):
-        for r_id in rest_ids_10km:
-            unbudgeted = search_dishes(
-                keyword=keyword,
-                cuisine=cuisine,
-                max_price=None,
-                restaurant_id=r_id,
-                disliked_ingredients=disliked_ingredients,
-                excluded_concepts=excluded_concepts,
-                semantic_keywords=semantic_keywords,
-            )
-            dishes_10km.extend(unbudgeted)
+        ))
 
     return {
-        "dishes": dishes_10km,
-        "restaurants": rests_10km,
-        "search_radius_km": max_radius,
-        "is_radius_expanded": True,
-        "message": f"Bán kính 5.0km có ít lựa chọn, hệ thống đã tự động mở rộng bán kính lên {max_radius}km quanh {user_address} để tìm thêm món ngon cho bạn."
+        "dishes": dishes,
+        "restaurants": restaurants,
+        "search_radius_km": radius_km,
     }
 
 

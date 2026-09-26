@@ -1,4 +1,4 @@
-from typing import Optional, Union, Dict, Any
+from typing import Any, Dict, List, Optional, Union
 from database.models import Promotion, PricingCalculation
 
 
@@ -79,3 +79,17 @@ def calculate_final_price(
         savings=savings,
         explanation=summary
     )
+
+
+def best_order_pricing(
+    subtotal: int,
+    delivery_fee: int,
+    promotions: List[Promotion],
+) -> PricingCalculation:
+    """Cheapest total for one restaurant's order among 'no promotion' and each available one."""
+    best = calculate_final_price(subtotal, None, delivery_fee=delivery_fee)
+    for promo in promotions:
+        calc = calculate_final_price(subtotal, promo, delivery_fee=delivery_fee)
+        if calc.final_price < best.final_price:
+            best = calc
+    return best

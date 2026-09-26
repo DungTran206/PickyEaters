@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Any, Tuple
 from database.models import Dish, Restaurant, UserPreference, RecommendationCandidate, PricingCalculation
-from services.pricing import calculate_final_price
+from services.pricing import best_order_pricing
 from services.search import get_restaurant_by_id, get_promotions, is_ingredient_disliked, mentions_concept, normalize_text
 
 
@@ -175,6 +175,7 @@ def generate_detailed_reasoning(
     search_radius_km: float = 5.0,
     is_radius_expanded: bool = False,
     quantity: int = 1,
+    order_restaurants: Optional[List[Restaurant]] = None,
 ) -> str:
     """
     Explain WHY this dish is recommended (Vietnamese).
@@ -207,7 +208,10 @@ def generate_detailed_reasoning(
         points.append(f"🍽️ Ẩm thực: {dish.cuisine}")
 
     # 3. Distance & Radius (always included), stating how the distance was obtained
-    if restaurant.distance_basis == "stored":
+    split = order_restaurants is not None and len(order_restaurants) > 1
+    if split:
+        distance = f"📍 Quán xa nhất ({restaurant.name}): {distance_text(restaurant)}"
+    elif restaurant.distance_basis == "stored":
         distance = f"📍 Cách bạn chỉ {restaurant.distance_km}km"
     else:
         distance = f"📍 Khoảng cách: {distance_text(restaurant)}"
@@ -265,8 +269,12 @@ def generate_detailed_reasoning(
         else:
             points.append(f"⚠️ Quán chưa cung cấp thành phần món — chưa kiểm tra được: {excludes_str}")
 
-    # 6. Rating & Platform
-    if restaurant.rating is None:
+    # 6. Rating & Platform (every restaurant of a split order, each named)
+    if split:
+        rated = [f"{r.name} {r.rating}⭐ ({r.platform})" for r in order_restaurants if r.rating is not None]
+        if rated:
+            points.append("⭐ Đánh giá: " + " · ".join(rated))
+    elif restaurant.rating is None:
         pass
     elif restaurant.rating >= 4.7:
         points.append(
@@ -314,6 +322,7 @@ def rank_candidates(
                     search_radius_km=search_radius_km,
                     is_radius_expanded=is_radius_expanded,
                     quantity=c.quantity,
+                    order_restaurants=c.restaurants or None,
                 )
                 c.explanation = c.reasoning
             candidates.append(c)
@@ -327,15 +336,9 @@ def rank_candidates(
             if user_pref and is_ingredient_disliked(dish.ingredients, user_pref.disliked_ingredients):
                 continue
 
-            # Find best promo
-            available_promos = get_promotions(dish.restaurant_id)
-            subtotal = dish.price * quantity
-            best_pricing = calculate_final_price(subtotal, None, delivery_fee=rest.delivery_fee)
-
-            for p in available_promos:
-                pricing = calculate_final_price(subtotal, p, delivery_fee=rest.delivery_fee)
-                if pricing.final_price < best_pricing.final_price:
-                    best_pricing = pricing
+            best_pricing = best_order_pricing(
+                dish.price * quantity, rest.delivery_fee, get_promotions(dish.restaurant_id)
+            )
 
             scores = score_candidate(dish, rest, best_pricing, user_pref, task_model)
             if scores["preference_match"] < -50:
@@ -446,7 +449,9 @@ def _rating_text(restaurant: Restaurant) -> str:
 
 def _fee_text(candidate: RecommendationCandidate) -> str:
     fee = f"{candidate.pricing.delivery_fee:,}đ"
-    return f"~{fee} (ước tính)" if "delivery_fee" in candidate.restaurant.estimated_fields else fee
+    rests = candidate.restaurants or [candidate.restaurant]
+    estimated = any("delivery_fee" in r.estimated_fields for r in rests)
+    return f"~{fee} (ước tính)" if estimated else fee
 
 
 def format_recommendations_output(
@@ -456,6 +461,7 @@ def format_recommendations_output(
     user_address: str = "",
     replan_action: Optional[Any] = None,
     search_radius_km: Optional[float] = None,
+    relaxed: Optional[List[str]] = None,
 ) -> str:
     radius = f"{search_radius_km:g}km" if search_radius_km else "khu vực tìm kiếm"
     if not candidates:
@@ -470,6 +476,9 @@ def format_recommendations_output(
     if is_radius_expanded:
         lines.append(f"🔍 *Thông báo bán kính:* Quanh '{user_address}' có ít lựa chọn ở bán kính ban đầu, hệ thống đã **tự động mở rộng bán kính lên {radius}**.\n")
 
+    if "cuisine" in (relaxed or []):
+        lines.append("ℹ️ *Không đủ lựa chọn đúng ẩm thực bạn ưu tiên, nên kết quả gồm cả ẩm thực khác.*\n")
+
     lines.append("### 🍜 Các món ngon dành riêng cho bạn:\n")
 
     for i, c in enumerate(candidates, 1):
@@ -478,8 +487,20 @@ def format_recommendations_output(
         if c.pricing.savings > 0:
             deal_str = f" 🔥 *(Tiết kiệm {c.pricing.savings:,}đ)*"
 
-        # Check if candidate is a multi-item combo
-        if c.items and len(c.items) > 1:
+        if len(c.restaurants) > 1:
+            # Split order: no single restaurant had every requested item
+            rest_names = {r.id: r.name for r in c.restaurants}
+            lines.append(f"**{i}. Tách đơn {len(c.restaurants)} quán: {' + '.join(it.name for it in c.items)}**")
+            for it in c.items:
+                qty = f" × {c.quantity}" if c.quantity > 1 else ""
+                lines.append(f"  • {it.name}: {it.price:,}đ{qty} — {rest_names.get(it.restaurant_id, '')}")
+            lines.append(f"- 💵 Tổng: **{price_k}**{deal_str} (gồm {len(c.restaurants)} lần phí ship: {_fee_text(c)})")
+            lines.append(f"- 📍 Quán xa nhất: **{distance_text(c.restaurant)}**")
+            lines.append(
+                "- 💡 **Vì sao tách đơn:** chưa quán nào có đủ các món bạn yêu cầu trong cùng một đơn • "
+                f"{c.reasoning}"
+            )
+        elif c.items and len(c.items) > 1:
             combo_title = " + ".join(it.name for it in c.items)
             lines.append(f"**{i}. Combo: {combo_title} — {c.restaurant.name}**")
             lines.append("- 🍱 **Chi tiết combo:**")

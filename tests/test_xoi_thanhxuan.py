@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.stdout.reconfigure(encoding='utf-8')
 from agent.agent import FoodAgent
-from services.search import search_with_radius_expansion, search_restaurants
+from services.search import search_within_radius, search_restaurants
 
 print('=== 1. Checking restaurants in Thanh Xuân within 5km ===')
 rests = search_restaurants(user_address='Thanh Xuân, Hà Nội', radius_km=5.0)
@@ -11,8 +11,8 @@ print(f'Found {len(rests)} restaurants in 5km')
 for r in rests[:8]:
     print(f'  {r.id} | {r.name} | {r.rating}⭐ | {r.distance_km}km | {r.address}')
 
-print('\n=== 2. Checking search_with_radius_expansion for keyword: xoi ===')
-res1 = search_with_radius_expansion(user_address='Thanh Xuân, Hà Nội', keyword='xoi', initial_radius=5.0)
+print('\n=== 2. Checking search_within_radius (5km) for keyword: xoi ===')
+res1 = search_within_radius(radius_km=5.0, user_address='Thanh Xuân, Hà Nội', keyword='xoi')
 print('Dishes found:', len(res1['dishes']))
 for d in res1['dishes'][:8]:
     print(f'  {d.name} ({d.price:,}đ) - Rest: {d.restaurant_id}')

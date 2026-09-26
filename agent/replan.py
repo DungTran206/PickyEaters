@@ -9,7 +9,7 @@ Architecture Rules (AGENTS.md):
 - Hard constraints must not be silently relaxed.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 from pydantic import BaseModel, Field
 from database.models import RecommendationCandidate
 from agent.task_model import TaskModel
@@ -31,9 +31,14 @@ def diagnose_and_replan(
     current_radius_km: float = 5.0,
     is_radius_expanded: bool = False,
     dishes_retrieved_count: int = 0,
+    max_radius_km: float = 10.0,
+    unavailable_objects: Optional[List[str]] = None,
 ) -> ReplanAction:
     """
-    Analyze structured validation failures and retrieval state to decide the next bounded strategy.
+    Explain why the bounded search ended without a valid option, and what the user can change.
+
+    Called after the search loop (next_step) has stopped. Hard constraints are never relaxed
+    here: budget / ingredient / follow-up failures become questions for the user.
     """
     def all_rejected_for(*types: str) -> bool:
         return bool(rejected_candidates) and all(
@@ -111,16 +116,34 @@ def diagnose_and_replan(
 
     # 3. Check if failure is due to DISTANCE / RADIUS (0 restaurants in current radius)
     if dishes_retrieved_count == 0 or len(rejected_candidates) == 0:
-        if current_radius_km < 10.0 and not is_radius_expanded:
+        if current_radius_km < max_radius_km and not is_radius_expanded:
             return ReplanAction(
                 strategy="expand_radius",
                 diagnosis="no_restaurants_in_initial_radius",
-                suggested_radius_km=10.0,
-                message_to_user="Trong bán kính 5km chưa có quán phù hợp, hệ thống đề xuất mở rộng bán kính lên 10km để tìm thêm lựa chọn cho bạn."
+                suggested_radius_km=max_radius_km,
+                message_to_user=(
+                    f"Trong bán kính {current_radius_km:g}km chưa có quán phù hợp, hệ thống đề xuất "
+                    f"mở rộng bán kính lên {max_radius_km:g}km để tìm thêm lựa chọn cho bạn."
+                ),
             )
 
-    # 4. Check if failure is due to COMBO PAIRING (multi-object same_restaurant failed)
-    if len(task.objects) > 1 and any(r.type in ("same_restaurant", "same_order") for r in task.relationships):
+    # 4a. A requested item is not sold anywhere in range (multi-object order)
+    if len(task.objects) > 1 and unavailable_objects:
+        missing = ", ".join(f"'{m}'" for m in unavailable_objects)
+        available = [o.concept or o.role for o in task.objects if (o.concept or o.role) not in unavailable_objects]
+        keep = ", ".join(f"'{a}'" for a in available) or "các món còn lại"
+        return ReplanAction(
+            strategy="suggest_alternatives",
+            diagnosis="requested_item_unavailable",
+            suggested_alternatives=available,
+            message_to_user=(
+                f"Trong bán kính {current_radius_km:g}km chưa có quán nào bán {missing}. "
+                f"Bạn muốn chỉ đặt {keep}, hay đổi sang món khác?"
+            ),
+        )
+
+    # 4b. Every item exists somewhere, but not together (same_restaurant pairing failed)
+    if len(task.objects) > 1:
         main_concept = task.objects[0].concept or "món chính"
         secondary_concepts = [o.concept for o in task.objects[1:] if o.concept]
         sec_str = ", ".join(secondary_concepts) if secondary_concepts else "món phụ / nước uống"
@@ -135,9 +158,14 @@ def diagnose_and_replan(
         )
 
     # 5. Default fallback: Clarify concept
-    concept_str = task.objects[0].concept if task.objects and task.objects[0].concept else "món bạn đang tìm"
+    if task.objects and task.objects[0].concept:
+        concept_str = task.objects[0].concept
+    elif task.soft_preferences.cuisine_affinity:
+        concept_str = "ẩm thực " + ", ".join(task.soft_preferences.cuisine_affinity)
+    else:
+        concept_str = "món bạn đang tìm"
     msg = (
-        f"Rất tiếc hiện chưa tìm thấy lựa chọn nào đáp ứng trọn vẹn yêu cầu về '{concept_str}' trong bán kính 10km. "
+        f"Rất tiếc hiện chưa tìm thấy lựa chọn nào đáp ứng trọn vẹn yêu cầu về '{concept_str}' trong bán kính {current_radius_km:g}km. "
         "Bạn có thể chia sẻ cụ thể hơn hoặc đổi sang loại món khác được không?"
     )
     return ReplanAction(
@@ -145,3 +173,67 @@ def diagnose_and_replan(
         diagnosis="no_matching_options",
         message_to_user=msg
     )
+
+
+# ---------------------------------------------------------------------------
+# Bounded search strategy loop
+# ---------------------------------------------------------------------------
+
+MIN_OPTIONS = 2          # fewer valid options than this is worth another strategy step
+MAX_REPLAN_STEPS = 4     # hard bound on strategy steps per request
+
+
+def radius_schedule(initial_km: float, max_km: float) -> List[float]:
+    """Radii to try, doubling from the initial radius up to the maximum (e.g. 3 -> 6 -> 10)."""
+    if initial_km <= 0:
+        return [max_km]
+    radii = [initial_km]
+    while radii[-1] < max_km:
+        radii.append(min(max_km, radii[-1] * 2))
+    return radii
+
+
+class SearchState(BaseModel):
+    """What the current search attempt looks like. Only search strategy and SOFT preferences
+    live here — hard constraints come from the TaskModel and are never changed."""
+    radius_km: float
+    radii: List[float]
+    cuisine: Optional[str] = None          # soft preference (profile or cuisine_affinity)
+    # Dropping the cuisine only makes sense when a dish/semantic/object request remains;
+    # if the cuisine IS the request ("tìm đồ Nhật"), relaxing it would answer a different question.
+    cuisine_relaxable: bool = False
+    relaxed: List[str] = Field(default_factory=list)
+    trace: List[Dict[str, Any]] = Field(default_factory=list)
+
+    @property
+    def active_cuisine(self) -> Optional[str]:
+        return None if "cuisine" in self.relaxed else self.cuisine
+
+
+class ReplanStep(BaseModel):
+    action: Literal["expand_radius", "relax_cuisine"]
+    reason: Literal["no_valid_options", "too_few_options"]
+    radius_km: Optional[float] = None
+
+
+def next_step(state: SearchState, valid_count: int) -> Optional[ReplanStep]:
+    """Decide the next search strategy from the observed number of valid options.
+
+    Order: widen the radius along the schedule, then drop the soft cuisine preference.
+    Returns None to stop (enough options, no strategy left, or step bound reached).
+    """
+    if valid_count >= MIN_OPTIONS or len(state.trace) >= MAX_REPLAN_STEPS:
+        return None
+    reason = "no_valid_options" if valid_count == 0 else "too_few_options"
+    wider = [r for r in state.radii if r > state.radius_km]
+    if wider:
+        return ReplanStep(action="expand_radius", reason=reason, radius_km=wider[0])
+    if state.cuisine and state.cuisine_relaxable and "cuisine" not in state.relaxed:
+        return ReplanStep(action="relax_cuisine", reason=reason)
+    return None
+
+
+def apply_step(state: SearchState, step: ReplanStep) -> SearchState:
+    if step.action == "expand_radius":
+        return state.model_copy(update={"radius_km": step.radius_km})
+    return state.model_copy(update={"relaxed": state.relaxed + ["cuisine"]})

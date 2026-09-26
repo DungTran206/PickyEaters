@@ -10,6 +10,7 @@ Regression tests for two pipeline contract bugs:
 
 import pytest
 
+import agent.executor as executor
 import agent.tools as tools
 from agent.task_model import HardConstraints, TaskModel, TaskObject
 from agent.validator import validate_candidate
@@ -82,14 +83,10 @@ def test_valid_candidate_below_top_k_is_not_lost(monkeypatch):
         for i in range(4)
     ] + [Dish(id="d_ok", restaurant_id="r_ok", name="Bún bò", price=50000, spicy=False)]
 
-    search_result = {
-        "dishes": dishes,
-        "restaurants": restaurants,
-        "search_radius_km": 5.0,
-        "is_radius_expanded": False,
-        "message": "",
-    }
-    monkeypatch.setattr(tools, "search_with_radius_expansion", lambda **_: search_result)
+    monkeypatch.setattr(
+        executor, "search_within_radius",
+        lambda radius_km, **_: {"dishes": dishes, "restaurants": restaurants, "search_radius_km": radius_km},
+    )
     monkeypatch.setattr(tools, "db_get_preferences", lambda user_id: UserPreference(user_id=user_id))
 
     task = TaskModel(

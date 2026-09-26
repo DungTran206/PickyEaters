@@ -57,6 +57,25 @@ def resolve_semantic_keywords(task: TaskModel) -> List[str]:
 
 PRICE_FOLLOW_UP_REASONS = {"lower_price", "too_expensive"}
 
+DEFAULT_INITIAL_RADIUS_KM = 5.0   # when the profile has no preferred_distance
+MAX_SEARCH_RADIUS_KM = 10.0       # farthest RE-PLAN may widen the search
+
+
+def composition_mode(task: TaskModel) -> str:
+    """How the requested objects form an order.
+
+    - "single": one object.
+    - "same_restaurant": the user said the items come from one restaurant ("cùng quán").
+    - "same_order": several objects in one meal — an explicit same_order, or several objects
+      with no relationship. They are not independent searches; COMPOSE prefers one restaurant
+      and may split across restaurants. No same-restaurant requirement is inferred.
+    """
+    if len(task.objects) <= 1:
+        return "single"
+    if any(r.type == "same_restaurant" for r in task.relationships):
+        return "same_restaurant"
+    return "same_order"
+
 
 def location_clarification(
     user_address: Optional[str], user_coords: Optional[Tuple[float, float]] = None
@@ -175,25 +194,13 @@ def plan_recommendation(
     # Extract primary concept from Main object
     primary_concept = next((obj.concept for obj in task.objects if obj.concept and obj.role == "Main"), None)
 
-    # Extract secondary objects (Drinks, Sides, or other Mains)
-    secondary_concepts = [
-        obj.concept for obj in task.objects
-        if obj.concept and (obj.role != "Main" or obj.concept != primary_concept)
-    ]
-
     # Semantic keyword expansion when primary concept is missing
     semantic_kws: List[str] = []
     if not primary_concept:
         semantic_kws = resolve_semantic_keywords(task)
 
-    # Check composition strategy (same_restaurant / same_order)
-    composition_strategy = "independent"
-    if any(r.type in ("same_restaurant", "same_order") for r in task.relationships):
-        composition_strategy = "same_restaurant"
-    elif len(task.objects) > 1 and any(o.role == "Drink" for o in task.objects):
-        composition_strategy = "same_restaurant"
-
     cuisine = next(iter(task.soft_preferences.cuisine_affinity or profile.get("preferred_cuisines", [])), None)
+    initial_radius = profile.get("preferred_distance") or DEFAULT_INITIAL_RADIUS_KM
 
     return {
         "user_id": user_id,
@@ -202,16 +209,16 @@ def plan_recommendation(
         "user_lng": user_coords[1] if user_coords else None,
         "keyword": primary_concept,
         "semantic_keywords": semantic_kws,
-        "secondary_keywords": secondary_concepts,
-        "composition_strategy": composition_strategy,
+        "composition_mode": composition_mode(task),
         "cuisine": cuisine,
         "max_price": task.hard_constraints.price_max,
         "min_price": task.hard_constraints.price_min,
         "spicy": task.hard_constraints.spicy,
         "disliked_ingredients": list(dict.fromkeys(profile.get("disliked_ingredients", []) + task.ingredient_excludes)),
         "excluded_concepts": task.excluded_concepts,
-        "initial_radius": profile.get("preferred_distance") or 5.0,
-        "max_radius": max(profile.get("preferred_distance") or 5.0, 10.0),
+        # RE-PLAN widens the radius step by step from initial_radius up to max_radius.
+        "initial_radius": initial_radius,
+        "max_radius": max(initial_radius, MAX_SEARCH_RADIUS_KM),
         "task_model": task.model_dump(mode="json"),
         **follow_up_constraints(task, previous_candidates or [], shown_dish_ids),
     }

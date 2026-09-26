@@ -14,9 +14,10 @@ from database.models import Dish, Restaurant, UserPreference, Promotion
 from agent.task_model import TaskModel, TaskObject, Relationship, HardConstraints
 from agent.composer import (
     compose_candidates,
-    is_composed_order_request,
     match_dish_to_task_object
 )
+from agent.planner import composition_mode
+from agent.validator import validate_candidates_list
 from services.recommendation import format_recommendations_output
 
 
@@ -47,13 +48,13 @@ def _make_restaurant(id: str, name: str = "Quán A", rating: float = 4.8, dist: 
 
 
 class TestComposeOrder:
-    def test_is_composed_order_request(self):
+    def test_composition_mode(self):
         # 1 object is not composed
         task_single = TaskModel(
             intent="request_recommendation",
             objects=[TaskObject(role="Main", concept="phở bò")],
         )
-        assert is_composed_order_request(task_single) is False
+        assert composition_mode(task_single) == "single"
 
         # 2 objects with same_restaurant relationship
         task_multi = TaskModel(
@@ -64,7 +65,7 @@ class TestComposeOrder:
             ],
             relationships=[Relationship(type="same_restaurant", objects=[0, 1])],
         )
-        assert is_composed_order_request(task_multi) is True
+        assert composition_mode(task_multi) == "same_restaurant"
 
     def test_compose_pairs_main_and_side_from_same_restaurant(self):
         # Rest 1 has both Phở and Quẩy
@@ -130,11 +131,15 @@ class TestComposeOrder:
             dishes=[main1, drink1, main2, drink2],
             restaurants=[rest1, rest2],
         )
+        # COMPOSE builds both orders; VALIDATE checks the budget on the composed total.
+        assert {c.restaurant.id for c in candidates} == {"r1", "r2"}
+        valid, rejected = validate_candidates_list(candidates, task)
 
-        # Rest 1 must be filtered out post-composition because 125k > 100k
-        assert len(candidates) == 1
-        assert candidates[0].restaurant.id == "r2"
-        assert candidates[0].pricing.original_price == 65000
+        # Rest 1 is rejected after composition because its combo (125k) exceeds 100k
+        assert [c.restaurant.id for c in valid] == ["r2"]
+        assert valid[0].pricing.original_price == 65000
+        assert rejected[0][0].restaurant.id == "r1"
+        assert rejected[0][1][0].constraint_type == "price_max"
 
     def test_single_delivery_fee_applied_for_combo(self):
         """Multiple items from the same restaurant incur only ONE delivery fee."""
@@ -175,8 +180,10 @@ class TestComposeOrder:
 
         user_pref = UserPreference(user_id="u1", disliked_ingredients=["onion"])
         candidates = compose_candidates(task, dishes=[main, side], restaurants=[rest], user_pref=user_pref)
-        # Must be rejected because side has onion
-        assert len(candidates) == 0
+        valid, rejected = validate_candidates_list(candidates, task, user_pref)
+        # Must be rejected (by VALIDATE, with evidence) because the side contains onion
+        assert valid == []
+        assert rejected and rejected[0][1][0].constraint_type == "ingredient_exclude"
 
     def test_format_recommendations_output_for_combo(self):
         rest = _make_restaurant("r1", name="Phở Bát Đàn")

@@ -84,6 +84,9 @@ class RecommendationCandidate(BaseModel):
     pricing: PricingCalculation
     items: List[Dish] = Field(default_factory=list)
     quantity: int = 1  # portions of each item (TaskModel.context.party_size); pricing covers all portions
+    # Split order (same_order across restaurants): every restaurant involved, one delivery each.
+    # Empty for single-restaurant candidates; `restaurant` then is the only one.
+    restaurants: List[Restaurant] = Field(default_factory=list)
     scores: Dict[str, float] = Field(default_factory=dict)
     total_score: float = 0.0
     explanation: str = ""

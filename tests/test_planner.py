@@ -86,10 +86,11 @@ class TestMultiObjectDecomposition:
         plan = plan_recommendation(task, "u1")
         assert plan is not None
         assert plan["keyword"] == "phở bò"
-        assert plan["secondary_keywords"] == ["trà chanh"]
-        assert plan["composition_strategy"] == "same_restaurant"
+        assert plan["composition_mode"] == "same_restaurant"
 
-    def test_implicit_drink_triggers_same_restaurant_delivery_strategy(self):
+    def test_main_plus_drink_without_relationship_is_one_order_not_forced_same_restaurant(self):
+        """Several objects are one meal (not independent searches), but "same restaurant"
+        is only required when the user said so; it is never inferred from a drink."""
         task = _make_task(
             objects=[
                 TaskObject(role="Main", concept="cơm sườn", required=True),
@@ -99,8 +100,7 @@ class TestMultiObjectDecomposition:
         plan = plan_recommendation(task, "u1")
         assert plan is not None
         assert plan["keyword"] == "cơm sườn"
-        assert plan["secondary_keywords"] == ["trà đá"]
-        assert plan["composition_strategy"] == "same_restaurant"
+        assert plan["composition_mode"] == "same_order"
 
 
 class TestProfileFusionAndConstraints:

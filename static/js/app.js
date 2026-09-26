@@ -529,7 +529,25 @@ document.addEventListener('DOMContentLoaded', () => {
         ? `🚀 ${distText} — đã mở rộng bán kính lên ${cand.search_radius_km} km`
         : `📍 ${distText}`;
 
-      const isSpicy = dish.spicy || false;
+      // Order contents: one dish, a same-restaurant combo, or a split order across restaurants
+      const items     = (cand.items && cand.items.length) ? cand.items : [dish];
+      const quantity  = cand.quantity || 1;
+      const orderRests = (cand.restaurants && cand.restaurants.length) ? cand.restaurants : [rest];
+      const isSplit   = orderRests.length > 1;
+      const restName  = id => (orderRests.find(r => r.id === id) || {}).name || '';
+      const qtyText   = quantity > 1 ? ` × ${quantity}` : '';
+      const title     = items.length > 1
+        ? `${isSplit ? '🧾 Tách đơn' : '🍱 Combo'}: ${items.map(i => i.name).join(' + ')}`
+        : `${dish.name || 'Món ăn'}${qtyText}`;
+      const restLine  = isSplit ? orderRests.map(r => r.name).join(' · ') : (rest.name || '');
+      const address   = isSplit ? '' : (rest.address || rest.district || '');
+      const itemsHtml = items.length > 1 ? `
+          <ul class="rec-items">
+            ${items.map(i => `<li><span>${escapeHtml(i.name)}${qtyText}</span><span>${(i.price || 0).toLocaleString('vi-VN')}đ${isSplit ? ' · ' + escapeHtml(restName(i.restaurant_id)) : ''}</span></li>`).join('')}
+            ${isSplit ? `<li class="rec-items-note">${orderRests.length} quán giao riêng · ${orderRests.length} lần phí ship (đã tính trong tổng)</li>` : ''}
+          </ul>` : '';
+
+      const isSpicy = items.some(i => i.spicy);
 
       // FIX: Reasoning split — handle both ' • ' and '\n' separators, fallback gracefully
       const reasoningRaw = cand.reasoning || cand.explanation || '';
@@ -561,14 +579,12 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="rec-rank-title">
               <span class="rec-rank-badge" title="Xếp hạng ${rank}">${rankEmoji || '#' + rank}</span>
               <div style="min-width:0;flex:1;">
-                <div class="rec-dish-name">${escapeHtml(dish.name || 'Món ăn')}</div>
+                <div class="rec-dish-name">${escapeHtml(title)}</div>
                 <div class="rec-restaurant-info">
-                  <span class="rec-restaurant-name">${escapeHtml(rest.name || 'Quán ăn')}</span>
-                  <span class="platform-tag ${platformClass}">${escapeHtml(platformName)}</span>
+                  <span class="rec-restaurant-name">${escapeHtml(restLine)}</span>
+                  ${[...new Set(orderRests.map(r => r.platform || platformName))].map(pf => `<span class="platform-tag ${pf.toLowerCase().includes('grab') ? 'grabfood' : 'shopeefood'}">${escapeHtml(pf)}</span>`).join('')}
                 </div>
-                <div class="rec-restaurant-address">
-                  <span>📍 ${escapeHtml(rest.address || rest.district || 'Hà Nội')}</span>
-                </div>
+                ${address ? `<div class="rec-restaurant-address"><span>📍 ${escapeHtml(address)}</span></div>` : ''}
               </div>
             </div>
 
@@ -580,13 +596,14 @@ document.addEventListener('DOMContentLoaded', () => {
               ` : ''}
             </div>
           </div>
+          ${itemsHtml}
 
           <div class="rec-meta-tags">
             <span class="meta-pill dist ${distClass}">${distLabel}</span>
-            <span class="meta-pill rating">${rest.rating != null ? '⭐ ' + rest.rating : 'Chưa có đánh giá'}</span>
-            <span class="meta-pill ${isSpicy ? 'spicy' : 'non-spicy'}">${isSpicy ? '🌶️ Có cay' : '🌱 Không cay'}</span>
+            ${isSplit ? '' : `<span class="meta-pill rating">${rest.rating != null ? '⭐ ' + rest.rating : 'Chưa có đánh giá'}</span>`}
+            <span class="meta-pill ${isSpicy ? 'spicy' : 'non-spicy'}">${isSpicy ? '🌶️ Có món cay' : '🌱 Không cay'}</span>
             ${pricing.applied_promotion_code ? `<span class="meta-pill deal">🔥 Mã: ${escapeHtml(pricing.applied_promotion_code)}</span>` : ''}
-            ${rest.delivery_time_mins && !estimated.includes('delivery_time_mins') ? `<span class="meta-pill dist">⏱️ ~${rest.delivery_time_mins} phút</span>` : ''}
+            ${!isSplit && rest.delivery_time_mins && !estimated.includes('delivery_time_mins') ? `<span class="meta-pill dist">⏱️ ~${rest.delivery_time_mins} phút</span>` : ''}
           </div>
 
           <!-- AI Reasoning Box -->
@@ -606,13 +623,14 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
 
           <div class="rec-card-footer">
+            ${orderRests.map(r => `
             <button
               class="order-btn"
-              data-restaurant="${escapeHtml(rest.name || '')}"
-              data-platform="${escapeHtml(platformName)}"
+              data-restaurant="${escapeHtml(r.name || '')}"
+              data-platform="${escapeHtml(r.platform || platformName)}"
             >
-              <span>🛒 Đặt qua ${escapeHtml(platformName)}</span>
-            </button>
+              <span>🛒 Đặt ${isSplit ? escapeHtml(r.name || '') + ' qua ' : 'qua '}${escapeHtml(r.platform || platformName)}</span>
+            </button>`).join('')}
           </div>
         </div>
       `;
